@@ -6,6 +6,7 @@ SequenceDetector::SequenceDetector(const char *sequence):sequence(sequence)
 	state = 0;
 	length = strlen_P(sequence);
 }
+/* returns true of sequence is detected */
 bool SequenceDetector::NextChar(char c)
 {
 	char cByte = pgm_read_byte(&sequence[state]);

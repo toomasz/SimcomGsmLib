@@ -31,8 +31,8 @@ class ParserSim900
 	Sim900 *gsm;
 	Sim900Context *ctx;
 	volatile bool commandReady;
-	Stream &ds;
-	ParserSim900(Stream& debugStream);
+	//Stream &ds;
+	ParserSim900();
 	FunctionBase *function;
 	void SetCommandType(FunctionBase *command);
 	void SetCommandType(int commandType);

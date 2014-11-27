@@ -1,7 +1,7 @@
 #include "ParserSim900.h"
 
-ParserSim900::ParserSim900(Stream& debugStream):
-okSeqDetector(PSTR("\r\nOK\r\n")), ds(debugStream)
+ParserSim900::ParserSim900():
+okSeqDetector(PSTR("\r\nOK\r\n")) //, ds(debugStream)
 {
 	commandType = 0;
 	lineParserState = PARSER_INITIAL;
@@ -52,7 +52,7 @@ void ParserSim900::FeedChar(char c)
 	if ((prevState == PARSER_LINE || prevState == PARSER_CR) && (lineParserState == PARSER_LF))
 	{
 		responseBuffer[n] =0;
-		ds.print("LN: "); ds.println((char*)responseBuffer);
+//		ds.print("LN: "); ds.println((char*)responseBuffer);
 		//	pr("\nLine: '%s' ", responseBuffer);
 		if (n == 0)
 			return;
@@ -257,6 +257,25 @@ int ParserSim900::ParseLine()
 				return S900_OK;
 			if (IsErrorLine())
 				return S900_ERR;
+		}
+	}
+	if (commandType == AT_CUSD)
+	{
+		if (n > 10)
+		{
+			if (strcmp_P((char*)responseBuffer, PSTR("+CUSD: ")) == 0)
+				return S900_OK;
+			parser.Init((char*)responseBuffer, 7, n);
+			uint16_t tmp = 0;
+			if (parser.NextNum(tmp))
+			{
+				char ussd[200];
+				if (parser.NextString(ctx->buffer_ptr, ctx->buffer_size))
+				{
+					return S900_OK;
+				}
+			}
+			return S900_ERR;
 		}
 	}
 	if(commandType == AT_CREG)

@@ -5,7 +5,7 @@ static int put_data(char c, FILE *f)
 	return 0;
 }
 Sim900::Sim900(Stream* serial, int powerPin, Stream &debugStream) :
-ds(debugStream), parser(debugStream)
+ds(debugStream) //, parser(debugStream)
 {
 	_powerPin = powerPin;
 	Sim900::ser = serial;
@@ -113,15 +113,18 @@ int Sim900::AttachGprs()
 Start tcp connection to address:port
 Return values S900_OK, S900_ERROR, S900_TIMEOUT
 */
-int Sim900::StartTransparentIpConnection(const char *address, int port )
+int Sim900::StartTransparentIpConnection(const char *address, int port, S900Socket *socket = 0 )
 {
 	dataBufferHead = dataBufferTail = 0;
 	parser.SetCommandType(AT_CIPSTART);
 	// Execute command like AT+CIPSTART="TCP","ag.kt29.net","80"
 	ser->print(F("AT+CIPSTART=\"TCP\",\"")); ser->print(address);  ser->print(F("\",\"")); ser->print(port); ser->println('"');
 
+	if(socket != 0)
+		socket->s900 = this;
 	return PopCommandResult(60000);
 }
+
 /* close active connection */
 int Sim900::CloseConnection()
 {
@@ -460,12 +463,25 @@ int Sim900::SendSms(char *number, char *message)
 	ser->print(F("AT+CMGS=\""));
 	ser->print(number);
 	ser->println(F("\""));
-	
-	while(ser->available() == false && ser->read() != '>');
-	
-	ser->println(message);
-	ser->println(F("\x2a"));
+
+	uint64_t start = millis();
+	// wait for >
+	while (ser->read() != '>')
+		if (millis() - start > 200)
+			return S900_ERR;
+	ser->print(message);
+	ser->print('\x1a');
 	return PopCommandResult(AT_DEFAULT_TIMEOUT);
+}
+int Sim900::SendUssdWaitResponse(char *ussd, char*response, int responseBufferLength)
+{
+	parser.SetCommandType(AT_CUSD);
+	buffer_ptr = response;
+	buffer_size = responseBufferLength;
+	ser->print(F("AT+CUSD=1,\""));
+	ser->print(ussd);
+	ser->println(F("\""));
+	return PopCommandResult(10000);
 }
 int Sim900::UnwriteDataBuffer()
 {

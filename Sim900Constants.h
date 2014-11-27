@@ -27,6 +27,8 @@ const int  S900_OK = 0;
 #define AT_CUSTOM_FUNCTION 10
 #define AT_CIPSHUT 11
 #define AT_CIPCLOSE 12
+#define AT_CUSD 13
+
 
 #define CRC_OK 0xe5     //"OK" l:2
 #define CRC_ERROR 0x34  //"ERROR" l:5
@@ -72,6 +74,6 @@ const int  S900_OK = 0;
 const int AT_DEFAULT_TIMEOUT = 3000;
 
 const int DATA_BUFFER_SIZE = 40;
-const int ResponseBufferSize = 110;
+const int ResponseBufferSize = 160;
 
 #endif /* SIM900CONSTANTS_H_ */

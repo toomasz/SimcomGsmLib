@@ -19,7 +19,8 @@ struct Sim900Context
 	char imei[16];
 	uint16_t cellId;
 	uint16_t lac;
-
+	char *buffer_ptr;
+	int buffer_size;
 }; //Sim900Context
 
 #endif //__SIM900CONTEXT_H__

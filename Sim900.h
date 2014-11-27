@@ -9,6 +9,10 @@
 #include "Functions/FunctionBase.h"
 #include "Sim900Context.h"
 #include "SequenceDetector.h"
+#include "S900Socket.h"
+
+class S900Socket;
+
 
 class Sim900: public Sim900Context
 {
@@ -49,14 +53,16 @@ public:
 		int SendSms(char *number, char *message);
 		int Call(char *number);
 		int PopCommandResult(int timeout);
-		
+		int SendUssdWaitResponse(char *ussd, char*response, int responseBufferLength);
 		// Tcpip functions
 		int GetIpStatus();
 		int SetTransparentMode(bool transparentMode);
 		int SetApn(const char *apnName, const char *username, const char *password);		
 		int AttachGprs();
 		int GetIpAddress();
-		int StartTransparentIpConnection(const char *address, int port);
+		int StartTransparentIpConnection(const char *address, int port, S900Socket *socket);
+		S900Socket StartConnection(const char* address, int port);
+		
 		int CloseConnection();
 		int Cipshut();
 		
