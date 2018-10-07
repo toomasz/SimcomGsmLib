@@ -1,18 +1,7 @@
-/*
- * Sim900Constants.h
- *
- * Created: 2014-02-20 20:33:24
- *  Author: Tomasz Œcis³owicz
- */ 
-
-
 #ifndef SIM900CONSTANTS_H_
 #define SIM900CONSTANTS_H_
 
-const int S900_NONE = -100;
-const int  S900_TIMEOUT = -2;
-const int  S900_ERR = -1;
-const int  S900_OK = 0;
+#include <inttypes.h>
 
 #define AT_DEFAULT 0
 #define AT_CIPSTATUS 1
@@ -28,6 +17,7 @@ const int  S900_OK = 0;
 #define AT_CIPSHUT 11
 #define AT_CIPCLOSE 12
 #define AT_CUSD 13
+#define AT_CBC 14
 
 
 #define CRC_OK 0xe5     //"OK" l:2
@@ -50,6 +40,7 @@ const int  S900_OK = 0;
 #define CRC_CREG 0x7   //"+CREG:" l:6
 #define CRC_COPS 0xa   //"+COPS:" l:6
 #define CRC_NO_CARRIER 0x56     //"NO CARRIER" l:10
+#define CRC_CBC 0x90 // "+CBC:" l:5
 
 //GetIpStatus() AT+CIPSTATUS result codes
 #define IP_INITIAL 0x25
@@ -62,18 +53,49 @@ const int  S900_OK = 0;
 #define PDP_DEACT 0x2b
 #define CONNECT_OK 0xec
 
-//GetRegistrationStatus result codes
-#define SEARCHING_FOR_NETWORK0 0
-#define HOME_NETWORK 1
-#define SEARCHING_FOR_NETWORK 2
-#define REGISTRATION_DENIED 3
-#define REGISTRATION_UNKNOWN 4
-#define ROAMING 5
+enum class ParserState : uint8_t
+{
+	Success,
+	Error,
+	Timeout,
+	None
+};
+
+enum class AtResultType : uint8_t
+{
+	Success,
+	Error,
+	Timeout
+};
+
+enum class GsmNetworkStatus : uint8_t
+{
+	SearchingForNetwork,
+	HomeNetwork,
+	RegistrationDenied,
+	RegistrationUnknown,
+	Roaming
+};
 
 
-const int AT_DEFAULT_TIMEOUT = 3000;
+const int AT_DEFAULT_TIMEOUT = 1500;
 
 const int DATA_BUFFER_SIZE = 40;
 const int ResponseBufferSize = 160;
+
+const int _defaultBaudRates[] =
+{
+	1200,
+	2400,
+	4800,
+	9600,
+	19200,
+	38400,
+	57600,
+	115200,
+	230400,
+	460800,
+	0
+};
 
 #endif /* SIM900CONSTANTS_H_ */

@@ -30,23 +30,23 @@ class FunctionDebug
 	}
 	void DebugResult(int function, int result)
 	{
-		if(function == AT_CIPSTATUS)
+		/*if(function == AT_CIPSTATUS)
 		{
 			debugStream.println(Sim900Strings::IpStatus2Pstr(result));
 		}
 		if(function == AT_CREG)
 		{
 			debugStream.println(Sim900Strings::RegStatus2Pstr(result));
-		}
+		}*/
 	}
 	
-	void DebugStandardResult(int result)
+	void DebugAtResult(AtResultType result)
 	{
-		if(result == S900_TIMEOUT)
+		if(result == AtResultType::Success)
 			debugStream.println(F("S900_TIMEOUT"));
-		if(result == S900_ERR)
+		if(result == AtResultType::Error)
 			debugStream.println(F("S900_ERR"));
-		if(result >=0)
+		if(result == AtResultType::Timeout)
 			debugStream.println(F("S900_OK"));
 	}
 	

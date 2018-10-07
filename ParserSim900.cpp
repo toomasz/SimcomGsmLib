@@ -1,16 +1,33 @@
 #include "ParserSim900.h"
 
-ParserSim900::ParserSim900():
-okSeqDetector(PSTR("\r\nOK\r\n")) //, ds(debugStream)
+#include "MappingHelpers.h"
+
+ParserSim900::ParserSim900(Stream &debugStream):
+okSeqDetector(PSTR("\r\nOK\r\n")) , ds(debugStream)
 {
 	commandType = 0;
 	lineParserState = PARSER_INITIAL;
 	n=0;
-	lastResult = S900_TIMEOUT;
+	lastResult = ParserState::Timeout;
 	function = 0;
 	memset(responseBuffer,0, ResponseBufferSize);
 }
 
+AtResultType ParserSim900::GetAtResultType()
+{
+	switch (lastResult)
+	{
+	case ParserState::Success:
+		return AtResultType::Success;
+	case ParserState::Error:
+		return AtResultType::Error;
+	case ParserState::Timeout:
+	case ParserState::None:
+		return AtResultType::Timeout;
+	default:
+		return AtResultType::Error;
+	}
+}
 /* processes character read from serial port of gsm module */
 void ParserSim900::FeedChar(char c)
 {
@@ -21,7 +38,7 @@ void ParserSim900::FeedChar(char c)
 		if (okSeqDetector.NextChar(c))
 		{
 			commandReady = true;
-			lastResult = S900_OK;
+			lastResult = ParserState::Success;
 			for (uint8_t i = 0; i < okSeqDetector.length; i++)
 				gsm->UnwriteDataBuffer();
 
@@ -47,28 +64,33 @@ void ParserSim900::FeedChar(char c)
 		}
 	}
 	if (lineParserState != PARSER_LINE)
+	{
 		gsm->commandBeforeRN = false;
+	}
 	// line -> delimiter
 	if ((prevState == PARSER_LINE || prevState == PARSER_CR) && (lineParserState == PARSER_LF))
 	{
 		responseBuffer[n] =0;
-//		ds.print("LN: "); ds.println((char*)responseBuffer);
 		//	pr("\nLine: '%s' ", responseBuffer);
 		if (n == 0)
 			return;
-			
+
+		ds.printf("   recv <- '%s'\n", (char*)responseBuffer);
+
 		crc = crc8(responseBuffer, n);
-		int parseResult = ParseLine();
+		ParserState parseResult = ParseLine();
 
 		// if error or or success
-		if (parseResult == S900_ERR || parseResult >= 0)
+		if (parseResult == ParserState::Success || parseResult == ParserState::Error)
 		{
 			commandReady = true;
 			lastResult = parseResult;
 		}
 		// if command not parsed yet
-		else if (parseResult == S900_NONE)
-			lastResult = S900_NONE;
+		else if (parseResult == ParserState::None)
+		{
+			lastResult = ParserState::None;
+		}
 		n=0;
 	}
 
@@ -101,10 +123,12 @@ bool ParserSim900::IsOkLine()
 		return true;
 	return false;
 }
-int ParserSim900::ParseLine()
+ParserState ParserSim900::ParseLine()
 {
-	if(commandReady)
-		return S900_NONE;
+	if (commandReady)
+	{
+		return ParserState::None;
+	}
 		
 	if(commandType == AT_CUSTOM_FUNCTION)
 		return function->IncomingLine((uint8_t*)responseBuffer, n ,crc);
@@ -112,9 +136,9 @@ int ParserSim900::ParseLine()
 	if(commandType == AT_DEFAULT)
 	{
 		if (IsErrorLine())
-			return S900_ERR;
+			return ParserState::Error;
 		if (IsOkLine())
-			return S900_OK;
+			return ParserState::Success;
 	}
 			
 			
@@ -130,7 +154,7 @@ int ParserSim900::ParseLine()
 		crc == CRC_STATE_PDP_DEACT ||
 		crc == CRC_STATE_CONNECT_OK)
 		{
-			return crc;
+		//	return crc;
 		}
 	}
 
@@ -140,33 +164,71 @@ int ParserSim900::ParseLine()
 		if(n > 5 && crc8(responseBuffer, 5) == CRC_CSQ)
 		{
 			parser.Init((char*)responseBuffer, 6, n);
-			bufferedResult = S900_ERR;
+			bufferedResult = ParserState::Error;
 			if (parser.NextNum(ctx->signalStrength) && parser.NextNum(ctx->signalErrorRate))
-				bufferedResult = S900_OK;
-			return S900_NONE;
+				bufferedResult = ParserState::Success;
+			return ParserState::None;
 		}
-		if (lastResult == S900_NONE)
+		if (lastResult == ParserState::None)
 		{
 			if (IsErrorLine())
-				return S900_ERR;
+				return ParserState::Error;
 			return bufferedResult;
+		}
+	}
+
+	if (commandType == AT_CBC)
+	{
+		auto crc = crc8(responseBuffer, 5);
+		if (n > 5 && crc == CRC_CBC)
+		{
+			parser.Init((char*)responseBuffer, 6, n);
+			bufferedResult = ParserState::Error;
+
+			uint16_t firstNum;
+			if (parser.NextNum(firstNum) &&
+				parser.NextNum(ctx->batteryPercent)
+				&& parser.NextNum(ctx->batteryVoltage))
+			{
+				bufferedResult = ParserState::Success;
+			}
+			return ParserState::None;
+		}
+		if (lastResult == ParserState::None)
+		{
+			if (IsOkLine())
+			{
+				return bufferedResult;
+			}
+			if (IsErrorLine())
+			{
+				return ParserState::Error;
+			}
 		}
 	}
 	if(commandType == AT_SWITCH_TO_DATA)
 	{
-		if(crc == CRC_CONNECT)		
-			return S900_OK;
+		if (crc == CRC_CONNECT)
+		{
+			return ParserState::Success;
+		}
 		
-		if(crc == CRC_NO_CARRIER)		
-			return S900_ERR;
+		if (crc == CRC_NO_CARRIER)
+		{
+			return ParserState::Error;
+		}
 		
 		if(crc == CRC_CLOSED)		
-			return S900_ERR;
+		{
+			return ParserState::Error;
+		}
 	}
 	if(commandType == AT_SWITH_TO_COMMAND)
 	{
 		if(crc == CRC_OK)
-			return S900_OK;
+		{
+			return ParserState::Success;
+		}
 	}
 	if(commandType == AT_CIFSR)
 	{
@@ -187,28 +249,28 @@ int ParserSim900::ParseLine()
 				memcpy(ctx->ipAddress, responseBuffer, n);
 				ctx->ipAddress[n] = 0;
 						
-				return S900_OK;
+				return ParserState::Success;
 			}
 		}
 		if (IsErrorLine())
-			return S900_ERR;
+			return ParserState::Error;
 	}
 	if(commandType == AT_CIPSTART)
 	{
 		if(crc == CRC_CONNECT)		
-			return S900_OK;
+			return ParserState::Success;
 		if(crc == CRC_CONNECT_FAIL || crc == CRC_PDP_DEACT)
-			return S900_ERR;
+			return ParserState::Error;
 	}
 	if(commandType == AT_CIPSHUT)
 	{
 		if(strcmp_P((char*)responseBuffer, PSTR("SHUT OK")) == 0)
-			return S900_OK;
+			return ParserState::Success;
 	}
 	if(commandType == AT_CIPCLOSE)
 	{
 		if(strcmp_P((char*)responseBuffer, PSTR("CLOSE OK")) == 0)
-		return S900_OK;
+		return ParserState::Success;
 	}
 	if(commandType == AT_COPS)
 	{
@@ -218,19 +280,19 @@ int ParserSim900::ParseLine()
 			parser.Init((char*)responseBuffer, 7, n);
 			uint16_t tmp;
 			if (!parser.NextNum(tmp))
-				bufferedResult = S900_ERR;
+				bufferedResult = ParserState::Error;
 			else if (!parser.NextNum(tmp))
-				bufferedResult = S900_ERR;
+				bufferedResult = ParserState::Error;
 			else if (!parser.NextString(ctx->operatorName, 20))
-				bufferedResult = S900_ERR;
+				bufferedResult = ParserState::Error;
 			else
-				bufferedResult = S900_OK;
-			return S900_NONE;
+				bufferedResult = ParserState::Success;
+			return ParserState::None;
 		}
-		if (lastResult == S900_NONE)
+		if (lastResult == ParserState::None)
 		{
 			if (IsErrorLine())
-				return S900_ERR;
+				return ParserState::Error;
 			return bufferedResult;
 		}
 				
@@ -248,15 +310,15 @@ int ParserSim900::ParseLine()
 			if(imeiOk)
 			{
 				strncpy(ctx->imei, (char*)responseBuffer, n);
-				return S900_NONE;
+				return ParserState::None;
 			}
 		}
-		if (lastResult == S900_NONE)
+		if (lastResult == ParserState::None)
 		{
 			if (IsOkLine())
-				return S900_OK;
+				return ParserState::Success;
 			if (IsErrorLine())
-				return S900_ERR;
+				return ParserState::Error;
 		}
 	}
 	if (commandType == AT_CUSD)
@@ -264,7 +326,7 @@ int ParserSim900::ParseLine()
 		if (n > 10)
 		{
 			if (strcmp_P((char*)responseBuffer, PSTR("+CUSD: ")) == 0)
-				return S900_OK;
+				return ParserState::Success;
 			parser.Init((char*)responseBuffer, 7, n);
 			uint16_t tmp = 0;
 			if (parser.NextNum(tmp))
@@ -272,10 +334,10 @@ int ParserSim900::ParseLine()
 				char ussd[200];
 				if (parser.NextString(ctx->buffer_ptr, ctx->buffer_size))
 				{
-					return S900_OK;
+					return ParserState::Success;
 				}
 			}
-			return S900_ERR;
+			return ParserState::Error;
 		}
 	}
 	if(commandType == AT_CREG)
@@ -289,32 +351,33 @@ int ParserSim900::ParseLine()
 			{
 				if (parser.NextNum(tmp))
 				{
-					bufferedResult = tmp;
+					_lastGsmResult = CregToNetworkStatus(tmp);
+					bufferedResult = ParserState::Success;
 					uint16_t lac, cellId;
 					if (parser.NextNum(lac, 16) && parser.NextNum(cellId, 16))
 					{
 						ctx->lac = lac;
 						ctx->cellId = cellId;
 					}
-					return S900_NONE;
+					return ParserState::None;
 				}
 			}
 			
 		}
-		if (lastResult == S900_NONE)
+		if (lastResult == ParserState::None)
 		{
 			if (IsOkLine())
-			{
-				if (bufferedResult < 0 || bufferedResult > 5)
-					return S900_ERR;
+			{				
 				return bufferedResult;
 			}
 			if (IsErrorLine())
-				return S900_ERR;
+			{
+				return ParserState::Error;
+			}
 
 		}
 	}
-	return S900_TIMEOUT;
+	return ParserState::Timeout;
 }
 
 void ParserSim900::SetCommandType(FunctionBase *command)
@@ -323,8 +386,8 @@ void ParserSim900::SetCommandType(FunctionBase *command)
 	n=0;
 	commandReady = false;
 	commandType = AT_CUSTOM_FUNCTION;
-	lastResult = S900_TIMEOUT;
-	bufferedResult = S900_TIMEOUT;
+	lastResult = ParserState::Timeout;
+	bufferedResult = ParserState::Timeout;
 }
 
 void ParserSim900::SetCommandType(int commandType)
@@ -336,8 +399,8 @@ void ParserSim900::SetCommandType(int commandType)
 	this->commandType = commandType;
 	commandReady = false;	
 	n = 0;	
-	lastResult = S900_TIMEOUT;
-	bufferedResult = S900_TIMEOUT;
+	lastResult = ParserState::Timeout;
+	bufferedResult = ParserState::Timeout;
 }
 
 int ParserSim900::StateTransition(char c)

@@ -1,9 +1,6 @@
-/*
- * ParserSim900.h
- *
- * Created: 2014-02-09 22:30:36
- *  Author: Tomasz Œcis³owicz
- */ 
+#ifndef _PARSERSIM900_H_
+#define _PARSERSIM900_H_
+
 #include <Arduino.h>
 #include "Sim900Constants.h"
 #include "Sim900Crc.h"
@@ -12,12 +9,9 @@
 #include "Sim900Context.h"
 #include "DelimParser.h"
 #include "SequenceDetector.h"
-#ifndef PARSERSIM900_H_
-#define PARSERSIM900_H_
 
-
-#define DEBUG4
 class Sim900;
+
 class ParserSim900
 {
 	enum LineState { PARSER_INITIAL, PARSER_CR, PARSER_LF, PARSER_LINE };
@@ -26,13 +20,18 @@ class ParserSim900
 	DelimParser parser;
 	uint8_t crc;
 	SequenceDetector okSeqDetector;
+	ParserState lastResult;
+	ParserState bufferedResult; // stores actual result for commands like CREG while parser is waiting for OK line
+public:
+	GsmNetworkStatus _lastGsmResult;
 
-	public:
+	AtResultType GetAtResultType();
+
 	Sim900 *gsm;
 	Sim900Context *ctx;
 	volatile bool commandReady;
-	//Stream &ds;
-	ParserSim900();
+	Stream &ds;
+	ParserSim900(Stream &debugStream);
 	FunctionBase *function;
 	void SetCommandType(FunctionBase *command);
 	void SetCommandType(int commandType);
@@ -42,18 +41,14 @@ class ParserSim900
 	bool IsErrorLine();
 	bool IsOkLine();
 
-	int lastResult;
-	int bufferedResult; // stores actual result for commands like CREG while parser is waiting for OK line
 	//int currNumber =
 	// this function uses class scope variables responseBuffer, n
-	int ParseLine();
+	ParserState ParseLine();
 	
 	int StateTransition(char c);
 	void FeedChar(char c);
 	
 };
-
-
 
 
 #endif /* PARSERSIM900_H_ */

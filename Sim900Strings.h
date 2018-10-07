@@ -13,7 +13,7 @@
 class Sim900Strings
 {
 	public:
-	static const __FlashStringHelper* ResultToString(int result)
+	/*static const __FlashStringHelper* ResultToString(int result)
 	{
 		switch(result)
 		{
@@ -37,8 +37,8 @@ class Sim900Strings
 			default: return ResultToString(regStatus);
 		}
 		
-	}
-	static const __FlashStringHelper * IpStatus2Pstr(int ipStatus)
+	}*/
+/*	static const __FlashStringHelper * IpStatus2Pstr(int ipStatus)
 	{
 		switch(ipStatus)
 		{
@@ -53,7 +53,7 @@ class Sim900Strings
 			case CONNECT_OK:	return F("CONNECT_OK");
 			default: return ResultToString(ipStatus);
 		}
-	}
+	}*/
 }; //Sim900Strings
 
 #endif //__SIM900STRINGS_H__

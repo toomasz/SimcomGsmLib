@@ -13,6 +13,8 @@ struct Sim900Context
 {
 	uint16_t signalStrength;
 	uint16_t signalErrorRate;
+	uint16_t batteryPercent;
+	uint16_t batteryVoltage;
 	int registrationStatus;
 	char ipAddress[16];
 	char operatorName[20];

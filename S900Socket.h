@@ -19,6 +19,7 @@ const char PdpDeactString[]  = "\r\n+PDP: DEACT\r\n";
 const uint8_t SOCKET_OPEN = 0;
 const uint8_t SOCKET_CLOSED = 1;
 const uint8_t SOCKET_PDP_DEACT = 2;
+class Sim900;
 
 class S900Socket
 {

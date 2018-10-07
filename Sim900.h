@@ -1,7 +1,6 @@
 #ifndef __SIM_900_H__
 #define __SIM_900_H__
 
-#include "ParserSim900.h"
 #include <Stream.h>
 #include <Arduino.h>
 #include <stdio.h>
@@ -10,63 +9,80 @@
 #include "Sim900Context.h"
 #include "SequenceDetector.h"
 #include "S900Socket.h"
+#include "ParserSim900.h"
 
+#include <pgmspace.h>
 class S900Socket;
+class ParserSim900;
 
+typedef void (*UpdateBaudRateCallback)(int baudRate);
 
 class Sim900: public Sim900Context
 {
-	private:
+private:
 		int _powerPin;
 		int _statusPin;
-		
+		Stream &ds;
+		Stream &serial;
 		// buffer for incoming data, used because fucking +++ needs 1000ms wait before issuing
 		char _dataBuffer[DATA_BUFFER_SIZE];
+		int _currentBaudRate;
+		void SendAt_P(int commandType, const __FlashStringHelper *command, ...);
 public:
 		int dataBufferHead;
 		int dataBufferTail;
+
+		int FindCurrentBaudRate();
 		
 		int UnwriteDataBuffer();
 		void WriteDataBuffer(char c);
 		int ReadDataBuffer();
 		FILE dataStream;
-		Stream &ds;
 	
-		Sim900(Stream* serial, int powerPin, Stream& debugStream);
+		Sim900(Stream& serial, int powerPin, Stream& debugStream);
+
+		UpdateBaudRateCallback UpdateBaudeRate;
 		
-		static Stream* ser;
-		void data_printf(const __FlashStringHelper *str, ...);
-		ParserSim900 parser;
-		
+		//void data_printf(const __FlashStringHelper *str, ...);
+		ParserSim900& parser;
 		void PrintEscapedChar(char c);
 		void PrintDataByte(uint8_t data);
+
 		// Standard modem functions
-		int SetBaudRate(uint32_t baud);
-		int TurnOn();
-		void Shutdown();
-		int GetRegistrationStatus();
-		int GetOperatorName();
-		int GetIMEI();
-		int getSignalQuality();
-		int ExecuteCommand_P(const __FlashStringHelper* command);		
-		int SetEcho(bool echoEnabled);
-		int SendSms(char *number, char *message);
-		int Call(char *number);
-		int PopCommandResult(int timeout);
-		int SendUssdWaitResponse(char *ussd, char*response, int responseBufferLength);
+		AtResultType SetBaudRate(uint32_t baud);
+		bool EnsureModemConnected();
+
+		AtResultType At();
+		AtResultType Shutdown();
+		AtResultType GetRegistrationStatus(GsmNetworkStatus& networkStatus);
+		AtResultType GetOperatorName();
+		AtResultType GetIMEI();
+		AtResultType GetBatteryStatus();
+		AtResultType getSignalQuality();
+		AtResultType SetEcho(bool echoEnabled);
+		AtResultType SendSms(char *number, char *message);
+		AtResultType Call(char *number);
+		AtResultType EnableCallerId();
+		AtResultType PopCommandResult(int timeout);
+		AtResultType SendUssdWaitResponse(char *ussd, char*response, int responseBufferLength);
+		
 		// Tcpip functions
-		int GetIpStatus();
-		int SetTransparentMode(bool transparentMode);
-		int SetApn(const char *apnName, const char *username, const char *password);		
-		int AttachGprs();
-		int GetIpAddress();
-		int StartTransparentIpConnection(const char *address, int port, S900Socket *socket);
-		S900Socket StartConnection(const char* address, int port);
+		AtResultType GetIpStatus();
+		AtResultType SetTransparentMode(bool transparentMode);
+		AtResultType SetApn(const char *apnName, const char *username, const char *password);
+		AtResultType AttachGprs();
+		AtResultType GetIpAddress();
+		AtResultType StartTransparentIpConnection(const char *address, int port, S900Socket *socket);
 		
-		int CloseConnection();
-		int Cipshut();
+		AtResultType CloseConnection();
+		AtResultType Cipshut();
+
+		// Data/command mode switching
+		AtResultType SwitchToCommandMode();
+		AtResultType SwitchToCommandModeDropData();
+		AtResultType SwitchToDataMode();
 		
-		int ExecuteFunction(FunctionBase &function);
+		AtResultType ExecuteFunction(FunctionBase &function);
 		// Transparent mode data functions
 		bool DataAvailable();
 		int DataRead();
@@ -83,9 +99,6 @@ public:
 
 		bool IsPoweredUp();
 		bool commandBeforeRN;
-		int SwitchToCommandMode();
-		int SwitchToCommandModeDropData();
-		int SwitchToDataMode();
 		void wait(int millis);
 };
 

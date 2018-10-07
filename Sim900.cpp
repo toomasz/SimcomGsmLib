@@ -1,14 +1,11 @@
 #include "Sim900.h"
-static int put_data(char c, FILE *f)
-{
-	Sim900::ser->write(c);
-	return 0;
-}
-Sim900::Sim900(Stream* serial, int powerPin, Stream &debugStream) :
-ds(debugStream) //, parser(debugStream)
+
+Sim900::Sim900(Stream& serial, int powerPin, Stream &debugStream) :
+serial(serial),
+ds(debugStream), 
+parser(*(new ParserSim900(ds)))
 {
 	_powerPin = powerPin;
-	Sim900::ser = serial;
 	lastDataWrite = 0;
 	dataBufferTail = 0;
 	dataBufferHead  = 0;
@@ -16,54 +13,44 @@ ds(debugStream) //, parser(debugStream)
 	parser.gsm = this;
 	parser.ctx = this;
 	memset(_dataBuffer,0, DATA_BUFFER_SIZE);
-#ifdef fdev_setup_stream
-	fdev_setup_stream(&dataStream,put_data, NULL, _FDEV_SETUP_WRITE);
-#endif
-
+	UpdateBaudeRate = nullptr;
+	_currentBaudRate = 0;
 }
-Stream* Sim900::ser = {0};
-/*
-Get gsm network registration status
-Return values S900_ERROR, S900_TIMEOUT, SEARCHING_FOR_NETWORK0, HOME_NETWORK, SEARCHING_FOR_NETWORK, REGISTRATION_DENIED, REGISTRATION_UNKNOWN, ROAMING
-*/
-int Sim900::GetRegistrationStatus()
+
+AtResultType Sim900::GetRegistrationStatus(GsmNetworkStatus& networkStatus)
 {
-	parser.SetCommandType(AT_CREG);
+	SendAt_P(AT_CREG,F("AT+CREG?"));
 
-	ser->println(F("AT+CREG?"));
-
-	registrationStatus = PopCommandResult(AT_DEFAULT_TIMEOUT);
-	return registrationStatus;
+	auto result = PopCommandResult(AT_DEFAULT_TIMEOUT);
+	if (result == AtResultType::Success)
+	{
+		networkStatus = parser._lastGsmResult;
+	}
+	return result;
 }
 
-
-/*
-Get operator name 
-Return values S900_OK, S900_ERROR, S900_TIMEOUT
-*/
-int Sim900::GetOperatorName()
+AtResultType Sim900::GetOperatorName()
 {
 	operatorName[0] = 0;
-	parser.SetCommandType(AT_COPS);
-	ser->println(F("AT+COPS?"));
-	
-	int result = PopCommandResult(AT_DEFAULT_TIMEOUT);
+	SendAt_P(AT_COPS, F("AT+COPS?"));	
+	auto result = PopCommandResult(AT_DEFAULT_TIMEOUT);
 	return result;
 }
-/*
-Get signal quality returned by AT+CSQ
-Return values S900_OK, S900_ERROR, S900_TIMEOUT
-*/
-int Sim900::getSignalQuality()
+
+AtResultType Sim900::getSignalQuality()
 {
-	parser.SetCommandType(AT_CSQ);
-	ser->println(F("AT+CSQ"));
-	
-	int result = PopCommandResult(AT_DEFAULT_TIMEOUT);
+	SendAt_P(AT_CSQ, F("AT+CSQ"));	
+	auto result = PopCommandResult(AT_DEFAULT_TIMEOUT);
 
 	return result;
 }
 
+AtResultType Sim900::GetBatteryStatus()
+{
+	SendAt_P(AT_CBC,F("AT+CBC"));
+	auto result = PopCommandResult(AT_DEFAULT_TIMEOUT);
+	return result;
+}
 
 void Sim900::PrintEscapedChar( char c )
 {
@@ -79,57 +66,41 @@ Get pdp context status using AT+CIPSTATUS
 Return values S900_ERR, S900_TIMEOUT
 IP_INITIAL, IP_START, IP_CONFIG, IP_GPRSACT, IP_STATUS, TCP_CONNECTING, TCP_CLOSED, PDP_DEACT, CONNECT_OK
 */
-int Sim900::GetIpStatus()
+AtResultType Sim900::GetIpStatus()
 {
-	parser.SetCommandType(AT_CIPSTATUS);
-	ser->println(F("AT+CIPSTATUS"));
-
+	SendAt_P(AT_CIPSTATUS, F("AT+CIPSTATUS"));
 	return PopCommandResult(AT_DEFAULT_TIMEOUT);
 }
-/*
-Get ip address using AT+CIFSR
-Return values S900_OK, S900_TIMEOUT
-*/
-int Sim900::GetIpAddress( )
+
+AtResultType Sim900::GetIpAddress( )
 {
-	parser.SetCommandType(AT_CIFSR);
-	ser->println(F("AT+CIFSR"));
-
-
-	int result = PopCommandResult(AT_DEFAULT_TIMEOUT);
-	return result;
+	SendAt_P(AT_CIFSR, F("AT+CIFSR"));
+	return PopCommandResult(AT_DEFAULT_TIMEOUT);
 }
-/*
-Bring up GRPS connection
-Return values S900_OK, S900_ERROR, S900_TIMEOUT
-*/
-int Sim900::AttachGprs()
+
+AtResultType Sim900::AttachGprs()
 {
-	parser.SetCommandType(AT_DEFAULT);
-	ser->println(F("AT+CIICR"));
+	SendAt_P(AT_DEFAULT, F("AT+CIICR"));
 	return PopCommandResult(60000);
 }
-/*
-Start tcp connection to address:port
-Return values S900_OK, S900_ERROR, S900_TIMEOUT
-*/
-int Sim900::StartTransparentIpConnection(const char *address, int port, S900Socket *socket = 0 )
+
+AtResultType Sim900::StartTransparentIpConnection(const char *address, int port, S900Socket *socket = 0 )
 {
 	dataBufferHead = dataBufferTail = 0;
-	parser.SetCommandType(AT_CIPSTART);
-	// Execute command like AT+CIPSTART="TCP","ag.kt29.net","80"
-	ser->print(F("AT+CIPSTART=\"TCP\",\"")); ser->print(address);  ser->print(F("\",\"")); ser->print(port); ser->println('"');
 
-	if(socket != 0)
+	// Execute command like AT+CIPSTART="TCP","example.com","80"
+	SendAt_P(AT_CIPSTART, F("AT+CIPSTART=\"TCP\",\"%s\",\"%d\""), address, port);
+
+	if (socket != 0)
+	{
 		socket->s900 = this;
+	}
 	return PopCommandResult(60000);
 }
 
-/* close active connection */
-int Sim900::CloseConnection()
+AtResultType Sim900::CloseConnection()
 {
-	parser.SetCommandType(AT_CIPCLOSE);
-	ser->println(F("AT+CIPCLOSE=1"));
+	SendAt_P(AT_CIPCLOSE, F("AT+CIPCLOSE=1"));
 	return PopCommandResult(AT_DEFAULT_TIMEOUT);
 }
 
@@ -139,7 +110,7 @@ bool Sim900::DataAvailable()
 {
 	if(dataBufferHead != dataBufferTail)
 		return true;
-	if(ser->available())
+	if(serial.available())
 		return true;
 	return false;
 }
@@ -171,7 +142,7 @@ int Sim900::DataRead()
 		//PrintDataByte(ret);
 		return ret;
 	}
-	ret = ser->read();
+	ret = serial.read();
 	if(ret != -1)
 	{
 	//	PrintDataByte(ret);
@@ -179,11 +150,7 @@ int Sim900::DataRead()
 	return ret;
 }
 
-/*
-Switches to command mode ATO
-Return values S900_OK, S900_ERROR, S900_TIMEOUT
-*/
-int Sim900::SwitchToCommandMode()
+AtResultType Sim900::SwitchToCommandMode()
 {
 	parser.SetCommandType(AT_SWITH_TO_COMMAND);
 	commandBeforeRN = true;
@@ -203,22 +170,26 @@ int Sim900::SwitchToCommandMode()
 		}
 	}*/
 	
-	ser->print(F("+++"));
+	serial.print(F("+++"));
 	lastDataWrite = millis();
 	return PopCommandResult(500);
 }
 
-int Sim900::SwitchToCommandModeDropData()
+AtResultType Sim900::SwitchToCommandModeDropData()
 {
 	parser.SetCommandType(AT_SWITH_TO_COMMAND);
-		ser->flush();
-	while(ser->available())
-		ser->read();
+	serial.flush();
+	while (serial.available())
+	{
+		serial.read();
+	}
 	delay(1500);
-	while(ser->available())
-		ser->read();
+	while (serial.available())
+	{
+		serial.read();
+	}
 
-	ser->print(F("+++"));
+	serial.print(F("+++"));
 
 	return PopCommandResult(500);
 }
@@ -227,19 +198,17 @@ int Sim900::SwitchToCommandModeDropData()
 Switches to data mode ATO
 Return values S900_OK, S900_ERROR, S900_TIMEOUT
 */
-int Sim900::SwitchToDataMode()
+AtResultType Sim900::SwitchToDataMode()
 {
-	parser.SetCommandType(AT_SWITCH_TO_DATA);
+	SendAt_P(AT_SWITCH_TO_DATA, F("ATO"));
 
-	ser->println(F("ATO"));
-
-	int result = PopCommandResult(AT_DEFAULT_TIMEOUT);
-	if(result == S900_OK)
+	auto result = PopCommandResult(AT_DEFAULT_TIMEOUT);
+	if(result == AtResultType::Success)
 	{
 		delay(100);
-		while(ser->available())
+		while(serial.available())
 		{
-			int c = ser->read();
+			int c = serial.read();
 			//pr("\nsd_data: %c\n", (char)c);
 			//ds.print("s_data: "); ds.println((int)c);
 			WriteDataBuffer(c);
@@ -249,181 +218,171 @@ int Sim900::SwitchToDataMode()
 	lastDataWrite = millis();
 	return result;
 }
-/*
-Interets incoming data from serial port as results
-Return values S900_OK, S900_ERROR, S900_TIMEOUT, specific function return values, specific errors
-*/
-int Sim900::PopCommandResult( int timeout )
+
+AtResultType Sim900::PopCommandResult( int timeout )
 {
 	unsigned long start = millis();
 	while(parser.commandReady == false && (millis()-start) < (unsigned long)timeout)
 	{
-		if(ser->available())
+		if(serial.available())
 		{
-			char c = ser->read();
+			char c = serial.read();
 			parser.FeedChar(c);
 		}
 	}
 
-	int commandResult = parser.lastResult;
-	if (commandResult == S900_NONE)
-		commandResult = S900_TIMEOUT;
+	auto commandResult = parser.GetAtResultType();
 	parser.SetCommandType(0);
-	
+	ds.println("  command ready");
 	return commandResult;
 }
 /*
 Disables/enables echo on serial port
-Return values S900_OK, S900_ERROR, S900_TIMEOUT
 */
-int Sim900::SetEcho( bool echoEnabled )
+AtResultType Sim900::SetEcho(bool echoEnabled)
 {
 	parser.SetCommandType(AT_DEFAULT);
-	if(echoEnabled)
-		ser->println(F("ATE1"));
+	if (echoEnabled)
+	{
+		SendAt_P(AT_DEFAULT, F("ATE1"));
+	}
 	else
-		ser->println(F("ATE0"));
+	{
+		SendAt_P(AT_DEFAULT, F("ATE0"));
+	}
 
-	int r = PopCommandResult(AT_DEFAULT_TIMEOUT);
+	auto r = PopCommandResult(AT_DEFAULT_TIMEOUT);
 	delay(100); // without 100ms wait, next command failed, idk wky
 	return r;
 }
 /*
-Set sim900 to use transparent mode
-Return values S900_OK, S900_ERROR, S900_TIMEOUT
+Set gsm modem to use transparent mode
 */
-int Sim900::SetTransparentMode( bool transparentMode )
-{
-	parser.SetCommandType(AT_DEFAULT);
-	
-	if(transparentMode)
-		ser->println(F("AT+CIPMODE=1"));
+AtResultType Sim900::SetTransparentMode( bool transparentMode )
+{	
+	if (transparentMode)
+	{
+		SendAt_P(AT_DEFAULT, F("AT+CIPMODE=1"));
+	}
 	else
-		ser->println(F("AT+CIPMODE=0"));
+	{
+		SendAt_P(AT_DEFAULT, F("AT+CIPMODE=0"));
+	}
 		
 	return PopCommandResult(AT_DEFAULT_TIMEOUT);
 }
-/*
-Set apn details
-Return values S900_OK, S900_ERROR, S900_TIMEOUT
-*/
-int Sim900::SetApn(const char *apnName, const char *username,const char *password )
-{
-	parser.SetCommandType(AT_DEFAULT);
-	ser->print(F("AT+CSTT=\"")); ser->print(apnName); ser->print(F("\",\"")); ser->print(username); ser->print(F("\",\"")); ser->print(password); ser->print(F("\"\r\n"));
-	return PopCommandResult(AT_DEFAULT_TIMEOUT);
-}
-/*
-Execute At command
-Return values S900_OK, S900_ERROR, S900_TIMEOUT
-*/
-int Sim900::ExecuteCommand_P( const __FlashStringHelper* command )
-{
-	parser.SetCommandType(AT_DEFAULT);
-	ser->println(command);
-	return PopCommandResult(AT_DEFAULT_TIMEOUT);
-}
 
+AtResultType Sim900::SetApn(const char *apnName, const char *username,const char *password )
+{
+	parser.SetCommandType(AT_DEFAULT);
+
+	SendAt_P(AT_DEFAULT, F("AT+CSTT=\"%s\",\"%s\",\"%s\""), apnName, username, password);
+	return PopCommandResult(AT_DEFAULT_TIMEOUT);
+}
 
 void Sim900::DataWrite( const __FlashStringHelper* data )
 {
-	ser->print(data);
+	serial.print(data);
 	lastDataWrite = millis();
 }
 
 void Sim900::DataWrite( char* data )
 {
-	ser->print(data);
+	serial.print(data);
 	lastDataWrite = millis();
 }
 
 void Sim900::DataWrite( char *data, int length )
 {
-	ser->write((unsigned char*)data, length);
+	serial.write((unsigned char*)data, length);
 	lastDataWrite = millis();
 }
 
 void Sim900::DataWrite( char c )
 {
-	ser->write(c);
+	serial.write(c);
 	lastDataWrite = millis();
 }
 
 
 void Sim900::DataEndl()
 {
-	ser->print(F("\r\n"));
-	ser->flush();
+	serial.print(F("\r\n"));
+	serial.flush();
 	lastDataWrite = millis();
 }
-/* makes sure modem is enabled */
-/* well this function may take forever */
-int Sim900::TurnOn()
+AtResultType Sim900::At()
 {
-	// while(!IsPoweredUp())
-//	 {
-		 ds.println(F("Timeout, trying to turn on"));
-		 
-		 pinMode(9, OUTPUT);
-		 digitalWrite(9,LOW);
-		 delay(1000);
-		 digitalWrite(9,HIGH);
-		 delay(2000);
-		 digitalWrite(9,LOW);
-		 delay(3000);
-//	 }
-	 
-	 return S900_OK;
+	SendAt_P(AT_DEFAULT, F("AT"));
+	return PopCommandResult(30);
 }
 
-int Sim900::SetBaudRate(uint32_t baud)
+AtResultType Sim900::SetBaudRate(uint32_t baud)
 {
-	parser.SetCommandType(AT_DEFAULT);
-	ser->print(F("AT+IPR="));  ser->println(baud);
+	SendAt_P(AT_DEFAULT, F("AT+IPR=%d"), baud);
 	return PopCommandResult(AT_DEFAULT_TIMEOUT);
 }
-int Sim900::GetIMEI()
+bool Sim900::EnsureModemConnected()
 {
-	parser.SetCommandType(AT_GSN);
+	auto atResult = At();
 
-	ser->println(F("AT+GSN"));
+	if (_currentBaudRate == 0 || atResult != AtResultType::Success)
+	{
+		_currentBaudRate = FindCurrentBaudRate();
+		if (_currentBaudRate != 0)
+		{
+			printf("Found baud rate = %d\n", _currentBaudRate);
+			if (SetBaudRate(115200) == AtResultType::Success)
+			{
+				_currentBaudRate = 115200;
+				printf("set baud rate to = %d\n", _currentBaudRate);
+				At();
+				SetEcho(false);
+				At();
+				return true;
+			}
+			printf("Failed to update baud rate = %d\n", _currentBaudRate);
+			return true;
+		}
+	}
 
-	return PopCommandResult(AT_DEFAULT_TIMEOUT);
+	printf("EnsureModemConnected return %d\n", atResult == AtResultType::Success);
+	return atResult == AtResultType::Success;
+}
+AtResultType Sim900::GetIMEI()
+{
+	SendAt_P(AT_GSN, F("AT+GSN"));
+	return PopCommandResult(100);
 }
 
 bool Sim900::IsPoweredUp()
 {
-	return GetIMEI() == S900_OK;
-	
-	//int result = S900_TIMEOUT;
-//
-	//parser.SetCommandType(AT_DEFAULT);
-	//ser->println(F("AT+GSN"));
-	//result = PopCommandResult(400);
-//
-//
-	//if(result == S900_TIMEOUT)
-		//return false;
-	//return true;
+	return GetIMEI() == AtResultType::Success;
 }
 
 void Sim900::wait(int ms)
 {
 	unsigned long start = millis();
-	while((millis()-start) <= (unsigned long)ms)
-		if(ser->available())
-			parser.FeedChar(ser->read());
+	while ((millis() - start) <= (unsigned long)ms)
+	{
+		if (serial.available())
+		{
+			parser.FeedChar(serial.read());
+		}
+	}
 }
 
-int Sim900::ExecuteFunction(FunctionBase &function)
+AtResultType Sim900::ExecuteFunction(FunctionBase &function)
 {
 	parser.SetCommandType(&function);
-	ser->println(function.getCommand());
+	serial.println(function.getCommand());
 	
-	int initialResult = PopCommandResult(function.functionTimeout);
+	auto initialResult = PopCommandResult(function.functionTimeout);
 	
-	if(initialResult == S900_OK)
-		return initialResult;
+	if (initialResult == AtResultType::Success)
+	{
+		return AtResultType::Success;
+	}
 	if(function.GetInitSequence() == NULL)
 		return initialResult;
 		
@@ -436,9 +395,9 @@ int Sim900::ExecuteFunction(FunctionBase &function)
 		//printf("Exec: %s\n", p);
 		ds.println((__FlashStringHelper*)p);
 		delay(100);
-		int r = ExecuteCommand_P((__FlashStringHelper*)p);
-		
-		if(r < 0)
+		SendAt_P(AT_DEFAULT, (__FlashStringHelper*)p);
+		auto r = PopCommandResult(AT_DEFAULT_TIMEOUT);
+		if(r != AtResultType::Success)
 		{
 				
 			ds.println(F("Fail"));
@@ -453,35 +412,70 @@ int Sim900::ExecuteFunction(FunctionBase &function)
 	}
 	delay(500);
 	parser.SetCommandType(&function);
-	ser->println(function.getCommand());
+	serial.println(function.getCommand());
 	return PopCommandResult(function.functionTimeout);
 }
 
-int Sim900::SendSms(char *number, char *message)
+AtResultType Sim900::SendSms(char *number, char *message)
 {
-	parser.SetCommandType(AT_DEFAULT);
-	ser->print(F("AT+CMGS=\""));
-	ser->print(number);
-	ser->println(F("\""));
-
+	SendAt_P(AT_DEFAULT, F("AT+CMGS=\"%s\""), number);
+	
 	uint64_t start = millis();
 	// wait for >
-	while (ser->read() != '>')
+	while (serial.read() != '>')
 		if (millis() - start > 200)
-			return S900_ERR;
-	ser->print(message);
-	ser->print('\x1a');
+			return AtResultType::Error;
+	serial.print(message);
+	serial.print('\x1a');
 	return PopCommandResult(AT_DEFAULT_TIMEOUT);
 }
-int Sim900::SendUssdWaitResponse(char *ussd, char*response, int responseBufferLength)
+AtResultType Sim900::SendUssdWaitResponse(char *ussd, char*response, int responseBufferLength)
 {
-	parser.SetCommandType(AT_CUSD);
 	buffer_ptr = response;
 	buffer_size = responseBufferLength;
-	ser->print(F("AT+CUSD=1,\""));
-	ser->print(ussd);
-	ser->println(F("\""));
+
+	SendAt_P(AT_CUSD, F("AT+CUSD=1,\"%s\""), ussd);
 	return PopCommandResult(10000);
+}
+void Sim900::SendAt_P(int commandType, const __FlashStringHelper* command, ...)
+{
+	parser.SetCommandType(commandType);
+
+	va_list argptr;
+	va_start(argptr, command);
+
+	char commandBuffer[200];
+	vsnprintf_P(commandBuffer, 200, (PGM_P)command, argptr);
+	ds.printf("  send -> '%s'\n", commandBuffer);
+	serial.println(commandBuffer);
+
+	va_end(argptr);
+}
+int Sim900::FindCurrentBaudRate()
+{
+	if (UpdateBaudeRate == nullptr)
+	{
+		return 0;
+	}
+	int i = 0;
+	int baudRate = 0;
+	do
+	{
+		baudRate = _defaultBaudRates[i];
+		ds.printf("Trying baud rate: %d\n", baudRate);
+		yield();
+		UpdateBaudeRate(baudRate);
+		yield();
+		if (At() == AtResultType::Success)
+		{
+			ds.printf(" Found baud rate: %d\n", baudRate);
+			return baudRate;
+		}
+		i++;
+	} 
+	while (_defaultBaudRates[i] != 0);
+
+	return 0;
 }
 int Sim900::UnwriteDataBuffer()
 {
@@ -520,46 +514,48 @@ int Sim900::ReadDataBuffer()
 	return -1;
 }
 
-int Sim900::Cipshut()
+AtResultType Sim900::Cipshut()
 {
-	parser.SetCommandType(AT_CIPSHUT);
-	ser->println(F("AT+CIPSHUT"));
+	SendAt_P(AT_CIPSHUT, F("AT+CIPSHUT"));
 	return PopCommandResult(AT_DEFAULT_TIMEOUT);
 }
 
 void Sim900::DataWriteNumber(int c)
 {
-	ser->print(c);
+	serial.print(c);
 	lastDataWrite = millis();
 }
 void Sim900::DataWriteNumber(uint16_t c)
 {
-	ser->print(c);
+	serial.print(c);
 	lastDataWrite = millis();
 }
+//
+//void Sim900::data_printf(const __FlashStringHelper *fmt, ...)
+//{
+//	va_list args;
+//	va_start(args, fmt);
+//	vfprintf_P(&dataStream, (const char*)fmt, args);
+//	va_end(args);
+//	lastDataWrite = millis();
+//}
 
-void Sim900::data_printf(const __FlashStringHelper *fmt, ...)
+AtResultType Sim900::Call(char *number)
 {
-	va_list args;
-	va_start(args, fmt);
-	vfprintf_P(&dataStream, (const char*)fmt, args);
-	va_end(args);
-	lastDataWrite = millis();
-}
-
-int Sim900::Call(char *number)
-{
-	parser.SetCommandType(AT_DEFAULT);
-	ser->print(F("ATD"));
-	ser->print(number);
-	ser->println(F(";"));
-		
+	SendAt_P(AT_DEFAULT, F("ATD%s;"), number);
 	return PopCommandResult(AT_DEFAULT_TIMEOUT);
 }
 
-void Sim900::Shutdown()
+AtResultType Sim900::EnableCallerId()
 {
-	ser->println(F("AT+CPOWD=0"));
+	SendAt_P(AT_DEFAULT, F("AT+CLIP=1"));
+	return PopCommandResult(AT_DEFAULT_TIMEOUT);
+}
+
+AtResultType Sim900::Shutdown()
+{
+	SendAt_P(AT_DEFAULT, F("AT+CPOWD=0"));
+	return PopCommandResult(AT_DEFAULT_TIMEOUT);
 }
 
 
