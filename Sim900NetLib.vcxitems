@@ -15,7 +15,6 @@
   </ItemGroup>
   <ItemGroup>
     <Text Include="$(MSBuildThisFileDirectory)library.properties" />
-    <Text Include="$(MSBuildThisFileDirectory)Sim900NetLib.h" />
   </ItemGroup>
   <ItemGroup>
     <!-- <ClInclude Include="$(MSBuildThisFileDirectory)Sim900NetLib.h" /> -->
@@ -45,6 +44,5 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)SequenceDetector.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)Sim900.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)Sim900Crc.cpp" />
-    <ClCompile Include="$(MSBuildThisFileDirectory)Sim900NetLib.cpp" />
   </ItemGroup>
 </Project>
