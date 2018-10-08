@@ -22,7 +22,9 @@ class ParserSim900
 	SequenceDetector okSeqDetector;
 	ParserState lastResult;
 	ParserState bufferedResult; // stores actual result for commands like CREG while parser is waiting for OK line
+	GsmLogCallback _onLog;
 public:
+	void SetLogCallback(GsmLogCallback onLog);
 	GsmNetworkStatus _lastGsmResult;
 
 	AtResultType GetAtResultType();
@@ -30,8 +32,7 @@ public:
 	Sim900 *gsm;
 	Sim900Context *ctx;
 	volatile bool commandReady;
-	Stream &ds;
-	ParserSim900(Stream &debugStream);
+	ParserSim900();
 	FunctionBase *function;
 	void SetCommandType(FunctionBase *command);
 	void SetCommandType(int commandType);
@@ -46,6 +47,7 @@ public:
 	ParserState ParseLine();
 	
 	int StateTransition(char c);
+	void Log_P(const __FlashStringHelper * format, ...);
 	void FeedChar(char c);
 	
 };

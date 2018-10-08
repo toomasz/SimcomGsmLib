@@ -2,8 +2,8 @@
 
 #include "MappingHelpers.h"
 
-ParserSim900::ParserSim900(Stream &debugStream):
-okSeqDetector(PSTR("\r\nOK\r\n")) , ds(debugStream)
+ParserSim900::ParserSim900():
+okSeqDetector(PSTR("\r\nOK\r\n"))
 {
 	commandType = 0;
 	lineParserState = PARSER_INITIAL;
@@ -11,6 +11,12 @@ okSeqDetector(PSTR("\r\nOK\r\n")) , ds(debugStream)
 	lastResult = ParserState::Timeout;
 	function = 0;
 	memset(responseBuffer,0, ResponseBufferSize);
+	_onLog = nullptr;
+}
+
+inline void ParserSim900::SetLogCallback(GsmLogCallback onLog)
+{
+	_onLog = onLog;
 }
 
 AtResultType ParserSim900::GetAtResultType()
@@ -75,7 +81,7 @@ void ParserSim900::FeedChar(char c)
 		if (n == 0)
 			return;
 
-		ds.printf("   recv <- '%s'\n", (char*)responseBuffer);
+		Log_P(F("   recv <- '%s'"), (char*)responseBuffer);
 
 		crc = crc8(responseBuffer, n);
 		ParserState parseResult = ParseLine();
@@ -438,6 +444,23 @@ int ParserSim900::StateTransition(char c)
 
 	}
 
+}
+
+void ParserSim900::Log_P(const __FlashStringHelper* format, ...)
+{
+
+	va_list argptr;
+	va_start(argptr, format);
+
+	char logBuffer[200];
+	vsnprintf_P(logBuffer, 200, (PGM_P)format, argptr);
+
+	if (_onLog != nullptr)
+	{
+		_onLog(logBuffer);
+	}
+
+	va_end(argptr);
 }
 
 

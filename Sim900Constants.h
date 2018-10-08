@@ -98,4 +98,9 @@ const int _defaultBaudRates[] =
 	0
 };
 
+
+typedef void(*UpdateBaudRateCallback)(int baudRate);
+typedef void(*GsmLogCallback)(const char* logLine);
+
+
 #endif /* SIM900CONSTANTS_H_ */

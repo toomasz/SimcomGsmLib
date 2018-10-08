@@ -12,23 +12,28 @@
 #include "ParserSim900.h"
 
 #include <pgmspace.h>
+
 class S900Socket;
 class ParserSim900;
-
-typedef void (*UpdateBaudRateCallback)(int baudRate);
 
 class Sim900: public Sim900Context
 {
 private:
 		int _powerPin;
 		int _statusPin;
-		Stream &ds;
 		Stream &serial;
 		// buffer for incoming data, used because fucking +++ needs 1000ms wait before issuing
 		char _dataBuffer[DATA_BUFFER_SIZE];
 		int _currentBaudRate;
+		void Log_P(const __FlashStringHelper *command, ...);
+
 		void SendAt_P(int commandType, const __FlashStringHelper *command, ...);
+		UpdateBaudRateCallback _updateBaudRateCallback;
+		GsmLogCallback _onLog;
 public:
+		Sim900(Stream& serial, UpdateBaudRateCallback updateBaudRateCallback);
+		
+
 		int dataBufferHead;
 		int dataBufferTail;
 
@@ -38,14 +43,14 @@ public:
 		void WriteDataBuffer(char c);
 		int ReadDataBuffer();
 		FILE dataStream;
-	
-		Sim900(Stream& serial, int powerPin, Stream& debugStream);
 
-		UpdateBaudRateCallback UpdateBaudeRate;
-		
+		void SetLogCallback(GsmLogCallback onLog)
+		{
+			_onLog;
+		}
+
 		//void data_printf(const __FlashStringHelper *str, ...);
 		ParserSim900& parser;
-		void PrintEscapedChar(char c);
 		void PrintDataByte(uint8_t data);
 
 		// Standard modem functions

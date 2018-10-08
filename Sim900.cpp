@@ -1,20 +1,17 @@
 #include "Sim900.h"
 
-Sim900::Sim900(Stream& serial, int powerPin, Stream &debugStream) :
-serial(serial),
-ds(debugStream), 
-parser(*(new ParserSim900(ds)))
+Sim900::Sim900(Stream& serial, UpdateBaudRateCallback updateBaudRateCallback) :
+serial(serial), parser(*new ParserSim900())
 {
-	_powerPin = powerPin;
 	lastDataWrite = 0;
 	dataBufferTail = 0;
 	dataBufferHead  = 0;
-	pinMode(powerPin, OUTPUT);
 	parser.gsm = this;
 	parser.ctx = this;
 	memset(_dataBuffer,0, DATA_BUFFER_SIZE);
-	UpdateBaudeRate = nullptr;
+	_updateBaudRateCallback = updateBaudRateCallback;
 	_currentBaudRate = 0;
+	_onLog = nullptr;
 }
 
 AtResultType Sim900::GetRegistrationStatus(GsmNetworkStatus& networkStatus)
@@ -52,15 +49,6 @@ AtResultType Sim900::GetBatteryStatus()
 	return result;
 }
 
-void Sim900::PrintEscapedChar( char c )
-{
-	if(c=='\r')
-		ds.print("\\r");
-	else if(c=='\n')
-		ds.print("\\n");
-	else
-		ds.print(c);	
-}
 /*
 Get pdp context status using AT+CIPSTATUS
 Return values S900_ERR, S900_TIMEOUT
@@ -129,9 +117,9 @@ void Sim900::PrintDataByte(uint8_t data) // prints 8-bit data in hex
 	if (second > 9) tmp[1] += 39;
 	
 	tmp[2] = 0;
-	ds.write(' ');
-	ds.print(tmp);
-	ds.write(' ');
+//	ds.write(' ');
+//	ds.print(tmp);
+//	ds.write(' ');
 }
 
 int Sim900::DataRead()
@@ -233,7 +221,7 @@ AtResultType Sim900::PopCommandResult( int timeout )
 
 	auto commandResult = parser.GetAtResultType();
 	parser.SetCommandType(0);
-	ds.println("  command ready");
+	Log_P(F("  command ready"));
 	return commandResult;
 }
 /*
@@ -393,17 +381,14 @@ AtResultType Sim900::ExecuteFunction(FunctionBase &function)
 	//	ds.print(F("Exec: "));
 			
 		//printf("Exec: %s\n", p);
-		ds.println((__FlashStringHelper*)p);
-		delay(100);
+		wait(100);
 		SendAt_P(AT_DEFAULT, (__FlashStringHelper*)p);
 		auto r = PopCommandResult(AT_DEFAULT_TIMEOUT);
 		if(r != AtResultType::Success)
 		{
 				
-			ds.println(F("Fail"));
 			return r;
 		}
-		ds.println(" __Fin");		
 
 		while(pgm_read_byte(p) != 0)			
 			p++;
@@ -437,6 +422,22 @@ AtResultType Sim900::SendUssdWaitResponse(char *ussd, char*response, int respons
 	SendAt_P(AT_CUSD, F("AT+CUSD=1,\"%s\""), ussd);
 	return PopCommandResult(10000);
 }
+void Sim900::Log_P(const __FlashStringHelper* format, ...)
+{
+
+	va_list argptr;
+	va_start(argptr, format);
+
+	char logBuffer[200];
+	vsnprintf_P(logBuffer, 200, (PGM_P)format, argptr);
+
+	if (_onLog != nullptr)
+	{
+		_onLog(logBuffer);
+	}
+
+	va_end(argptr);
+}
 void Sim900::SendAt_P(int commandType, const __FlashStringHelper* command, ...)
 {
 	parser.SetCommandType(commandType);
@@ -446,14 +447,14 @@ void Sim900::SendAt_P(int commandType, const __FlashStringHelper* command, ...)
 
 	char commandBuffer[200];
 	vsnprintf_P(commandBuffer, 200, (PGM_P)command, argptr);
-	ds.printf("  send -> '%s'\n", commandBuffer);
+	Log_P(F("  send -> '%s'"), commandBuffer);
 	serial.println(commandBuffer);
 
 	va_end(argptr);
 }
 int Sim900::FindCurrentBaudRate()
 {
-	if (UpdateBaudeRate == nullptr)
+	if (_updateBaudRateCallback == nullptr)
 	{
 		return 0;
 	}
@@ -462,13 +463,13 @@ int Sim900::FindCurrentBaudRate()
 	do
 	{
 		baudRate = _defaultBaudRates[i];
-		ds.printf("Trying baud rate: %d\n", baudRate);
+		Log_P(F("Trying baud rate: %d"), baudRate);
 		yield();
-		UpdateBaudeRate(baudRate);
+		_updateBaudRateCallback(baudRate);
 		yield();
 		if (At() == AtResultType::Success)
 		{
-			ds.printf(" Found baud rate: %d\n", baudRate);
+			Log_P(F(" Found baud rate: %d"), baudRate);
 			return baudRate;
 		}
 		i++;
@@ -493,7 +494,7 @@ void Sim900::WriteDataBuffer(char c)
 		tmp = 0;
 	if(tmp == dataBufferHead)
 	{
-		ds.println(F("Buffer overflow"));
+		Log_P(F("Buffer overflow"));
 		return;
 	}
 	//ds.print(F("Written ")); this->PrintDataByte(c);
