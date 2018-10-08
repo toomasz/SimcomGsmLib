@@ -10,11 +10,11 @@
 #include "SequenceDetector.h"
 #include "S900Socket.h"
 #include "ParserSim900.h"
+#include "CircularDataBuffer.h"
 
 #include <pgmspace.h>
 
 class S900Socket;
-class ParserSim900;
 
 class Sim900: public Sim900Context
 {
@@ -23,25 +23,18 @@ private:
 		int _statusPin;
 		Stream &serial;
 		// buffer for incoming data, used because fucking +++ needs 1000ms wait before issuing
-		char _dataBuffer[DATA_BUFFER_SIZE];
 		int _currentBaudRate;
 		void Log_P(const __FlashStringHelper *command, ...);
 
 		void SendAt_P(int commandType, const __FlashStringHelper *command, ...);
 		UpdateBaudRateCallback _updateBaudRateCallback;
 		GsmLogCallback _onLog;
+		CircularDataBuffer _dataBuffer;
 public:
-		Sim900(Stream& serial, UpdateBaudRateCallback updateBaudRateCallback);
-		
-
-		int dataBufferHead;
-		int dataBufferTail;
+		Sim900(Stream& serial, UpdateBaudRateCallback updateBaudRateCallback);		
 
 		int FindCurrentBaudRate();
 		
-		int UnwriteDataBuffer();
-		void WriteDataBuffer(char c);
-		int ReadDataBuffer();
 		FILE dataStream;
 
 		void SetLogCallback(GsmLogCallback onLog)
@@ -50,7 +43,7 @@ public:
 		}
 
 		//void data_printf(const __FlashStringHelper *str, ...);
-		ParserSim900& parser;
+		ParserSim900 parser;
 		void PrintDataByte(uint8_t data);
 
 		// Standard modem functions
@@ -103,7 +96,6 @@ public:
 		void DataEndl();	
 
 		bool IsPoweredUp();
-		bool commandBeforeRN;
 		void wait(int millis);
 };
 

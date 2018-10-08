@@ -5,12 +5,10 @@
 #include "Sim900Constants.h"
 #include "Sim900Crc.h"
 #include "Functions/FunctionBase.h"
-#include "Sim900.h"
+#include "CircularDataBuffer.h"
 #include "Sim900Context.h"
 #include "DelimParser.h"
 #include "SequenceDetector.h"
-
-class Sim900;
 
 class ParserSim900
 {
@@ -23,16 +21,17 @@ class ParserSim900
 	ParserState lastResult;
 	ParserState bufferedResult; // stores actual result for commands like CREG while parser is waiting for OK line
 	GsmLogCallback _onLog;
+	CircularDataBuffer& _dataBuffer;
+
 public:
+	ParserSim900(CircularDataBuffer& dataBuffer);
+
 	void SetLogCallback(GsmLogCallback onLog);
 	GsmNetworkStatus _lastGsmResult;
 
 	AtResultType GetAtResultType();
-
-	Sim900 *gsm;
 	Sim900Context *ctx;
 	volatile bool commandReady;
-	ParserSim900();
 	FunctionBase *function;
 	void SetCommandType(FunctionBase *command);
 	void SetCommandType(int commandType);

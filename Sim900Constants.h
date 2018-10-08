@@ -80,7 +80,6 @@ enum class GsmNetworkStatus : uint8_t
 
 const int AT_DEFAULT_TIMEOUT = 1500;
 
-const int DATA_BUFFER_SIZE = 40;
 const int ResponseBufferSize = 160;
 
 const int _defaultBaudRates[] =

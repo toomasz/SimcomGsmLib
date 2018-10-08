@@ -17,6 +17,7 @@
       <Filter>Functions</Filter>
     </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)DelimParser.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)CircularDataBuffer.cpp" />
   </ItemGroup>
   <ItemGroup>
     <Text Include="$(MSBuildThisFileDirectory)library.properties" />
@@ -42,10 +43,14 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)Functions\FunctionGetLocation.h">
       <Filter>Functions</Filter>
     </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)CircularDataBuffer.h" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Functions">
       <UniqueIdentifier>{c469f579-b409-4439-8331-16037d25c153}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Helpers">
+      <UniqueIdentifier>{83bf437d-71cc-44d9-825c-2689cbbac34b}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
 </Project>

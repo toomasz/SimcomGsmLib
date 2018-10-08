@@ -2,8 +2,9 @@
 
 #include "MappingHelpers.h"
 
-ParserSim900::ParserSim900():
-okSeqDetector(PSTR("\r\nOK\r\n"))
+ParserSim900::ParserSim900(CircularDataBuffer& dataBuffer):
+okSeqDetector(PSTR("\r\nOK\r\n")), 
+_dataBuffer(dataBuffer)
 {
 	commandType = 0;
 	lineParserState = PARSER_INITIAL;
@@ -40,14 +41,15 @@ void ParserSim900::FeedChar(char c)
 	if (commandType == AT_SWITH_TO_COMMAND)
 	{
 		//printf("w\n");
-		gsm->WriteDataBuffer(c);
+		_dataBuffer.WriteDataBuffer(c);
 		if (okSeqDetector.NextChar(c))
 		{
 			commandReady = true;
 			lastResult = ParserState::Success;
 			for (uint8_t i = 0; i < okSeqDetector.length; i++)
-				gsm->UnwriteDataBuffer();
-
+			{
+				_dataBuffer.UnwriteDataBuffer();
+			}
 		}
 		return;
 	}
@@ -61,17 +63,19 @@ void ParserSim900::FeedChar(char c)
 		if (lineParserState == PARSER_LINE)
 		{
 
-			if (commandType == AT_SWITH_TO_COMMAND && gsm->commandBeforeRN)
+			if (commandType == AT_SWITH_TO_COMMAND && _dataBuffer.commandBeforeRN)
 			{
-				gsm->WriteDataBuffer(c);
+				_dataBuffer.WriteDataBuffer(c);
 			}
 			if (n < ResponseBufferSize - 2)
+			{
 				responseBuffer[n++] = c;
+			}
 		}
 	}
 	if (lineParserState != PARSER_LINE)
 	{
-		gsm->commandBeforeRN = false;
+		_dataBuffer.commandBeforeRN = false;
 	}
 	// line -> delimiter
 	if ((prevState == PARSER_LINE || prevState == PARSER_CR) && (lineParserState == PARSER_LF))

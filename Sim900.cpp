@@ -1,14 +1,12 @@
 #include "Sim900.h"
 
 Sim900::Sim900(Stream& serial, UpdateBaudRateCallback updateBaudRateCallback) :
-serial(serial), parser(*new ParserSim900())
+serial(serial),
+parser(_dataBuffer)
 {
 	lastDataWrite = 0;
-	dataBufferTail = 0;
-	dataBufferHead  = 0;
-	parser.gsm = this;
+
 	parser.ctx = this;
-	memset(_dataBuffer,0, DATA_BUFFER_SIZE);
 	_updateBaudRateCallback = updateBaudRateCallback;
 	_currentBaudRate = 0;
 	_onLog = nullptr;
@@ -74,7 +72,7 @@ AtResultType Sim900::AttachGprs()
 
 AtResultType Sim900::StartTransparentIpConnection(const char *address, int port, S900Socket *socket = 0 )
 {
-	dataBufferHead = dataBufferTail = 0;
+	_dataBuffer.Clear();
 
 	// Execute command like AT+CIPSTART="TCP","example.com","80"
 	SendAt_P(AT_CIPSTART, F("AT+CIPSTART=\"TCP\",\"%s\",\"%d\""), address, port);
@@ -96,10 +94,14 @@ AtResultType Sim900::CloseConnection()
 /* returns true if any data is available to read from transparent connection */
 bool Sim900::DataAvailable()
 {
-	if(dataBufferHead != dataBufferTail)
+	if (_dataBuffer.DataAvailable())
+	{
 		return true;
-	if(serial.available())
+	}
+	if (serial.available())
+	{
 		return true;
+	}
 	return false;
 }
 void Sim900::PrintDataByte(uint8_t data) // prints 8-bit data in hex
@@ -124,7 +126,7 @@ void Sim900::PrintDataByte(uint8_t data) // prints 8-bit data in hex
 
 int Sim900::DataRead()
 {
-	int ret = ReadDataBuffer();
+	int ret = _dataBuffer.ReadDataBuffer();
 	if(ret != -1)
 	{
 		//PrintDataByte(ret);
@@ -141,7 +143,7 @@ int Sim900::DataRead()
 AtResultType Sim900::SwitchToCommandMode()
 {
 	parser.SetCommandType(AT_SWITH_TO_COMMAND);
-	commandBeforeRN = true;
+	_dataBuffer.commandBeforeRN = true;
 	// +++ escape sequence needs to wait 1000ms after last data was sent via transparent connection
 	// in the meantime data from tcp connection may arrive so we read it here to dataBuffer
 	// ex: lastDataWrite = 1500
@@ -199,7 +201,7 @@ AtResultType Sim900::SwitchToDataMode()
 			int c = serial.read();
 			//pr("\nsd_data: %c\n", (char)c);
 			//ds.print("s_data: "); ds.println((int)c);
-			WriteDataBuffer(c);
+			_dataBuffer.WriteDataBuffer(c);
 		}
 		
 	}
@@ -477,42 +479,6 @@ int Sim900::FindCurrentBaudRate()
 	while (_defaultBaudRates[i] != 0);
 
 	return 0;
-}
-int Sim900::UnwriteDataBuffer()
-{
-	if (dataBufferTail == 0)
-		dataBufferTail = DATA_BUFFER_SIZE - 1;
-	else
-		dataBufferTail--;
-	return _dataBuffer[dataBufferTail];
-}
-
-void Sim900::WriteDataBuffer(char c)
-{
-	int tmp = dataBufferTail+1;
-	if(tmp == DATA_BUFFER_SIZE)
-		tmp = 0;
-	if(tmp == dataBufferHead)
-	{
-		Log_P(F("Buffer overflow"));
-		return;
-	}
-	//ds.print(F("Written ")); this->PrintDataByte(c);
-	_dataBuffer[dataBufferTail] = c;
-	dataBufferTail = tmp;
-}
-
-int Sim900::ReadDataBuffer()
-{
-	if(dataBufferHead != dataBufferTail)
-	{
-		int ret= _dataBuffer[dataBufferHead];
-		dataBufferHead++;
-		if(dataBufferHead==DATA_BUFFER_SIZE)
-			dataBufferHead = 0;
-		return ret;
-	}
-	return -1;
 }
 
 AtResultType Sim900::Cipshut()
