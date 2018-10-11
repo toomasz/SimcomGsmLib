@@ -31,7 +31,7 @@ AtResultType Sim900::GetOperatorName()
 	return result;
 }
 
-AtResultType Sim900::getSignalQuality()
+AtResultType Sim900::GetSignalQuality()
 {
 	SendAt_P(AT_CSQ, F("AT+CSQ"));	
 	auto result = PopCommandResult(AT_DEFAULT_TIMEOUT);

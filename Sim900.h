@@ -51,7 +51,7 @@ public:
 		AtResultType GetOperatorName();
 		AtResultType GetIMEI();
 		AtResultType GetBatteryStatus();
-		AtResultType getSignalQuality();
+		AtResultType GetSignalQuality();
 		AtResultType SetEcho(bool echoEnabled);
 		AtResultType SendSms(char *number, char *message);
 		AtResultType Call(char *number);
