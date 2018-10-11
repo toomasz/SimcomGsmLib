@@ -9,6 +9,7 @@
 #include "Sim900Context.h"
 #include "DelimParser.h"
 #include "SequenceDetector.h"
+#include "GsmLogger.h"
 
 class ParserSim900
 {
@@ -20,13 +21,11 @@ class ParserSim900
 	SequenceDetector okSeqDetector;
 	ParserState lastResult;
 	ParserState bufferedResult; // stores actual result for commands like CREG while parser is waiting for OK line
-	GsmLogCallback _onLog;
 	CircularDataBuffer& _dataBuffer;
-
+	GsmLogger &_logger;
 public:
-	ParserSim900(CircularDataBuffer& dataBuffer);
+	ParserSim900(CircularDataBuffer& dataBuffer, GsmLogger &logger);
 
-	void SetLogCallback(GsmLogCallback onLog);
 	GsmNetworkStatus _lastGsmResult;
 
 	AtResultType GetAtResultType();
@@ -46,7 +45,6 @@ public:
 	ParserState ParseLine();
 	
 	int StateTransition(char c);
-	void Log_P(const __FlashStringHelper * format, ...);
 	void FeedChar(char c);
 	
 };

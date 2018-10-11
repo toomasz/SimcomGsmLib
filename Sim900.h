@@ -11,6 +11,7 @@
 #include "S900Socket.h"
 #include "ParserSim900.h"
 #include "CircularDataBuffer.h"
+#include "GsmLogger.h"
 
 #include <pgmspace.h>
 
@@ -19,27 +20,21 @@ class S900Socket;
 class Sim900: public Sim900Context
 {
 private:
-		int _powerPin;
-		int _statusPin;
 		Stream &serial;
 		// buffer for incoming data, used because fucking +++ needs 1000ms wait before issuing
 		int _currentBaudRate;
-		void Log_P(const __FlashStringHelper *command, ...);
-
 		void SendAt_P(int commandType, const __FlashStringHelper *command, ...);
 		UpdateBaudRateCallback _updateBaudRateCallback;
-		GsmLogCallback _onLog;
 		CircularDataBuffer _dataBuffer;
+		GsmLogger _logger;
 public:
 		Sim900(Stream& serial, UpdateBaudRateCallback updateBaudRateCallback);		
 
-		int FindCurrentBaudRate();
-		
-		FILE dataStream;
+		int FindCurrentBaudRate();		
 
 		void SetLogCallback(GsmLogCallback onLog)
 		{
-			_onLog;
+			_logger.SetLogCallback(onLog);
 		}
 
 		//void data_printf(const __FlashStringHelper *str, ...);

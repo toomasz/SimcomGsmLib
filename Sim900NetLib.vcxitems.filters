@@ -18,6 +18,7 @@
     </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)DelimParser.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)CircularDataBuffer.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)GsmLogger.cpp" />
   </ItemGroup>
   <ItemGroup>
     <Text Include="$(MSBuildThisFileDirectory)library.properties" />
@@ -44,6 +45,7 @@
       <Filter>Functions</Filter>
     </ClInclude>
     <ClInclude Include="$(MSBuildThisFileDirectory)CircularDataBuffer.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)GsmLogger.h" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Functions">

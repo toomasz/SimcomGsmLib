@@ -24,6 +24,7 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)Functions\FunctionBase.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)Functions\FunctionGetImei.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)Functions\FunctionGetLocation.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)GsmLogger.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)MappingHelpers.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)ParserSim900.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)S900Socket.h" />
@@ -40,6 +41,7 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)Functions\FunctionBase.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)Functions\FunctionGetImei.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)Functions\FunctionGetLocation.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)GsmLogger.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)MappingHelpers.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)ParserSim900.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)S900Socket.cpp" />

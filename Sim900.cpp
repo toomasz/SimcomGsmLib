@@ -2,14 +2,13 @@
 
 Sim900::Sim900(Stream& serial, UpdateBaudRateCallback updateBaudRateCallback) :
 serial(serial),
-parser(_dataBuffer)
+parser(_dataBuffer, _logger)
 {
 	lastDataWrite = 0;
 
 	parser.ctx = this;
 	_updateBaudRateCallback = updateBaudRateCallback;
 	_currentBaudRate = 0;
-	_onLog = nullptr;
 }
 
 AtResultType Sim900::GetRegistrationStatus(GsmNetworkStatus& networkStatus)
@@ -223,7 +222,7 @@ AtResultType Sim900::PopCommandResult( int timeout )
 
 	auto commandResult = parser.GetAtResultType();
 	parser.SetCommandType(0);
-	Log_P(F("  command ready"));
+	_logger.Log_P(F(" --- "));
 	return commandResult;
 }
 /*
@@ -424,22 +423,6 @@ AtResultType Sim900::SendUssdWaitResponse(char *ussd, char*response, int respons
 	SendAt_P(AT_CUSD, F("AT+CUSD=1,\"%s\""), ussd);
 	return PopCommandResult(10000);
 }
-void Sim900::Log_P(const __FlashStringHelper* format, ...)
-{
-
-	va_list argptr;
-	va_start(argptr, format);
-
-	char logBuffer[200];
-	vsnprintf_P(logBuffer, 200, (PGM_P)format, argptr);
-
-	if (_onLog != nullptr)
-	{
-		_onLog(logBuffer);
-	}
-
-	va_end(argptr);
-}
 void Sim900::SendAt_P(int commandType, const __FlashStringHelper* command, ...)
 {
 	parser.SetCommandType(commandType);
@@ -449,7 +432,7 @@ void Sim900::SendAt_P(int commandType, const __FlashStringHelper* command, ...)
 
 	char commandBuffer[200];
 	vsnprintf_P(commandBuffer, 200, (PGM_P)command, argptr);
-	Log_P(F("  send -> '%s'"), commandBuffer);
+	_logger.Log_P(F(" => %s"), commandBuffer);
 	serial.println(commandBuffer);
 
 	va_end(argptr);
@@ -465,13 +448,13 @@ int Sim900::FindCurrentBaudRate()
 	do
 	{
 		baudRate = _defaultBaudRates[i];
-		Log_P(F("Trying baud rate: %d"), baudRate);
+		_logger.Log_P(F("Trying baud rate: %d"), baudRate);
 		yield();
 		_updateBaudRateCallback(baudRate);
 		yield();
 		if (At() == AtResultType::Success)
 		{
-			Log_P(F(" Found baud rate: %d"), baudRate);
+			_logger.Log_P(F(" Found baud rate: %d"), baudRate);
 			return baudRate;
 		}
 		i++;
