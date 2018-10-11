@@ -135,8 +135,10 @@ ParserState ParserSim900::ParseLine()
 		return ParserState::None;
 	}
 		
-	if(commandType == AT_CUSTOM_FUNCTION)
-		return function->IncomingLine((uint8_t*)responseBuffer, n ,crc);
+	if (commandType == AT_CUSTOM_FUNCTION)
+	{
+		return function->IncomingLine((uint8_t*)responseBuffer, n, crc);
+	}
 			
 	if(commandType == AT_DEFAULT)
 	{

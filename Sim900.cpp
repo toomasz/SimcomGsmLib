@@ -327,7 +327,8 @@ bool Sim900::EnsureModemConnected()
 				printf("set baud rate to = %d\n", _currentBaudRate);
 				At();
 				SetEcho(false);
-				At();
+				EnableCallerId();
+
 				return true;
 			}
 			printf("Failed to update baud rate = %d\n", _currentBaudRate);
