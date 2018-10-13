@@ -18,6 +18,7 @@
 #define AT_CIPCLOSE 12
 #define AT_CUSD 13
 #define AT_CBC 14
+#define AT_CLCC 15
 
 
 #define CRC_OK 0xe5     //"OK" l:2

@@ -12,7 +12,7 @@
 #include "ParserSim900.h"
 #include "CircularDataBuffer.h"
 #include "GsmLogger.h"
-
+#include "GsmTypes.h"
 #include <pgmspace.h>
 
 class S900Socket;
@@ -56,10 +56,11 @@ public:
 		AtResultType SetEcho(bool echoEnabled);
 		AtResultType SendSms(char *number, char *message);
 		AtResultType Call(char *number);
+		AtResultType GetIncomingCall(IncomingCallInfo &callInfo);
+
 		AtResultType EnableCallerId();
 		AtResultType PopCommandResult(int timeout);
 		AtResultType SendUssdWaitResponse(char *ussd, char*response, int responseBufferLength);
-		
 		// Tcpip functions
 		AtResultType GetIpStatus();
 		AtResultType SetTransparentMode(bool transparentMode);

@@ -25,6 +25,7 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)Functions\FunctionGetImei.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)Functions\FunctionGetLocation.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)GsmLogger.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)GsmTypes.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)MappingHelpers.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)ParserSim900.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)S900Socket.h" />

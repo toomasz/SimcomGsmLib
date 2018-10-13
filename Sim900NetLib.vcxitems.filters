@@ -46,6 +46,7 @@
     </ClInclude>
     <ClInclude Include="$(MSBuildThisFileDirectory)CircularDataBuffer.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)GsmLogger.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)GsmTypes.h" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Functions">

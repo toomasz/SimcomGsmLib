@@ -262,6 +262,37 @@ ParserState ParserSim900::ParseLine()
 		if (IsErrorLine())
 			return ParserState::Error;
 	}
+
+	if (commandType == AT_CLCC)
+	{		
+		if (strstr_P((char*)responseBuffer, (char*)F("+CLCC:")) == (char*)responseBuffer)
+		{
+			parser.Init((char*)responseBuffer, 6, n);
+			uint16_t tmp;
+			parser.NextNum(tmp);
+			parser.NextNum(tmp);
+			parser.NextNum(tmp);
+			parser.NextNum(tmp);
+			parser.NextNum(tmp);
+
+			char numberBuffer[20];
+
+			if (parser.NextString(numberBuffer, 20))
+			{
+				ctx->_callInfo.CallerNumber = numberBuffer;
+				ctx->_callInfo.HasAtiveCall = true;
+			}
+		}
+		if (IsOkLine())
+		{
+			return ParserState::Success;
+		}
+		if (IsErrorLine())
+		{
+			return ParserState::Error;
+		}
+	}
+
 	if(commandType == AT_CIPSTART)
 	{
 		if(crc == CRC_CONNECT)		

@@ -1,13 +1,7 @@
-/* 
-* Sim900Context.h
-*
-* Created: 2014-06-18 18:08:10
-* Author: Tomasz Œcis³owicz
-*/
-
-
 #ifndef __SIM900CONTEXT_H__
 #define __SIM900CONTEXT_H__
+
+#include "GsmTypes.h"
 
 struct Sim900Context
 {
@@ -23,6 +17,7 @@ struct Sim900Context
 	uint16_t lac;
 	char *buffer_ptr;
 	int buffer_size;
+	IncomingCallInfo _callInfo;
 }; //Sim900Context
 
 #endif //__SIM900CONTEXT_H__

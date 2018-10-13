@@ -227,7 +227,8 @@ AtResultType Sim900::PopCommandResult( int timeout )
 
 	auto commandResult = parser.GetAtResultType();
 	parser.SetCommandType(0);
-	_logger.Log_P(F(" --- "));
+	auto elapsedMs = millis() - start;
+	_logger.Log_P(F(" --- %d ms ---"), elapsedMs);
 	return commandResult;
 }
 /*
@@ -498,6 +499,16 @@ AtResultType Sim900::Call(char *number)
 {
 	SendAt_P(AT_DEFAULT, F("ATD%s;"), number);
 	return PopCommandResult(AT_DEFAULT_TIMEOUT);
+}
+
+AtResultType Sim900::GetIncomingCall(IncomingCallInfo & callInfo)
+{
+	_callInfo.CallerNumber.clear();
+	_callInfo.HasAtiveCall = false;
+	SendAt_P(AT_CLCC, F("AT+CLCC"));
+	auto result = PopCommandResult(AT_DEFAULT_TIMEOUT);
+	callInfo = _callInfo;
+	return result;
 }
 
 AtResultType Sim900::EnableCallerId()
