@@ -49,7 +49,7 @@ public:
 		AtResultType At(const __FlashStringHelper* command);
 		AtResultType Shutdown();
 		AtResultType GetRegistrationStatus(GsmNetworkStatus& networkStatus);
-		AtResultType GetOperatorName();
+		AtResultType GetOperatorName(bool returnImsi = false);
 		AtResultType GetIMEI();
 		AtResultType GetBatteryStatus();
 		AtResultType GetSignalQuality();

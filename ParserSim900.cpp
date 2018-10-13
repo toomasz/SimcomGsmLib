@@ -316,15 +316,24 @@ ParserState ParserSim900::ParseLine()
 		if(n>7&& crc8(responseBuffer, 6) == CRC_COPS)
 		{				
 			parser.Init((char*)responseBuffer, 7, n);
-			uint16_t tmp;
-			if (!parser.NextNum(tmp))
+			uint16_t operatorNameFormat;
+			if (!parser.NextNum(operatorNameFormat))
+			{
 				bufferedResult = ParserState::Error;
-			else if (!parser.NextNum(tmp))
+			}
+			else if (!parser.NextNum(operatorNameFormat))
+			{
 				bufferedResult = ParserState::Error;
+			}
 			else if (!parser.NextString(ctx->operatorName, 20))
+			{
 				bufferedResult = ParserState::Error;
+			}
 			else
+			{
+				ctx->_isOperatorNameReturnedInImsiFormat = operatorNameFormat == 2;
 				bufferedResult = ParserState::Success;
+			}
 			return ParserState::None;
 		}
 		if (lastResult == ParserState::None)

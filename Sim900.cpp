@@ -24,15 +24,39 @@ AtResultType Sim900::GetRegistrationStatus(GsmNetworkStatus& networkStatus)
 }
 AtResultType Sim900::At(const __FlashStringHelper* command)
 {
-	SendAt_P(AT_COPS, command);
+	SendAt_P(AT_DEFAULT, command);
 	auto result = PopCommandResult(AT_DEFAULT_TIMEOUT);
 	return result;
 }
-AtResultType Sim900::GetOperatorName()
+AtResultType Sim900::GetOperatorName(bool returnImsi)
 {
+	SendAt_P(AT_COPS, F("AT+COPS?"));
 	operatorName[0] = 0;
-	SendAt_P(AT_COPS, F("AT+COPS?"));	
+
 	auto result = PopCommandResult(AT_DEFAULT_TIMEOUT);
+	if (result != AtResultType::Success)
+	{
+		return result;
+	}
+
+	if (_isOperatorNameReturnedInImsiFormat == returnImsi)
+	{
+		return result;
+	}
+
+	if (returnImsi)
+	{
+		At(F("AT+COPS=0,2"));
+	}
+	else
+	{
+		At(F("AT+COPS=0,0"));
+	}
+
+	SendAt_P(AT_COPS, F("AT+COPS?"));
+	result = PopCommandResult(AT_DEFAULT_TIMEOUT);
+
+
 	return result;
 }
 

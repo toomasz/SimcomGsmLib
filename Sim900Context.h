@@ -12,6 +12,7 @@ struct Sim900Context
 	int registrationStatus;
 	char ipAddress[16];
 	char operatorName[20];
+	bool _isOperatorNameReturnedInImsiFormat;
 	char imei[16];
 	uint16_t cellId;
 	uint16_t lac;
