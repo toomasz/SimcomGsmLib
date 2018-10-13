@@ -1,6 +1,6 @@
 #include "CircularDataBuffer.h"
-
 #include <string.h>
+
 CircularDataBuffer::CircularDataBuffer()
 {
 	Clear();

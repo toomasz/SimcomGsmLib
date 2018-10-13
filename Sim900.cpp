@@ -22,7 +22,12 @@ AtResultType Sim900::GetRegistrationStatus(GsmNetworkStatus& networkStatus)
 	}
 	return result;
 }
-
+AtResultType Sim900::At(const __FlashStringHelper* command)
+{
+	SendAt_P(AT_COPS, command);
+	auto result = PopCommandResult(AT_DEFAULT_TIMEOUT);
+	return result;
+}
 AtResultType Sim900::GetOperatorName()
 {
 	operatorName[0] = 0;
@@ -311,7 +316,7 @@ AtResultType Sim900::SetBaudRate(uint32_t baud)
 	SendAt_P(AT_DEFAULT, F("AT+IPR=%d"), baud);
 	return PopCommandResult(AT_DEFAULT_TIMEOUT);
 }
-bool Sim900::EnsureModemConnected()
+bool Sim900::EnsureModemConnected(long requestedBaudRate)
 {
 	auto atResult = At();
 
@@ -320,23 +325,21 @@ bool Sim900::EnsureModemConnected()
 		_currentBaudRate = FindCurrentBaudRate();
 		if (_currentBaudRate != 0)
 		{
-			printf("Found baud rate = %d\n", _currentBaudRate);
-			if (SetBaudRate(115200) == AtResultType::Success)
+			_logger.Log_P(F("Found baud rate = %d"), _currentBaudRate);
+			if (SetBaudRate(requestedBaudRate) == AtResultType::Success)
 			{
-				_currentBaudRate = 115200;
-				printf("set baud rate to = %d\n", _currentBaudRate);
+				_currentBaudRate = requestedBaudRate;
+				_logger.Log_P(F("set baud rate to = %d"), _currentBaudRate);
 				At();
 				SetEcho(false);
 				EnableCallerId();
 
 				return true;
 			}
-			printf("Failed to update baud rate = %d\n", _currentBaudRate);
+			_logger.Log_P(F("Failed to update baud rate = %d"), _currentBaudRate);
 			return true;
 		}
 	}
-
-	printf("EnsureModemConnected return %d\n", atResult == AtResultType::Success);
 	return atResult == AtResultType::Success;
 }
 AtResultType Sim900::GetIMEI()

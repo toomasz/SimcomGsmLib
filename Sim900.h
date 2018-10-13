@@ -29,6 +29,7 @@ private:
 		GsmLogger _logger;
 public:
 		Sim900(Stream& serial, UpdateBaudRateCallback updateBaudRateCallback);		
+		bool EnsureModemConnected(long baudRate);
 
 		int FindCurrentBaudRate();		
 
@@ -43,9 +44,9 @@ public:
 
 		// Standard modem functions
 		AtResultType SetBaudRate(uint32_t baud);
-		bool EnsureModemConnected();
 
 		AtResultType At();
+		AtResultType At(const __FlashStringHelper* command);
 		AtResultType Shutdown();
 		AtResultType GetRegistrationStatus(GsmNetworkStatus& networkStatus);
 		AtResultType GetOperatorName();
