@@ -11,7 +11,7 @@ struct Sim900Context
 	uint16_t batteryVoltage;
 	int registrationStatus;
 	char ipAddress[16];
-	char operatorName[20];
+	FixedStringBase* _operatorName;
 	bool _isOperatorNameReturnedInImsiFormat;
 	char imei[16];
 	uint16_t cellId;

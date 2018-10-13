@@ -11,6 +11,7 @@
 
 #include <inttypes.h>
 #include <string.h>
+#include <FixedString.h>
 
 enum ParserStates { INITIAL, INSIDE, START_Q, INSIDE_QUOTE, END_Q, DELIM, ERR, END };
 
@@ -28,6 +29,7 @@ class DelimParser
 	bool NextToken();
 
 	bool NextString(char *d_str, uint8_t length);
+	bool NextString(FixedStringBase * d_str);
 	bool NextNum(uint16_t &dst, int base = 10);
 
 	int hexDigitToInt(char c);

@@ -325,7 +325,7 @@ ParserState ParserSim900::ParseLine()
 			{
 				bufferedResult = ParserState::Error;
 			}
-			else if (!parser.NextString(ctx->operatorName, 20))
+			else if (!parser.NextString(ctx->_operatorName))
 			{
 				bufferedResult = ParserState::Error;
 			}

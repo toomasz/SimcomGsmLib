@@ -94,6 +94,17 @@ bool DelimParser::NextString(char *d_str, uint8_t length)
 	d_str[tokLength] = 0;
 	return true;
 }
+bool DelimParser::NextString(FixedStringBase *d_str)
+{
+	if (!NextToken())
+	{
+		return false;
+	}
+	int tokLength = n - 1 - tokStart;
+	d_str->clear();
+	d_str->append(str + tokStart, tokLength);
+	return true;
+}
 
 bool DelimParser::NextNum(uint16_t &dst, int base /*= 10*/)
 {

@@ -28,10 +28,10 @@ AtResultType Sim900::At(const __FlashStringHelper* command)
 	auto result = PopCommandResult(AT_DEFAULT_TIMEOUT);
 	return result;
 }
-AtResultType Sim900::GetOperatorName(bool returnImsi)
+AtResultType Sim900::GetOperatorName(FixedStringBase &operatorName, bool returnImsi)
 {
 	SendAt_P(AT_COPS, F("AT+COPS?"));
-	operatorName[0] = 0;
+	_operatorName = &operatorName;
 
 	auto result = PopCommandResult(AT_DEFAULT_TIMEOUT);
 	if (result != AtResultType::Success)
