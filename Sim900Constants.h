@@ -24,15 +24,7 @@
 #define CRC_OK 0xe5     //"OK" l:2
 #define CRC_ERROR 0x34  //"ERROR" l:5
 #define CRC_CSQ 0xc    //"+CSQ:" l:5
-#define CRC_STATE_IP_INITIAL 0x25       //"STATE: IP INITIAL" l:17
-#define CRC_STATE_IP_START 0x34 //"STATE: IP START" l:15
-#define CRC_STATE_IP_CONFIG 0x66        //"STATE: IP CONFIG" l:16
-#define CRC_STATE_IP_GPRSACT 0x73       //"STATE: IP GPRSACT" l:17
-#define CRC_STATE_IP_STATUS 0xf3        //"STATE: IP STATUS" l:16
-#define CRC_STATE_TCP_CONNECTING 0xd0   //"STATE: TCP CONNECTING" l:21
-#define CRC_STATE_TCP_CLOSED 0x61       //"STATE: TCP CLOSED" l:17
-#define CRC_STATE_PDP_DEACT 0x2b        //"STATE: PDP DEACT" l:16
-#define CRC_STATE_CONNECT_OK 0xec       //"STATE: CONNECT OK" l:17
+
 #define CRC_CONNECT_FAIL 0x54   //"CONNECT FAIL" l:12
 #define CRC_CONNECT 0x1f        //"CONNECT" l:7
 #define CRC_CME_ERROR 0x47     //"+CME ERROR:" l:11
@@ -43,16 +35,20 @@
 #define CRC_NO_CARRIER 0x56     //"NO CARRIER" l:10
 #define CRC_CBC 0x90 // "+CBC:" l:5
 
-//GetIpStatus() AT+CIPSTATUS result codes
-#define IP_INITIAL 0x25
-#define IP_START 0x34
-#define IP_CONFIG 0x66
-#define IP_GPRSACT 0x73
-#define IP_STATUS 0xf3
-#define TCP_CONNECTING 0xd0
-#define TCP_CLOSED 0x61
-#define PDP_DEACT 0x2b
-#define CONNECT_OK 0xec
+
+enum class SimcomIpState : uint8_t
+{
+	IpInitial,
+	IpStart,
+	IpConfig,
+	IpGprsact,
+	IpStatus,
+	TcpConnecting,
+	TcpClosed,
+	PdpDeact,
+	ConnectOk,
+	Unknown
+};
 
 enum class ParserState : uint8_t
 {
@@ -94,13 +90,10 @@ const int _defaultBaudRates[] =
 	4800,			
 	57600,
 	2400,
-	1200,
-	
+	1200,	
 	0
 };
 
-
 typedef void(*UpdateBaudRateCallback)(int baudRate);
 
-
-#endif /* SIM900CONSTANTS_H_ */
+#endif

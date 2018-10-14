@@ -11,6 +11,8 @@
 #include "SequenceDetector.h"
 #include "GsmLogger.h"
 
+
+
 class ParserSim900
 {
 	enum LineState { PARSER_INITIAL, PARSER_CR, PARSER_LF, PARSER_LINE };

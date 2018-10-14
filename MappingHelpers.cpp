@@ -1,13 +1,27 @@
 #include "MappingHelpers.h"
 
+#include <pgmspace.h>
+#include <stdio.h>
+#include <WString.h>
 
-
-#define SEARCHING_FOR_NETWORK0 0
-#define HOME_NETWORK 1
-#define SEARCHING_FOR_NETWORK 2
-#define REGISTRATION_DENIED 3
-#define REGISTRATION_UNKNOWN 4
-#define ROAMING 5
+struct IpStatusEntry
+{
+	const __FlashStringHelper *str;
+	SimcomIpState status;
+};
+struct IpStatusEntry IpStatusMap[] =
+{
+	F("STATE: IP INITIAL"), SimcomIpState::IpInitial,
+	F("STATE: IP START"), SimcomIpState::IpStart,
+	F("STATE: IP CONFIG"), SimcomIpState::IpConfig,
+	F("STATE: IP GPRSACT"), SimcomIpState::IpGprsact,
+	F("STATE: IP STATUS"), SimcomIpState::IpStatus,
+	F("STATE: TCP CONNECTING"), SimcomIpState::TcpConnecting,
+	F("STATE: TCP CLOSED"), SimcomIpState::TcpClosed,
+	F("STATE: PDP DEACT"), SimcomIpState::PdpDeact,
+	F("STATE: CONNECT OK"), SimcomIpState::ConnectOk,
+	0,SimcomIpState::Unknown
+};
 
 GsmNetworkStatus CregToNetworkStatus(uint16_t status)
 {
@@ -28,6 +42,23 @@ GsmNetworkStatus CregToNetworkStatus(uint16_t status)
 		return GsmNetworkStatus::RegistrationUnknown;
 
 	}
+}
+
+bool ParseIpStatus(const char *str, SimcomIpState &status)
+{
+	int i = 0;
+
+	auto key = IpStatusMap[i].str;
+	while (key)
+	{
+		if (strcmp_P(str, (PGM_P)key) == 0)
+		{
+			status = IpStatusMap[i].status;
+			return true;
+		}
+		key = IpStatusMap[++i].str;
+	}
+	return false;
 }
 
 

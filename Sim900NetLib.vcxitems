@@ -20,7 +20,7 @@
     <!-- <ClInclude Include="$(MSBuildThisFileDirectory)Sim900NetLib.h" /> -->
     <ClInclude Include="$(MSBuildThisFileDirectory)CircularDataBuffer.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)DelimParser.h" />
-    <ClInclude Include="$(MSBuildThisFileDirectory)FunctionDebug.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)GsmDebugHelpers.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)Functions\FunctionBase.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)Functions\FunctionGetImei.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)Functions\FunctionGetLocation.h" />
@@ -34,7 +34,6 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)Sim900Constants.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)Sim900Context.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)Sim900Crc.h" />
-    <ClInclude Include="$(MSBuildThisFileDirectory)Sim900Strings.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="$(MSBuildThisFileDirectory)CircularDataBuffer.cpp" />

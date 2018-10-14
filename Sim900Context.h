@@ -19,6 +19,7 @@ struct Sim900Context
 	char *buffer_ptr;
 	int buffer_size;
 	IncomingCallInfo _callInfo;
+	SimcomIpState _ipState;
 }; //Sim900Context
 
 #endif //__SIM900CONTEXT_H__

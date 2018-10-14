@@ -75,15 +75,15 @@ AtResultType Sim900::GetBatteryStatus()
 	return result;
 }
 
-/*
-Get pdp context status using AT+CIPSTATUS
-Return values S900_ERR, S900_TIMEOUT
-IP_INITIAL, IP_START, IP_CONFIG, IP_GPRSACT, IP_STATUS, TCP_CONNECTING, TCP_CLOSED, PDP_DEACT, CONNECT_OK
-*/
-AtResultType Sim900::GetIpStatus()
+AtResultType Sim900::GetIpState(SimcomIpState &status)
 {
 	SendAt_P(AT_CIPSTATUS, F("AT+CIPSTATUS"));
-	return PopCommandResult(AT_DEFAULT_TIMEOUT);
+	auto result = PopCommandResult(AT_DEFAULT_TIMEOUT);
+	if (result == AtResultType::Success)
+	{
+		status = _ipState;
+	}
+	return result;
 }
 
 AtResultType Sim900::GetIpAddress( )

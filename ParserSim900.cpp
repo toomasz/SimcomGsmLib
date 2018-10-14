@@ -145,18 +145,10 @@ ParserState ParserSim900::ParseLine()
 			
 	if(commandType == AT_CIPSTATUS)
 	{
-		if(crc == CRC_STATE_IP_INITIAL ||
-		crc == CRC_STATE_IP_START ||
-		crc == CRC_STATE_IP_CONFIG ||
-		crc == CRC_STATE_IP_GPRSACT ||
-		crc == CRC_STATE_IP_STATUS ||
-		crc == CRC_STATE_TCP_CONNECTING ||
-		crc == CRC_STATE_TCP_CLOSED ||
-		crc == CRC_STATE_PDP_DEACT ||
-		crc == CRC_STATE_CONNECT_OK)
+		if (ParseIpStatus(responseBuffer.c_str(), ctx->_ipState))
 		{
-		//	return crc;
-		}
+			return ParserState::Success;
+		}		
 	}
 
 	if(commandType == AT_CSQ)

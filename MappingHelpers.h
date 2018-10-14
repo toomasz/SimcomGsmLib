@@ -5,5 +5,7 @@
 
 GsmNetworkStatus CregToNetworkStatus(uint16_t status);
 
+bool ParseIpStatus(const char *str, SimcomIpState &status);
+
 #endif
 

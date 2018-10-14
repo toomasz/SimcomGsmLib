@@ -62,7 +62,7 @@ public:
 		AtResultType PopCommandResult(int timeout);
 		AtResultType SendUssdWaitResponse(char *ussd, char*response, int responseBufferLength);
 		// Tcpip functions
-		AtResultType GetIpStatus();
+		AtResultType GetIpState(SimcomIpState &ipStatus);
 		AtResultType SetTransparentMode(bool transparentMode);
 		AtResultType SetApn(const char *apnName, const char *username, const char *password);
 		AtResultType AttachGprs();
