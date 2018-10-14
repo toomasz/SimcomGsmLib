@@ -9,10 +9,8 @@ _logger(logger)
 {
 	commandType = 0;
 	lineParserState = PARSER_INITIAL;
-	n=0;
 	lastResult = ParserState::Timeout;
 	function = 0;
-	memset(responseBuffer,0, ResponseBufferSize);
 }
 
 AtResultType ParserSim900::GetAtResultType()
@@ -62,10 +60,8 @@ void ParserSim900::FeedChar(char c)
 			{
 				_dataBuffer.WriteDataBuffer(c);
 			}
-			if (n < ResponseBufferSize - 2)
-			{
-				responseBuffer[n++] = c;
-			}
+
+			responseBuffer.append(c);
 		}
 	}
 	if (lineParserState != PARSER_LINE)
@@ -75,14 +71,13 @@ void ParserSim900::FeedChar(char c)
 	// line -> delimiter
 	if ((prevState == PARSER_LINE || prevState == PARSER_CR) && (lineParserState == PARSER_LF))
 	{
-		responseBuffer[n] =0;
 		//	pr("\nLine: '%s' ", responseBuffer);
-		if (n == 0)
+		if (responseBuffer.length() == 0)
 			return;
 
-		_logger.Log_P(F("  <= %s"), (char*)responseBuffer);
+		_logger.Log_P(F("  <= %s"), (char*)responseBuffer.c_str());
 
-		crc = crc8(responseBuffer, n);
+		crc = crc8((uint8_t*)responseBuffer.c_str(), responseBuffer.length());
 		ParserState parseResult = ParseLine();
 
 		// if error or or success
@@ -96,7 +91,7 @@ void ParserSim900::FeedChar(char c)
 		{
 			lastResult = ParserState::None;
 		}
-		n=0;
+		responseBuffer.clear();
 	}
 
 }
@@ -114,11 +109,10 @@ bool ParserSim900::IsErrorLine()
 	if (crc == CRC_ERROR)
 		return true;
 
-	if (n > 11)
+	if (responseBuffer.startsWith(F("+CME ERROR:")))
 	{
-		if (crc8(responseBuffer, 11) == CRC_CME_ERROR)
-			return true;
-	}
+		return true;
+	}	
 	return false;
 }
 /* returns true if current line is OK*/
@@ -137,7 +131,7 @@ ParserState ParserSim900::ParseLine()
 		
 	if (commandType == AT_CUSTOM_FUNCTION)
 	{
-		return function->IncomingLine((uint8_t*)responseBuffer, n, crc);
+		return function->IncomingLine((uint8_t*)responseBuffer.c_str(), responseBuffer.length(), crc);
 	}
 			
 	if(commandType == AT_DEFAULT)
@@ -168,9 +162,9 @@ ParserState ParserSim900::ParseLine()
 	if(commandType == AT_CSQ)
 	{
 		//+CSQ: 17,0
-		if(n > 5 && crc8(responseBuffer, 5) == CRC_CSQ)
+		if(responseBuffer.startsWith(F("+CSQ:")))
 		{
-			parser.Init((char*)responseBuffer, 6, n);
+			parser.Init((char*)responseBuffer.c_str(), 6, responseBuffer.length());
 			bufferedResult = ParserState::Error;
 			if (parser.NextNum(ctx->signalStrength) && parser.NextNum(ctx->signalErrorRate))
 				bufferedResult = ParserState::Success;
@@ -186,10 +180,9 @@ ParserState ParserSim900::ParseLine()
 
 	if (commandType == AT_CBC)
 	{
-		auto crc = crc8(responseBuffer, 5);
-		if (n > 5 && crc == CRC_CBC)
+		if (responseBuffer.startsWith(F("+CBC: ")))
 		{
-			parser.Init((char*)responseBuffer, 6, n);
+			parser.Init((char*)responseBuffer.c_str(), 6, responseBuffer.length());
 			bufferedResult = ParserState::Error;
 
 			uint16_t firstNum;
@@ -239,22 +232,22 @@ ParserState ParserSim900::ParseLine()
 	}
 	if(commandType == AT_CIFSR)
 	{
-		if(n>=7)
+		if(responseBuffer.length() > 7)
 		{	
 			byte dotCount = 0;
 			bool hasNonDigits = false;
 					
-			for(int i=0; i < n; i++)
+			for(int i=0; i < responseBuffer.length(); i++)
 			{
-				if(responseBuffer[i] == '.')
+				if(responseBuffer.c_str()[i] == '.')
 				dotCount++;
-				else if(responseBuffer[i] < '0' || responseBuffer[i]>'9')
+				else if(responseBuffer.c_str()[i] < '0' || responseBuffer.c_str()[i]>'9')
 				hasNonDigits = true;
 			}
 			if(dotCount == 3 && hasNonDigits == false)
 			{
-				memcpy(ctx->ipAddress, responseBuffer, n);
-				ctx->ipAddress[n] = 0;
+				memcpy(ctx->ipAddress, responseBuffer.c_str(), responseBuffer.length());
+				ctx->ipAddress[responseBuffer.length()] = 0;
 						
 				return ParserState::Success;
 			}
@@ -265,9 +258,9 @@ ParserState ParserSim900::ParseLine()
 
 	if (commandType == AT_CLCC)
 	{		
-		if (strstr_P((char*)responseBuffer, (char*)F("+CLCC:")) == (char*)responseBuffer)
+		if (responseBuffer.startsWith(F("+CLCC:")))
 		{
-			parser.Init((char*)responseBuffer, 6, n);
+			parser.Init((char*)responseBuffer.c_str(), 6, responseBuffer.length());
 			uint16_t tmp;
 			parser.NextNum(tmp);
 			parser.NextNum(tmp);
@@ -302,20 +295,24 @@ ParserState ParserSim900::ParseLine()
 	}
 	if(commandType == AT_CIPSHUT)
 	{
-		if(strcmp_P((char*)responseBuffer, PSTR("SHUT OK")) == 0)
+		if (responseBuffer.equals(F("SHUT OK")))
+		{
 			return ParserState::Success;
+		}
 	}
 	if(commandType == AT_CIPCLOSE)
 	{
-		if(strcmp_P((char*)responseBuffer, PSTR("CLOSE OK")) == 0)
-		return ParserState::Success;
+		if (responseBuffer.equals(F("CLOSE OK")))
+		{
+			return ParserState::Success;
+		}
 	}
 	if(commandType == AT_COPS)
 	{
 		//+COPS: 0,0,"PLAY"
-		if(n>7&& crc8(responseBuffer, 6) == CRC_COPS)
+		if(responseBuffer.startsWith(F("+COPS:")))
 		{				
-			parser.Init((char*)responseBuffer, 7, n);
+			parser.Init((char*)responseBuffer.c_str(), 7, responseBuffer.length());
 			uint16_t operatorNameFormat;
 			if (!parser.NextNum(operatorNameFormat))
 			{
@@ -346,17 +343,21 @@ ParserState ParserSim900::ParseLine()
 	}
 	if(commandType == AT_GSN)
 	{
-		if(n >= 10)
+		if(responseBuffer.length() > 10)
 		{
 			bool imeiOk = true;
 					
-			for(int i=0; i < n; i++)
-			if(responseBuffer[i] < '0' || responseBuffer[i] > '9')
-			imeiOk = false;
+			for (int i = 0; i < responseBuffer.length(); i++)
+			{
+				if (responseBuffer.c_str()[i] < '0' || responseBuffer.c_str()[i] > '9')
+				{
+					imeiOk = false;
+				}
+			}
 					
 			if(imeiOk)
 			{
-				strncpy(ctx->imei, (char*)responseBuffer, n);
+				strncpy(ctx->imei, (char*)responseBuffer.c_str(), responseBuffer.length());
 				return ParserState::None;
 			}
 		}
@@ -370,11 +371,9 @@ ParserState ParserSim900::ParseLine()
 	}
 	if (commandType == AT_CUSD)
 	{
-		if (n > 10)
+		if (responseBuffer.startsWith(F("+CUSD:")))
 		{
-			if (strcmp_P((char*)responseBuffer, PSTR("+CUSD: ")) == 0)
-				return ParserState::Success;
-			parser.Init((char*)responseBuffer, 7, n);
+			parser.Init((char*)responseBuffer.c_str(), 7, responseBuffer.length());
 			uint16_t tmp = 0;
 			if (parser.NextNum(tmp))
 			{
@@ -390,9 +389,9 @@ ParserState ParserSim900::ParseLine()
 	if(commandType == AT_CREG)
 	{
 		// example valid line : +CREG: 2,1,"07E6","D68F"
-		if(n>=10 && crc8(responseBuffer,6) == CRC_CREG) // checks if responseBuffer starts with '+CREG:'
+		if(responseBuffer.startsWith(F("+CREG:")))
 		{
-			parser.Init((char*)responseBuffer, 7, n);
+			parser.Init((char*)responseBuffer.c_str(), 7, responseBuffer.length());
 			uint16_t tmp = 0;
 			if (parser.NextNum(tmp))
 			{
@@ -430,7 +429,6 @@ ParserState ParserSim900::ParseLine()
 void ParserSim900::SetCommandType(FunctionBase *command)
 {
 	this->function = command;
-	n=0;
 	commandReady = false;
 	commandType = AT_CUSTOM_FUNCTION;
 	lastResult = ParserState::Timeout;
@@ -445,7 +443,7 @@ void ParserSim900::SetCommandType(int commandType)
 		
 	this->commandType = commandType;
 	commandReady = false;	
-	n = 0;	
+	responseBuffer.clear();
 	lastResult = ParserState::Timeout;
 	bufferedResult = ParserState::Timeout;
 }

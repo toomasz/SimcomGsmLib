@@ -23,6 +23,8 @@ class ParserSim900
 	ParserState bufferedResult; // stores actual result for commands like CREG while parser is waiting for OK line
 	CircularDataBuffer& _dataBuffer;
 	GsmLogger &_logger;
+	FixedString<ResponseBufferSize> responseBuffer;
+
 public:
 	ParserSim900(CircularDataBuffer& dataBuffer, GsmLogger &logger);
 
@@ -35,8 +37,7 @@ public:
 	void SetCommandType(FunctionBase *command);
 	void SetCommandType(int commandType);
 
-	uint8_t responseBuffer[ResponseBufferSize];
-	int n;
+
 	bool IsErrorLine();
 	bool IsOkLine();
 
