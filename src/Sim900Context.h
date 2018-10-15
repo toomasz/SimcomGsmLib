@@ -1,7 +1,7 @@
 #ifndef __SIM900CONTEXT_H__
 #define __SIM900CONTEXT_H__
 
-#include "GsmTypes.h"
+#include "SimcomGsmTypes.h"
 
 struct Sim900Context
 {

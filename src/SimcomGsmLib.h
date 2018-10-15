@@ -7,12 +7,12 @@
 #include <stdarg.h>
 #include "Functions/FunctionBase.h"
 #include "Sim900Context.h"
-#include "SequenceDetector.h"
+#include "Parsing/SequenceDetector.h"
+#include "Parsing/ParserSim900.h"
 #include "S900Socket.h"
-#include "ParserSim900.h"
 #include "CircularDataBuffer.h"
 #include "GsmLogger.h"
-#include "GsmTypes.h"
+#include "SimcomGsmTypes.h"
 #include <pgmspace.h>
 
 class S900Socket;

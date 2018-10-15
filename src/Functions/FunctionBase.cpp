@@ -1,12 +1,7 @@
-/* 
-* FunctionBase.cpp
-*
-* Created: 2014-03-21 18:42:22
-* Author: Tom
-*/
-
-
 #include "FunctionBase.h"
+
+#include "../Sim900Constants.h"
+
 
 // default constructor
 FunctionBase::FunctionBase()
