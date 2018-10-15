@@ -5,15 +5,15 @@
 
 struct ParserContext
 {
-	int16_t* _signalQuality;
-	FixedString20* _ipAddress;
-	FixedStringBase* _operatorName;
-	bool _isOperatorNameReturnedInImsiFormat;
-	FixedString150*_ussdResponse;
-	FixedString20* _imei;
-	BatteryStatus* _batteryStatus;
-	IncomingCallInfo *_callInfo;
-	SimcomIpState* _ipState;
+	int16_t* CsqSignalQuality;
+	FixedString20* IpAddress;
+	FixedStringBase* OperatorName;
+	FixedString150* UssdResponse;
+	FixedString20* Imei;
+	BatteryStatus* BatteryInfo;
+	IncomingCallInfo *CallInfo;
+	SimcomIpState* IpState;
+	bool IsOperatorNameReturnedInImsiFormat;
 };
 
 #endif

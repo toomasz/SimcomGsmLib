@@ -153,7 +153,7 @@ ParserState SimcomResponseParser::ParseLine()
 			
 	if(commandType == AtCommand::Cipstatus)
 	{
-		if (ParseIpStatus(_response.c_str(), *_parserContext._ipState))
+		if (ParseIpStatus(_response.c_str(), *_parserContext.IpState))
 		{
 			return ParserState::Success;
 		}
@@ -171,7 +171,7 @@ ParserState SimcomResponseParser::ParseLine()
 
 			if (parser.NextNum(signalQuality) && parser.NextNum(signalStrength))
 			{
-				*_parserContext._signalQuality = signalQuality;
+				*_parserContext.CsqSignalQuality = signalQuality;
 				bufferedResult = ParserState::Success;
 			}
 			return ParserState::None;
@@ -201,8 +201,8 @@ ParserState SimcomResponseParser::ParseLine()
 			if (parser.NextNum(batteryPercent)
 				&& parser.NextNum(mVbatteryVoltage))
 			{
-				_parserContext._batteryStatus->Voltage = mVbatteryVoltage / 1000.0;
-				_parserContext._batteryStatus->Percent = batteryPercent;
+				_parserContext.BatteryInfo->Voltage = mVbatteryVoltage / 1000.0;
+				_parserContext.BatteryInfo->Percent = batteryPercent;
 				bufferedResult = ParserState::Success;
 			}
 			return ParserState::None;
@@ -247,7 +247,7 @@ ParserState SimcomResponseParser::ParseLine()
 	{
 		if (ParsingHelpers::IsIpAddressValid(_response))
 		{
-			*_parserContext._ipAddress = _response;
+			*_parserContext.IpAddress = _response;
 			return ParserState::Success;
 		}
 		if (IsErrorLine())
@@ -272,8 +272,8 @@ ParserState SimcomResponseParser::ParseLine()
 			
 			if (parser.NextString(number))
 			{
-				_parserContext._callInfo->CallerNumber = number;
-				_parserContext._callInfo->HasAtiveCall = true;
+				_parserContext.CallInfo->CallerNumber = number;
+				_parserContext.CallInfo->HasAtiveCall = true;
 			}
 		}
 		if (IsOkLine())
@@ -326,13 +326,13 @@ ParserState SimcomResponseParser::ParseLine()
 			{
 				bufferedResult = ParserState::Error;
 			}
-			else if (!parser.NextString(*_parserContext._operatorName))
+			else if (!parser.NextString(*_parserContext.OperatorName))
 			{
 				bufferedResult = ParserState::Error;
 			}
 			else
 			{
-				_parserContext._isOperatorNameReturnedInImsiFormat = operatorNameFormat == 2;
+				_parserContext.IsOperatorNameReturnedInImsiFormat = operatorNameFormat == 2;
 				bufferedResult = ParserState::Success;
 			}
 			return ParserState::None;
@@ -350,7 +350,7 @@ ParserState SimcomResponseParser::ParseLine()
 		auto imeiValid = ParsingHelpers::IsImeiValid(_response);
 		if (imeiValid)
 		{
-			*_parserContext._imei = _response;
+			*_parserContext.Imei = _response;
 			return ParserState::None;
 		}		
 		if (lastResult == ParserState::None)
@@ -369,7 +369,7 @@ ParserState SimcomResponseParser::ParseLine()
 			uint16_t tmp = 0;
 			if (parser.NextNum(tmp))
 			{
-				if (parser.NextString(*_parserContext._ussdResponse))
+				if (parser.NextString(*_parserContext.UssdResponse))
 				{
 					return ParserState::Success;
 				}

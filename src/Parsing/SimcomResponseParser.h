@@ -2,7 +2,7 @@
 #define _PARSERSIM900_H_
 
 #include <Arduino.h>
-#include "Sim900Constants.h"
+#include "GsmLibConstants.h"
 #include "Functions/FunctionBase.h"
 #include "CircularDataBuffer.h"
 #include "ParserContext.h"

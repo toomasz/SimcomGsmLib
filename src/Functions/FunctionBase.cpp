@@ -1,6 +1,6 @@
 #include "FunctionBase.h"
 
-#include "../Sim900Constants.h"
+#include "../GsmLibConstants.h"
 
 
 // default constructor

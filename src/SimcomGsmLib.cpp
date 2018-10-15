@@ -29,7 +29,7 @@ AtResultType SimcomGsm::At(const __FlashStringHelper* command)
 AtResultType SimcomGsm::GetOperatorName(FixedStringBase &operatorName, bool returnImsi)
 {
 	SendAt_P(AtCommand::Cops, F("AT+COPS?"));
-	_parserContext._operatorName = &operatorName;
+	_parserContext.OperatorName = &operatorName;
 
 	auto result = PopCommandResult(AT_DEFAULT_TIMEOUT);
 	if (result != AtResultType::Success)
@@ -37,7 +37,7 @@ AtResultType SimcomGsm::GetOperatorName(FixedStringBase &operatorName, bool retu
 		return result;
 	}
 
-	if (_parserContext._isOperatorNameReturnedInImsiFormat == returnImsi)
+	if (_parserContext.IsOperatorNameReturnedInImsiFormat == returnImsi)
 	{
 		return result;
 	}
@@ -60,7 +60,7 @@ AtResultType SimcomGsm::GetOperatorName(FixedStringBase &operatorName, bool retu
 
 AtResultType SimcomGsm::GetSignalQuality(int16_t& signalQuality)
 {
-	_parserContext._signalQuality = &signalQuality;
+	_parserContext.CsqSignalQuality = &signalQuality;
 	SendAt_P(AtCommand::Csq, F("AT+CSQ"));
 	auto result = PopCommandResult(AT_DEFAULT_TIMEOUT);
 	return result;
@@ -68,21 +68,21 @@ AtResultType SimcomGsm::GetSignalQuality(int16_t& signalQuality)
 
 AtResultType SimcomGsm::GetBatteryStatus(BatteryStatus &batteryStatus)
 {
-	_parserContext._batteryStatus = &batteryStatus;
+	_parserContext.BatteryInfo = &batteryStatus;
 	SendAt_P(AtCommand::Cbc,F("AT+CBC"));
 	return PopCommandResult(AT_DEFAULT_TIMEOUT);
 }
 
 AtResultType SimcomGsm::GetIpState(SimcomIpState &ipState)
 {
-	_parserContext._ipState = &ipState;
+	_parserContext.IpState = &ipState;
 	SendAt_P(AtCommand::Cipstatus, F("AT+CIPSTATUS"));
 	return PopCommandResult(AT_DEFAULT_TIMEOUT);	
 }
 
 AtResultType SimcomGsm::GetIpAddress(FixedString20& ipAddress)
 {
-	_parserContext._ipAddress = &ipAddress;
+	_parserContext.IpAddress = &ipAddress;
 	SendAt_P(AtCommand::Cifsr, F("AT+CIFSR"));
 	return PopCommandResult(AT_DEFAULT_TIMEOUT);
 }
@@ -359,7 +359,7 @@ bool SimcomGsm::EnsureModemConnected(long requestedBaudRate)
 }
 AtResultType SimcomGsm::GetImei(FixedString20 &imei)
 {
-	_parserContext._imei = &imei;
+	_parserContext.Imei = &imei;
 	SendAt_P(AtCommand::Gsn, F("AT+GSN"));
 	return PopCommandResult(AT_DEFAULT_TIMEOUT);
 }
@@ -432,7 +432,7 @@ AtResultType SimcomGsm::SendSms(char *number, char *message)
 }
 AtResultType SimcomGsm::SendUssdWaitResponse(char *ussd, FixedString150& response)
 {
-	_parserContext._ussdResponse = &response;
+	_parserContext.UssdResponse = &response;
 	SendAt_P(AtCommand::Cusd, F("AT+CUSD=1,\"%s\""), ussd);
 	auto result = PopCommandResult(10000);
 }
@@ -502,7 +502,7 @@ AtResultType SimcomGsm::Call(char *number)
 
 AtResultType SimcomGsm::GetIncomingCall(IncomingCallInfo & callInfo)
 {
-	_parserContext._callInfo = &callInfo;
+	_parserContext.CallInfo = &callInfo;
 	SendAt_P(AtCommand::Clcc, F("AT+CLCC"));
 	auto result = PopCommandResult(AT_DEFAULT_TIMEOUT);
 	return result;

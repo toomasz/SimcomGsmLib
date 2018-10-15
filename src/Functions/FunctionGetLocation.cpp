@@ -1,13 +1,5 @@
-/* 
-* FunctionGetLocation.cpp
-*
-* Created: 2014-03-25 18:46:25
-* Author: Tom
-*/
-
-
 #include "FunctionGetLocation.h"
-#include "../Sim900Constants.h"
+#include "../GsmLibConstants.h"
 
 // default constructor
 FunctionGetLocation::FunctionGetLocation()

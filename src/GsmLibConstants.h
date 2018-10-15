@@ -1,5 +1,5 @@
-#ifndef SIM900CONSTANTS_H_
-#define SIM900CONSTANTS_H_
+#ifndef _GSMLIBCONSTANTS_H
+#define _GSMLIBCONSTANTS_H
 
 const int AT_DEFAULT_TIMEOUT = 1500;
 
@@ -17,7 +17,5 @@ const int _defaultBaudRates[] =
 	1200,	
 	0
 };
-
-typedef void(*UpdateBaudRateCallback)(int baudRate);
 
 #endif

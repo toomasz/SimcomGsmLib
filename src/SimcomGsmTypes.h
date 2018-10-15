@@ -4,6 +4,8 @@
 #include <FixedString.h>
 #include <inttypes.h>
 
+typedef void(*UpdateBaudRateCallback)(int baudRate);
+
 struct BatteryStatus
 {
 	double Voltage;

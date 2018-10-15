@@ -3,7 +3,6 @@
 
 #include <Arduino.h>
 #include <pgmspace.h>
-#include "Sim900Constants.h"
 
 const __FlashStringHelper* IpStatusToStr(SimcomIpState ipStatus)
 {

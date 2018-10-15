@@ -19,7 +19,6 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)src\GsmLogger.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)src\MappingHelpers.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)src\S900Socket.h" />
-    <ClInclude Include="$(MSBuildThisFileDirectory)src\Sim900Constants.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)src\Functions\FunctionBase.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)src\Functions\FunctionGetLocation.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)src\SimcomGsmLib.h" />
@@ -29,6 +28,7 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)src\Parsing\SimcomResponseParser.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)src\Parsing\ParsingHelpers.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)src\Parsing\ParserContext.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)src\GsmLibConstants.h" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Functions">
