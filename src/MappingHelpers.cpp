@@ -20,6 +20,7 @@ struct IpStatusEntry IpStatusMap[] =
 	F("STATE: TCP CLOSED"), SimcomIpState::TcpClosed,
 	F("STATE: PDP DEACT"), SimcomIpState::PdpDeact,
 	F("STATE: CONNECT OK"), SimcomIpState::ConnectOk,
+	F("STATE: IP PROCESSING"), SimcomIpState::IpProcessing,
 	0,SimcomIpState::Unknown
 };
 

@@ -41,6 +41,7 @@ enum class SimcomIpState : uint8_t
 	TcpClosed,
 	PdpDeact,
 	ConnectOk,
+	IpProcessing,
 	Unknown
 };
 

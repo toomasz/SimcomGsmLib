@@ -10,8 +10,6 @@
 #include "SequenceDetector.h"
 #include "GsmLogger.h"
 
-
-
 class SimcomResponseParser
 {
 	enum LineState { PARSER_INITIAL, PARSER_CR, PARSER_LF, PARSER_LINE };
@@ -24,7 +22,6 @@ class SimcomResponseParser
 	CircularDataBuffer& _dataBuffer;
 	GsmLogger &_logger;
 	FixedString150 _response;
-
 public:
 	SimcomResponseParser(CircularDataBuffer& dataBuffer, GsmLogger &logger);
 

@@ -5,8 +5,7 @@
 
 struct Sim900Context
 {
-	uint16_t signalStrength;
-	uint16_t signalErrorRate;
+	int16_t* _signalQuality;
 	FixedString20* _ipAddress;
 	FixedStringBase* _operatorName;
 	bool _isOperatorNameReturnedInImsiFormat;
@@ -14,7 +13,7 @@ struct Sim900Context
 	FixedString20* _imei;
 	BatteryStatus* _batteryStatus;
 	IncomingCallInfo *_callInfo;
-	SimcomIpState _ipState;
-}; //Sim900Context
+	SimcomIpState* _ipState;
+};
 
 #endif //__SIM900CONTEXT_H__

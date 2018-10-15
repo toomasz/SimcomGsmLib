@@ -53,7 +53,7 @@ public:
 		AtResultType GetOperatorName(FixedStringBase &operatorName, bool returnImsi = false);
 		AtResultType GetImei(FixedString20 &imei);
 		AtResultType GetBatteryStatus(BatteryStatus &batteryStatus);
-		AtResultType GetSignalQuality();
+		AtResultType GetSignalQuality(int16_t &signalQuality);
 		AtResultType SetEcho(bool echoEnabled);
 		AtResultType SendSms(char *number, char *message);
 		AtResultType Call(char *number);

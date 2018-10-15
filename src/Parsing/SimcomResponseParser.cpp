@@ -152,7 +152,7 @@ ParserState SimcomResponseParser::ParseLine()
 			
 	if(commandType == AtCommand::Cipstatus)
 	{
-		if (ParseIpStatus(_response.c_str(), ctx->_ipState))
+		if (ParseIpStatus(_response.c_str(), *ctx->_ipState))
 		{
 			return ParserState::Success;
 		}
@@ -165,8 +165,12 @@ ParserState SimcomResponseParser::ParseLine()
 		{
 			parser.Init((char*)_response.c_str(), 6, _response.length());
 			bufferedResult = ParserState::Error;
-			if (parser.NextNum(ctx->signalStrength) && parser.NextNum(ctx->signalErrorRate))
+			uint16_t signalQuality;
+			uint16_t signalStrength;
+
+			if (parser.NextNum(signalQuality) && parser.NextNum(signalStrength))
 			{
+				*ctx->_signalQuality = signalQuality;
 				bufferedResult = ParserState::Success;
 			}
 			return ParserState::None;

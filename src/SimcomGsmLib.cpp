@@ -60,11 +60,11 @@ AtResultType SimcomGsm::GetOperatorName(FixedStringBase &operatorName, bool retu
 	return result;
 }
 
-AtResultType SimcomGsm::GetSignalQuality()
+AtResultType SimcomGsm::GetSignalQuality(int16_t& signalQuality)
 {
+	_signalQuality = &signalQuality;
 	SendAt_P(AtCommand::Csq, F("AT+CSQ"));
 	auto result = PopCommandResult(AT_DEFAULT_TIMEOUT);
-
 	return result;
 }
 
@@ -75,10 +75,9 @@ AtResultType SimcomGsm::GetBatteryStatus(BatteryStatus &batteryStatus)
 	return PopCommandResult(AT_DEFAULT_TIMEOUT);
 }
 
-AtResultType SimcomGsm::GetIpState(SimcomIpState &status)
+AtResultType SimcomGsm::GetIpState(SimcomIpState &ipState)
 {
-	_ipState = SimcomIpState::Unknown;
-
+	_ipState = &ipState;
 	SendAt_P(AtCommand::Cipstatus, F("AT+CIPSTATUS"));
 	return PopCommandResult(AT_DEFAULT_TIMEOUT);	
 }
