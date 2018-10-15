@@ -62,10 +62,10 @@ public:
 		AtResultType SendUssdWaitResponse(char *ussd, FixedString150& response);
 		// Tcpip functions
 		AtResultType GetIpState(SimcomIpState &ipStatus);
+		AtResultType GetIpAddress(FixedString20 &ipAddress);
 		AtResultType SetTransparentMode(bool transparentMode);
 		AtResultType SetApn(const char *apnName, const char *username, const char *password);
 		AtResultType AttachGprs();
-		AtResultType GetIpAddress();
 		AtResultType StartTransparentIpConnection(const char *address, int port, S900Socket *socket);
 		
 		AtResultType CloseConnection();

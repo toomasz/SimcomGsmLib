@@ -21,3 +21,27 @@ bool ParsingHelpers::IsImeiValid(FixedStringBase &imei)
 	}
 	return true;
 }
+bool ParsingHelpers::IsIpAddressValid(FixedStringBase &ipAddress)
+{
+	if (ipAddress.length() < 7)
+	{
+		return false;
+	}
+	
+	byte dotCount = 0;
+
+	for (int i = 0; i < ipAddress.length(); i++)
+	{
+		auto c = ipAddress.c_str()[i];
+		if (c == '.')
+		{
+			dotCount++;
+		}
+		else if (c < '0' || c >'9')
+		{
+			return false;
+		}
+	}
+
+	return dotCount == 3;	
+}

@@ -240,28 +240,15 @@ ParserState SimcomResponseParser::ParseLine()
 	}
 	if(commandType == AtCommand::Cifsr)
 	{
-		if(_response.length() > 7)
-		{	
-			byte dotCount = 0;
-			bool hasNonDigits = false;
-					
-			for(int i=0; i < _response.length(); i++)
-			{
-				if(_response.c_str()[i] == '.')
-				dotCount++;
-				else if(_response.c_str()[i] < '0' || _response.c_str()[i]>'9')
-				hasNonDigits = true;
-			}
-			if(dotCount == 3 && hasNonDigits == false)
-			{
-				memcpy(ctx->ipAddress, _response.c_str(), _response.length());
-				ctx->ipAddress[_response.length()] = 0;
-						
-				return ParserState::Success;
-			}
+		if (ParsingHelpers::IsIpAddressValid(_response))
+		{
+			*ctx->_ipAddress = _response;
+			return ParserState::Success;
 		}
 		if (IsErrorLine())
+		{
 			return ParserState::Error;
+		}
 	}
 
 	if (commandType == AtCommand::Clcc)
@@ -401,8 +388,7 @@ ParserState SimcomResponseParser::ParseLine()
 					uint16_t lac, cellId;
 					if (parser.NextNum(lac, 16) && parser.NextNum(cellId, 16))
 					{
-						ctx->lac = lac;
-						ctx->cellId = cellId;
+						// todo - use lac and cellId
 					}
 					return ParserState::None;
 				}

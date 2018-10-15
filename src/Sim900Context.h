@@ -7,11 +7,9 @@ struct Sim900Context
 {
 	uint16_t signalStrength;
 	uint16_t signalErrorRate;
-	char ipAddress[16];
+	FixedString20* _ipAddress;
 	FixedStringBase* _operatorName;
 	bool _isOperatorNameReturnedInImsiFormat;
-	uint16_t cellId;
-	uint16_t lac;
 	FixedString150*_ussdResponse;
 	FixedString20* _imei;
 	BatteryStatus* _batteryStatus;

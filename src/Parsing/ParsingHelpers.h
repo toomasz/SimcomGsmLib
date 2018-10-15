@@ -7,6 +7,7 @@ class ParsingHelpers
 {
 public:
 	static bool IsImeiValid(FixedStringBase &imei);
+	static bool IsIpAddressValid(FixedStringBase &ipAddress);
 };
 
 #endif

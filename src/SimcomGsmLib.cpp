@@ -83,8 +83,9 @@ AtResultType SimcomGsm::GetIpState(SimcomIpState &status)
 	return PopCommandResult(AT_DEFAULT_TIMEOUT);	
 }
 
-AtResultType SimcomGsm::GetIpAddress( )
+AtResultType SimcomGsm::GetIpAddress(FixedString20& ipAddress)
 {
+	_ipAddress = &ipAddress;
 	SendAt_P(AtCommand::Cifsr, F("AT+CIFSR"));
 	return PopCommandResult(AT_DEFAULT_TIMEOUT);
 }
