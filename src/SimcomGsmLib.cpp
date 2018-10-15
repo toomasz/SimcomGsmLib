@@ -1,6 +1,6 @@
-#include "Sim900.h"
+#include "SimcomGsmLib.h"
 
-Sim900::Sim900(Stream& serial, UpdateBaudRateCallback updateBaudRateCallback) :
+SimcomGsm::SimcomGsm(Stream& serial, UpdateBaudRateCallback updateBaudRateCallback) :
 serial(serial),
 parser(_dataBuffer, _logger)
 {
@@ -11,7 +11,7 @@ parser(_dataBuffer, _logger)
 	_currentBaudRate = 0;
 }
 
-AtResultType Sim900::GetRegistrationStatus(GsmNetworkStatus& networkStatus)
+AtResultType SimcomGsm::GetRegistrationStatus(GsmNetworkStatus& networkStatus)
 {
 	SendAt_P(AtCommand::Creg ,F("AT+CREG?"));
 
@@ -22,13 +22,13 @@ AtResultType Sim900::GetRegistrationStatus(GsmNetworkStatus& networkStatus)
 	}
 	return result;
 }
-AtResultType Sim900::At(const __FlashStringHelper* command)
+AtResultType SimcomGsm::At(const __FlashStringHelper* command)
 {
 	SendAt_P(AtCommand::Generic, command);
 	auto result = PopCommandResult(AT_DEFAULT_TIMEOUT);
 	return result;
 }
-AtResultType Sim900::GetOperatorName(FixedStringBase &operatorName, bool returnImsi)
+AtResultType SimcomGsm::GetOperatorName(FixedStringBase &operatorName, bool returnImsi)
 {
 	SendAt_P(AtCommand::Cops, F("AT+COPS?"));
 	_operatorName = &operatorName;
@@ -60,7 +60,7 @@ AtResultType Sim900::GetOperatorName(FixedStringBase &operatorName, bool returnI
 	return result;
 }
 
-AtResultType Sim900::GetSignalQuality()
+AtResultType SimcomGsm::GetSignalQuality()
 {
 	SendAt_P(AtCommand::Csq, F("AT+CSQ"));
 	auto result = PopCommandResult(AT_DEFAULT_TIMEOUT);
@@ -68,14 +68,14 @@ AtResultType Sim900::GetSignalQuality()
 	return result;
 }
 
-AtResultType Sim900::GetBatteryStatus()
+AtResultType SimcomGsm::GetBatteryStatus()
 {
 	SendAt_P(AtCommand::Cbc,F("AT+CBC"));
 	auto result = PopCommandResult(AT_DEFAULT_TIMEOUT);
 	return result;
 }
 
-AtResultType Sim900::GetIpState(SimcomIpState &status)
+AtResultType SimcomGsm::GetIpState(SimcomIpState &status)
 {
 	SendAt_P(AtCommand::Cipstatus, F("AT+CIPSTATUS"));
 	auto result = PopCommandResult(AT_DEFAULT_TIMEOUT);
@@ -86,19 +86,19 @@ AtResultType Sim900::GetIpState(SimcomIpState &status)
 	return result;
 }
 
-AtResultType Sim900::GetIpAddress( )
+AtResultType SimcomGsm::GetIpAddress( )
 {
 	SendAt_P(AtCommand::Cifsr, F("AT+CIFSR"));
 	return PopCommandResult(AT_DEFAULT_TIMEOUT);
 }
 
-AtResultType Sim900::AttachGprs()
+AtResultType SimcomGsm::AttachGprs()
 {
 	SendAt_P(AtCommand::Generic, F("AT+CIICR"));
 	return PopCommandResult(60000);
 }
 
-AtResultType Sim900::StartTransparentIpConnection(const char *address, int port, S900Socket *socket = 0 )
+AtResultType SimcomGsm::StartTransparentIpConnection(const char *address, int port, S900Socket *socket = 0 )
 {
 	_dataBuffer.Clear();
 
@@ -112,7 +112,7 @@ AtResultType Sim900::StartTransparentIpConnection(const char *address, int port,
 	return PopCommandResult(60000);
 }
 
-AtResultType Sim900::CloseConnection()
+AtResultType SimcomGsm::CloseConnection()
 {
 	SendAt_P(AtCommand::Cipclose, F("AT+CIPCLOSE=1"));
 	return PopCommandResult(AT_DEFAULT_TIMEOUT);
@@ -120,7 +120,7 @@ AtResultType Sim900::CloseConnection()
 
 
 /* returns true if any data is available to read from transparent connection */
-bool Sim900::DataAvailable()
+bool SimcomGsm::DataAvailable()
 {
 	if (_dataBuffer.DataAvailable())
 	{
@@ -132,7 +132,7 @@ bool Sim900::DataAvailable()
 	}
 	return false;
 }
-void Sim900::PrintDataByte(uint8_t data) // prints 8-bit data in hex
+void SimcomGsm::PrintDataByte(uint8_t data) // prints 8-bit data in hex
 {
 	char tmp[3];
 	byte first;
@@ -152,7 +152,7 @@ void Sim900::PrintDataByte(uint8_t data) // prints 8-bit data in hex
 //	ds.write(' ');
 }
 
-int Sim900::DataRead()
+int SimcomGsm::DataRead()
 {
 	int ret = _dataBuffer.ReadDataBuffer();
 	if(ret != -1)
@@ -168,7 +168,7 @@ int Sim900::DataRead()
 	return ret;
 }
 
-AtResultType Sim900::SwitchToCommandMode()
+AtResultType SimcomGsm::SwitchToCommandMode()
 {
 	parser.SetCommandType(AtCommand::SwitchToCommand);
 	_dataBuffer.commandBeforeRN = true;
@@ -193,7 +193,7 @@ AtResultType Sim900::SwitchToCommandMode()
 	return PopCommandResult(500);
 }
 
-AtResultType Sim900::SwitchToCommandModeDropData()
+AtResultType SimcomGsm::SwitchToCommandModeDropData()
 {
 	parser.SetCommandType(AtCommand::SwitchToCommand);
 	serial.flush();
@@ -216,7 +216,7 @@ AtResultType Sim900::SwitchToCommandModeDropData()
 Switches to data mode ATO
 Return values S900_OK, S900_ERROR, S900_TIMEOUT
 */
-AtResultType Sim900::SwitchToDataMode()
+AtResultType SimcomGsm::SwitchToDataMode()
 {
 	SendAt_P(AtCommand::SwitchToData, F("ATO"));
 
@@ -237,7 +237,7 @@ AtResultType Sim900::SwitchToDataMode()
 	return result;
 }
 
-AtResultType Sim900::PopCommandResult( int timeout )
+AtResultType SimcomGsm::PopCommandResult( int timeout )
 {
 	unsigned long start = millis();
 	while(parser.commandReady == false && (millis()-start) < (unsigned long)timeout)
@@ -258,7 +258,7 @@ AtResultType Sim900::PopCommandResult( int timeout )
 /*
 Disables/enables echo on serial port
 */
-AtResultType Sim900::SetEcho(bool echoEnabled)
+AtResultType SimcomGsm::SetEcho(bool echoEnabled)
 {
 	if (echoEnabled)
 	{
@@ -276,7 +276,7 @@ AtResultType Sim900::SetEcho(bool echoEnabled)
 /*
 Set gsm modem to use transparent mode
 */
-AtResultType Sim900::SetTransparentMode( bool transparentMode )
+AtResultType SimcomGsm::SetTransparentMode( bool transparentMode )
 {	
 	if (transparentMode)
 	{
@@ -290,55 +290,55 @@ AtResultType Sim900::SetTransparentMode( bool transparentMode )
 	return PopCommandResult(AT_DEFAULT_TIMEOUT);
 }
 
-AtResultType Sim900::SetApn(const char *apnName, const char *username,const char *password )
+AtResultType SimcomGsm::SetApn(const char *apnName, const char *username,const char *password )
 {
 	SendAt_P(AtCommand::Generic, F("AT+CSTT=\"%s\",\"%s\",\"%s\""), apnName, username, password);
 	return PopCommandResult(AT_DEFAULT_TIMEOUT);
 }
 
-void Sim900::DataWrite( const __FlashStringHelper* data )
+void SimcomGsm::DataWrite( const __FlashStringHelper* data )
 {
 	serial.print(data);
 	lastDataWrite = millis();
 }
 
-void Sim900::DataWrite( char* data )
+void SimcomGsm::DataWrite( char* data )
 {
 	serial.print(data);
 	lastDataWrite = millis();
 }
 
-void Sim900::DataWrite( char *data, int length )
+void SimcomGsm::DataWrite( char *data, int length )
 {
 	serial.write((unsigned char*)data, length);
 	lastDataWrite = millis();
 }
 
-void Sim900::DataWrite( char c )
+void SimcomGsm::DataWrite( char c )
 {
 	serial.write(c);
 	lastDataWrite = millis();
 }
 
 
-void Sim900::DataEndl()
+void SimcomGsm::DataEndl()
 {
 	serial.print(F("\r\n"));
 	serial.flush();
 	lastDataWrite = millis();
 }
-AtResultType Sim900::At()
+AtResultType SimcomGsm::At()
 {
 	SendAt_P(AtCommand::Generic, F("AT"));
 	return PopCommandResult(30);
 }
 
-AtResultType Sim900::SetBaudRate(uint32_t baud)
+AtResultType SimcomGsm::SetBaudRate(uint32_t baud)
 {
 	SendAt_P(AtCommand::Generic, F("AT+IPR=%d"), baud);
 	return PopCommandResult(AT_DEFAULT_TIMEOUT);
 }
-bool Sim900::EnsureModemConnected(long requestedBaudRate)
+bool SimcomGsm::EnsureModemConnected(long requestedBaudRate)
 {
 	auto atResult = At();
 
@@ -364,18 +364,18 @@ bool Sim900::EnsureModemConnected(long requestedBaudRate)
 	}
 	return atResult == AtResultType::Success;
 }
-AtResultType Sim900::GetIMEI()
+AtResultType SimcomGsm::GetIMEI()
 {
 	SendAt_P(AtCommand::Generic, F("AT+GSN"));
 	return PopCommandResult(100);
 }
 
-bool Sim900::IsPoweredUp()
+bool SimcomGsm::IsPoweredUp()
 {
 	return GetIMEI() == AtResultType::Success;
 }
 
-void Sim900::wait(int ms)
+void SimcomGsm::wait(int ms)
 {
 	unsigned long start = millis();
 	while ((millis() - start) <= (unsigned long)ms)
@@ -387,7 +387,7 @@ void Sim900::wait(int ms)
 	}
 }
 
-AtResultType Sim900::ExecuteFunction(FunctionBase &function)
+AtResultType SimcomGsm::ExecuteFunction(FunctionBase &function)
 {
 	parser.SetCommandType(&function);
 	serial.println(function.getCommand());
@@ -428,7 +428,7 @@ AtResultType Sim900::ExecuteFunction(FunctionBase &function)
 	return PopCommandResult(function.functionTimeout);
 }
 
-AtResultType Sim900::SendSms(char *number, char *message)
+AtResultType SimcomGsm::SendSms(char *number, char *message)
 {
 	SendAt_P(AtCommand::Generic, F("AT+CMGS=\"%s\""), number);
 	
@@ -441,7 +441,7 @@ AtResultType Sim900::SendSms(char *number, char *message)
 	serial.print('\x1a');
 	return PopCommandResult(AT_DEFAULT_TIMEOUT);
 }
-AtResultType Sim900::SendUssdWaitResponse(char *ussd, char*response, int responseBufferLength)
+AtResultType SimcomGsm::SendUssdWaitResponse(char *ussd, char*response, int responseBufferLength)
 {
 	buffer_ptr = response;
 	buffer_size = responseBufferLength;
@@ -449,7 +449,7 @@ AtResultType Sim900::SendUssdWaitResponse(char *ussd, char*response, int respons
 	SendAt_P(AtCommand::Cusd, F("AT+CUSD=1,\"%s\""), ussd);
 	return PopCommandResult(10000);
 }
-void Sim900::SendAt_P(AtCommand commnd, const __FlashStringHelper* command, ...)
+void SimcomGsm::SendAt_P(AtCommand commnd, const __FlashStringHelper* command, ...)
 {
 	parser.SetCommandType(commnd);
 
@@ -463,7 +463,7 @@ void Sim900::SendAt_P(AtCommand commnd, const __FlashStringHelper* command, ...)
 
 	va_end(argptr);
 }
-int Sim900::FindCurrentBaudRate()
+int SimcomGsm::FindCurrentBaudRate()
 {
 	if (_updateBaudRateCallback == nullptr)
 	{
@@ -490,30 +490,30 @@ int Sim900::FindCurrentBaudRate()
 	return 0;
 }
 
-AtResultType Sim900::Cipshut()
+AtResultType SimcomGsm::Cipshut()
 {
 	SendAt_P(AtCommand::Cipshut, F("AT+CIPSHUT"));
 	return PopCommandResult(AT_DEFAULT_TIMEOUT);
 }
 
-void Sim900::DataWriteNumber(int c)
+void SimcomGsm::DataWriteNumber(int c)
 {
 	serial.print(c);
 	lastDataWrite = millis();
 }
-void Sim900::DataWriteNumber(uint16_t c)
+void SimcomGsm::DataWriteNumber(uint16_t c)
 {
 	serial.print(c);
 	lastDataWrite = millis();
 }
 
-AtResultType Sim900::Call(char *number)
+AtResultType SimcomGsm::Call(char *number)
 {
 	SendAt_P(AtCommand::Generic, F("ATD%s;"), number);
 	return PopCommandResult(AT_DEFAULT_TIMEOUT);
 }
 
-AtResultType Sim900::GetIncomingCall(IncomingCallInfo & callInfo)
+AtResultType SimcomGsm::GetIncomingCall(IncomingCallInfo & callInfo)
 {
 	_callInfo.CallerNumber.clear();
 	_callInfo.HasAtiveCall = false;
@@ -523,13 +523,13 @@ AtResultType Sim900::GetIncomingCall(IncomingCallInfo & callInfo)
 	return result;
 }
 
-AtResultType Sim900::EnableCallerId()
+AtResultType SimcomGsm::EnableCallerId()
 {
 	SendAt_P(AtCommand::Generic, F("AT+CLIP=1"));
 	return PopCommandResult(AT_DEFAULT_TIMEOUT);
 }
 
-AtResultType Sim900::Shutdown()
+AtResultType SimcomGsm::Shutdown()
 {
 	SendAt_P(AtCommand::Generic, F("AT+CPOWD=0"));
 	return PopCommandResult(AT_DEFAULT_TIMEOUT);

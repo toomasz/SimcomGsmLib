@@ -1,5 +1,5 @@
-#ifndef __SIM_900_H__
-#define __SIM_900_H__
+#ifndef _SIMCOM_GSM_LIB_H
+#define _SIMCOM_GSM_LIB_H
 
 #include <Stream.h>
 #include <Arduino.h>
@@ -17,18 +17,18 @@
 
 class S900Socket;
 
-class Sim900: public Sim900Context
+class SimcomGsm: public Sim900Context
 {
 private:
 		Stream &serial;
-		// buffer for incoming data, used because fucking +++ needs 1000ms wait before issuing
 		int _currentBaudRate;
 		void SendAt_P(AtCommand commandType, const __FlashStringHelper *command, ...);
 		UpdateBaudRateCallback _updateBaudRateCallback;
+		// buffer for incoming data, used because fucking +++ needs 1000ms wait before issuing
 		CircularDataBuffer _dataBuffer;
 		GsmLogger _logger;
 public:
-		Sim900(Stream& serial, UpdateBaudRateCallback updateBaudRateCallback);		
+		SimcomGsm(Stream& serial, UpdateBaudRateCallback updateBaudRateCallback);
 		bool EnsureModemConnected(long baudRate);
 
 		int FindCurrentBaudRate();		

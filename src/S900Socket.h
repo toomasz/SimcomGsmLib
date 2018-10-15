@@ -9,7 +9,7 @@
 #ifndef __S900SOCKET_H__
 #define __S900SOCKET_H__
 
-#include "Sim900.h"
+#include "SimcomGsmLib.h"
 #include <Arduino.h>
 
 
@@ -19,7 +19,7 @@ const char PdpDeactString[]  = "\r\n+PDP: DEACT\r\n";
 const uint8_t SOCKET_OPEN = 0;
 const uint8_t SOCKET_CLOSED = 1;
 const uint8_t SOCKET_PDP_DEACT = 2;
-class Sim900;
+class SimcomGsm;
 
 class S900Socket
 {
@@ -31,7 +31,7 @@ public:
 	{
 		socket_state = SOCKET_OPEN;
 	}
-	Sim900 *s900;
+	SimcomGsm *s900;
 	uint8_t socket_state;
 	uint16_t read_blocking(char *data, uint16_t length, unsigned long  timeout);
 	uint8_t write(char *data, int length);
