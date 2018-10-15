@@ -3,22 +3,25 @@
 
 #include <inttypes.h>
 
-#define AT_DEFAULT 0
-#define AT_CIPSTATUS 1
-#define AT_CSQ 2
-#define AT_CIFSR 3
-#define AT_CIPSTART 4
-#define AT_SWITH_TO_COMMAND 5
-#define AT_SWITCH_TO_DATA 6
-#define AT_COPS 7
-#define AT_CREG 8
-#define AT_GSN 9
-#define AT_CUSTOM_FUNCTION 10
-#define AT_CIPSHUT 11
-#define AT_CIPCLOSE 12
-#define AT_CUSD 13
-#define AT_CBC 14
-#define AT_CLCC 15
+enum class AtCommand : uint8_t
+{
+	Generic,
+	Cipstatus,
+	Csq,
+	Cifsr,
+	Cipstart,
+	SwitchToCommand,
+	SwitchToData,
+	Cops,
+	Creg,
+	Gsn,
+	CustomFunction,
+	Cipshut,
+	Cipclose,
+	Cusd,
+	Cbc,
+	Clcc
+};
 
 enum class SimcomIpState : uint8_t
 {
@@ -60,8 +63,6 @@ enum class GsmNetworkStatus : uint8_t
 
 
 const int AT_DEFAULT_TIMEOUT = 1500;
-
-const int ResponseBufferSize = 160;
 
 const int _defaultBaudRates[] =
 {

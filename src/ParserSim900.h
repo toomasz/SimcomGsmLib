@@ -16,7 +16,7 @@ class ParserSim900
 {
 	enum LineState { PARSER_INITIAL, PARSER_CR, PARSER_LF, PARSER_LINE };
 	uint8_t lineParserState;
-	uint8_t commandType;
+	AtCommand commandType;
 	DelimParser parser;
 	SequenceDetector okSeqDetector;
 	ParserState lastResult;
@@ -35,7 +35,7 @@ public:
 	volatile bool commandReady;
 	FunctionBase *function;
 	void SetCommandType(FunctionBase *command);
-	void SetCommandType(int commandType);
+	void SetCommandType(AtCommand commandType);
 
 
 	bool IsErrorLine();

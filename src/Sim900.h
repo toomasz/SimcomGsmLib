@@ -23,7 +23,7 @@ private:
 		Stream &serial;
 		// buffer for incoming data, used because fucking +++ needs 1000ms wait before issuing
 		int _currentBaudRate;
-		void SendAt_P(int commandType, const __FlashStringHelper *command, ...);
+		void SendAt_P(AtCommand commandType, const __FlashStringHelper *command, ...);
 		UpdateBaudRateCallback _updateBaudRateCallback;
 		CircularDataBuffer _dataBuffer;
 		GsmLogger _logger;

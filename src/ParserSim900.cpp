@@ -7,7 +7,7 @@ okSeqDetector(PSTR("\r\nOK\r\n")),
 _dataBuffer(dataBuffer),
 _logger(logger)
 {
-	commandType = 0;
+	commandType = AtCommand::Generic;
 	lineParserState = PARSER_INITIAL;
 	lastResult = ParserState::Timeout;
 	function = 0;
@@ -31,7 +31,7 @@ AtResultType ParserSim900::GetAtResultType()
 /* processes character read from serial port of gsm module */
 void ParserSim900::FeedChar(char c)
 {
-	if (commandType == AT_SWITH_TO_COMMAND)
+	if (commandType == AtCommand::SwitchToCommand)
 	{
 		//printf("w\n");
 		_dataBuffer.WriteDataBuffer(c);
@@ -56,7 +56,7 @@ void ParserSim900::FeedChar(char c)
 		if (lineParserState == PARSER_LINE)
 		{
 
-			if (commandType == AT_SWITH_TO_COMMAND && _dataBuffer.commandBeforeRN)
+			if (commandType == AtCommand::SwitchToCommand && _dataBuffer.commandBeforeRN)
 			{
 				_dataBuffer.WriteDataBuffer(c);
 			}
@@ -131,29 +131,33 @@ ParserState ParserSim900::ParseLine()
 		return ParserState::None;
 	}
 		
-	if (commandType == AT_CUSTOM_FUNCTION)
+	if (commandType == AtCommand::CustomFunction)
 	{
 		return function->IncomingLine(_response);
 	}
 			
-	if(commandType == AT_DEFAULT)
+	if(commandType == AtCommand::Generic)
 	{
 		if (IsErrorLine())
+		{
 			return ParserState::Error;
+		}
 		if (IsOkLine())
+		{
 			return ParserState::Success;
+		}
 	}
 			
 			
-	if(commandType == AT_CIPSTATUS)
+	if(commandType == AtCommand::Cipstatus)
 	{
 		if (ParseIpStatus(_response.c_str(), ctx->_ipState))
 		{
 			return ParserState::Success;
-		}		
+		}
 	}
 
-	if(commandType == AT_CSQ)
+	if(commandType == AtCommand::Csq)
 	{
 		//+CSQ: 17,0
 		if(_response.startsWith(F("+CSQ:")))
@@ -161,18 +165,22 @@ ParserState ParserSim900::ParseLine()
 			parser.Init((char*)_response.c_str(), 6, _response.length());
 			bufferedResult = ParserState::Error;
 			if (parser.NextNum(ctx->signalStrength) && parser.NextNum(ctx->signalErrorRate))
+			{
 				bufferedResult = ParserState::Success;
+			}
 			return ParserState::None;
 		}
 		if (lastResult == ParserState::None)
 		{
 			if (IsErrorLine())
+			{
 				return ParserState::Error;
+			}
 			return bufferedResult;
 		}
 	}
 
-	if (commandType == AT_CBC)
+	if (commandType == AtCommand::Cbc)
 	{
 		if (_response.startsWith(F("+CBC: ")))
 		{
@@ -200,7 +208,7 @@ ParserState ParserSim900::ParseLine()
 			}
 		}
 	}
-	if(commandType == AT_SWITCH_TO_DATA)
+	if(commandType == AtCommand::SwitchToData)
 	{
 		if (_response == F("CONNECT"))
 		{
@@ -217,14 +225,14 @@ ParserState ParserSim900::ParseLine()
 			return ParserState::Error;
 		}
 	}
-	if(commandType == AT_SWITH_TO_COMMAND)
+	if(commandType == AtCommand::SwitchToCommand)
 	{
 		if(IsOkLine())
 		{
 			return ParserState::Success;
 		}
 	}
-	if(commandType == AT_CIFSR)
+	if(commandType == AtCommand::Cifsr)
 	{
 		if(_response.length() > 7)
 		{	
@@ -250,7 +258,7 @@ ParserState ParserSim900::ParseLine()
 			return ParserState::Error;
 	}
 
-	if (commandType == AT_CLCC)
+	if (commandType == AtCommand::Clcc)
 	{		
 		if (_response.startsWith(F("+CLCC:")))
 		{
@@ -280,7 +288,7 @@ ParserState ParserSim900::ParseLine()
 		}
 	}
 
-	if(commandType == AT_CIPSTART)
+	if(commandType == AtCommand::Cipstart)
 	{
 		if (_response == F("CONNECT"))
 		{
@@ -291,21 +299,21 @@ ParserState ParserSim900::ParseLine()
 			return ParserState::Error;
 		}
 	}
-	if(commandType == AT_CIPSHUT)
+	if(commandType == AtCommand::Cipshut)
 	{
 		if (_response.equals(F("SHUT OK")))
 		{
 			return ParserState::Success;
 		}
 	}
-	if(commandType == AT_CIPCLOSE)
+	if(commandType == AtCommand::Cipclose)
 	{
 		if (_response.equals(F("CLOSE OK")))
 		{
 			return ParserState::Success;
 		}
 	}
-	if(commandType == AT_COPS)
+	if(commandType == AtCommand::Cops)
 	{
 		//+COPS: 0,0,"PLAY"
 		if(_response.startsWith(F("+COPS:")))
@@ -339,7 +347,7 @@ ParserState ParserSim900::ParseLine()
 		}
 				
 	}
-	if(commandType == AT_GSN)
+	if(commandType == AtCommand::Gsn)
 	{
 		if(_response.length() > 10)
 		{
@@ -367,7 +375,7 @@ ParserState ParserSim900::ParseLine()
 				return ParserState::Error;
 		}
 	}
-	if (commandType == AT_CUSD)
+	if (commandType == AtCommand::Cusd)
 	{
 		if (_response.startsWith(F("+CUSD:")))
 		{
@@ -384,7 +392,7 @@ ParserState ParserSim900::ParseLine()
 			return ParserState::Error;
 		}
 	}
-	if(commandType == AT_CREG)
+	if(commandType == AtCommand::Creg)
 	{
 		// example valid line : +CREG: 2,1,"07E6","D68F"
 		if(_response.startsWith(F("+CREG:")))
@@ -428,12 +436,12 @@ void ParserSim900::SetCommandType(FunctionBase *command)
 {
 	this->function = command;
 	commandReady = false;
-	commandType = AT_CUSTOM_FUNCTION;
+	commandType = AtCommand::CustomFunction;
 	lastResult = ParserState::Timeout;
 	bufferedResult = ParserState::Timeout;
 }
 
-void ParserSim900::SetCommandType(int commandType)
+void ParserSim900::SetCommandType(AtCommand commandType)
 {
 	//if(commandType != AT_SWITH_TO_COMMAND && commandType != AT_SWITCH_TO_DATA)
 	//	while(gsm->ser->available())
