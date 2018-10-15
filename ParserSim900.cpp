@@ -76,9 +76,7 @@ void ParserSim900::FeedChar(char c)
 
 		_logger.Log_P(F("  <= %s"), (char*)_response.c_str());
 
-		crc = crc8((uint8_t*)_response.c_str(), _response.length());
 		ParserState parseResult = ParseLine();
-
 		// if error or or success
 		if (parseResult == ParserState::Success || parseResult == ParserState::Error)
 		{
@@ -100,13 +98,18 @@ void ParserSim900::FeedChar(char c)
 /* returns true if current line is error: ERROR, CME ERROR etc*/
 bool ParserSim900::IsErrorLine()
 {
-	if(crc == CRC_NO_CARRIER)
+	if (_response == F("NO CARRIER"))
+	{
 		return true;
-	if(crc == CRC_PDP_DEACT)
+	}
+	if (_response == F("+PDP: DEACT"))
+	{
 		return true;
-		
-	if (crc == CRC_ERROR)
+	}
+	if (_response == F("ERROR"))
+	{
 		return true;
+	}
 
 	if (_response.startsWith(F("+CME ERROR:")))
 	{
@@ -117,7 +120,7 @@ bool ParserSim900::IsErrorLine()
 /* returns true if current line is OK*/
 bool ParserSim900::IsOkLine()
 {
-	if (crc == CRC_OK)
+	if (_response == F("OK"))
 		return true;
 	return false;
 }
@@ -130,7 +133,7 @@ ParserState ParserSim900::ParseLine()
 		
 	if (commandType == AT_CUSTOM_FUNCTION)
 	{
-		return function->IncomingLine((uint8_t*)_response.c_str(), _response.length(), crc);
+		return function->IncomingLine(_response);
 	}
 			
 	if(commandType == AT_DEFAULT)
@@ -199,24 +202,24 @@ ParserState ParserSim900::ParseLine()
 	}
 	if(commandType == AT_SWITCH_TO_DATA)
 	{
-		if (crc == CRC_CONNECT)
+		if (_response == F("CONNECT"))
 		{
 			return ParserState::Success;
 		}
 		
-		if (crc == CRC_NO_CARRIER)
+		if (_response == F("NO CARRIER"))
 		{
 			return ParserState::Error;
 		}
 		
-		if(crc == CRC_CLOSED)		
+		if(_response == F("CLOSED"))
 		{
 			return ParserState::Error;
 		}
 	}
 	if(commandType == AT_SWITH_TO_COMMAND)
 	{
-		if(crc == CRC_OK)
+		if(IsOkLine())
 		{
 			return ParserState::Success;
 		}
@@ -279,10 +282,14 @@ ParserState ParserSim900::ParseLine()
 
 	if(commandType == AT_CIPSTART)
 	{
-		if(crc == CRC_CONNECT)		
+		if (_response == F("CONNECT"))
+		{
 			return ParserState::Success;
-		if(crc == CRC_CONNECT_FAIL || crc == CRC_PDP_DEACT)
+		}
+		if (_response == F("CONNECT FAIL") || _response == F("+PDP: DEACT"))
+		{
 			return ParserState::Error;
+		}
 	}
 	if(commandType == AT_CIPSHUT)
 	{

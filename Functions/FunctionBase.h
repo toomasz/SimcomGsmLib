@@ -6,6 +6,7 @@
 */
 
 #include <inttypes.h>
+#include <FixedString.h>
 
 #include "../Sim900Constants.h"
 #include <Arduino.h>
@@ -22,7 +23,7 @@ class FunctionBase
     //508 551 395
 	FunctionBase();
 	
-    virtual ParserState IncomingLine(unsigned char *line, int lineLength, uint8_t crc)=0;
+    virtual ParserState IncomingLine(FixedStringBase &line)=0;
 	virtual const __FlashStringHelper* getCommand() = 0;
 	virtual const __FlashStringHelper* GetInitSequence()
 	{

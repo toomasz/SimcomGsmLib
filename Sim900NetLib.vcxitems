@@ -33,7 +33,6 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)Sim900.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)Sim900Constants.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)Sim900Context.h" />
-    <ClInclude Include="$(MSBuildThisFileDirectory)Sim900Crc.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="$(MSBuildThisFileDirectory)CircularDataBuffer.cpp" />
@@ -47,6 +46,5 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)S900Socket.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)SequenceDetector.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)Sim900.cpp" />
-    <ClCompile Include="$(MSBuildThisFileDirectory)Sim900Crc.cpp" />
   </ItemGroup>
 </Project>

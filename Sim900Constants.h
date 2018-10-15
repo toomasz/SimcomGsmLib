@@ -20,22 +20,6 @@
 #define AT_CBC 14
 #define AT_CLCC 15
 
-
-#define CRC_OK 0xe5     //"OK" l:2
-#define CRC_ERROR 0x34  //"ERROR" l:5
-#define CRC_CSQ 0xc    //"+CSQ:" l:5
-
-#define CRC_CONNECT_FAIL 0x54   //"CONNECT FAIL" l:12
-#define CRC_CONNECT 0x1f        //"CONNECT" l:7
-#define CRC_CME_ERROR 0x47     //"+CME ERROR:" l:11
-#define CRC_PDP_DEACT 0x1b      //"+PDP: DEACT" l:11
-#define CRC_CLOSED 0x42 //"CLOSED" l:6
-#define CRC_CREG 0x7   //"+CREG:" l:6
-#define CRC_COPS 0xa   //"+COPS:" l:6
-#define CRC_NO_CARRIER 0x56     //"NO CARRIER" l:10
-#define CRC_CBC 0x90 // "+CBC:" l:5
-
-
 enum class SimcomIpState : uint8_t
 {
 	IpInitial,

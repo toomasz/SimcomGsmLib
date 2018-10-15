@@ -3,7 +3,6 @@
 
 #include <Arduino.h>
 #include "Sim900Constants.h"
-#include "Sim900Crc.h"
 #include "Functions/FunctionBase.h"
 #include "CircularDataBuffer.h"
 #include "Sim900Context.h"
@@ -19,7 +18,6 @@ class ParserSim900
 	uint8_t lineParserState;
 	uint8_t commandType;
 	DelimParser parser;
-	uint8_t crc;
 	SequenceDetector okSeqDetector;
 	ParserState lastResult;
 	ParserState bufferedResult; // stores actual result for commands like CREG while parser is waiting for OK line
