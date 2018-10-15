@@ -4,6 +4,12 @@
 #include <FixedString.h>
 #include <inttypes.h>
 
+struct BatteryStatus
+{
+	double Voltage;
+	uint8_t Percent;
+};
+
 enum class AtCommand : uint8_t
 {
 	Generic,

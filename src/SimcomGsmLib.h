@@ -52,16 +52,14 @@ public:
 		AtResultType GetRegistrationStatus(GsmNetworkStatus& networkStatus);
 		AtResultType GetOperatorName(FixedStringBase &operatorName, bool returnImsi = false);
 		AtResultType GetIMEI();
-		AtResultType GetBatteryStatus();
+		AtResultType GetBatteryStatus(BatteryStatus &batteryStatus);
 		AtResultType GetSignalQuality();
 		AtResultType SetEcho(bool echoEnabled);
 		AtResultType SendSms(char *number, char *message);
 		AtResultType Call(char *number);
 		AtResultType GetIncomingCall(IncomingCallInfo &callInfo);
-
-		AtResultType EnableCallerId();
 		AtResultType PopCommandResult(int timeout);
-		AtResultType SendUssdWaitResponse(char *ussd, char*response, int responseBufferLength);
+		AtResultType SendUssdWaitResponse(char *ussd, FixedString150& response);
 		// Tcpip functions
 		AtResultType GetIpState(SimcomIpState &ipStatus);
 		AtResultType SetTransparentMode(bool transparentMode);

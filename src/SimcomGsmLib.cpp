@@ -68,11 +68,11 @@ AtResultType SimcomGsm::GetSignalQuality()
 	return result;
 }
 
-AtResultType SimcomGsm::GetBatteryStatus()
+AtResultType SimcomGsm::GetBatteryStatus(BatteryStatus &batteryStatus)
 {
+	_batteryStatus = &batteryStatus;
 	SendAt_P(AtCommand::Cbc,F("AT+CBC"));
-	auto result = PopCommandResult(AT_DEFAULT_TIMEOUT);
-	return result;
+	return PopCommandResult(AT_DEFAULT_TIMEOUT);
 }
 
 AtResultType SimcomGsm::GetIpState(SimcomIpState &status)
@@ -354,8 +354,6 @@ bool SimcomGsm::EnsureModemConnected(long requestedBaudRate)
 				_logger.Log_P(F("set baud rate to = %d"), _currentBaudRate);
 				At();
 				SetEcho(false);
-				EnableCallerId();
-
 				return true;
 			}
 			_logger.Log_P(F("Failed to update baud rate = %d"), _currentBaudRate);
@@ -441,13 +439,11 @@ AtResultType SimcomGsm::SendSms(char *number, char *message)
 	_serial.print('\x1a');
 	return PopCommandResult(AT_DEFAULT_TIMEOUT);
 }
-AtResultType SimcomGsm::SendUssdWaitResponse(char *ussd, char*response, int responseBufferLength)
+AtResultType SimcomGsm::SendUssdWaitResponse(char *ussd, FixedString150& response)
 {
-	buffer_ptr = response;
-	buffer_size = responseBufferLength;
-
+	_ussdResponse = &response;
 	SendAt_P(AtCommand::Cusd, F("AT+CUSD=1,\"%s\""), ussd);
-	return PopCommandResult(10000);
+	auto result = PopCommandResult(10000);
 }
 void SimcomGsm::SendAt_P(AtCommand commnd, const __FlashStringHelper* command, ...)
 {
@@ -521,12 +517,6 @@ AtResultType SimcomGsm::GetIncomingCall(IncomingCallInfo & callInfo)
 	auto result = PopCommandResult(AT_DEFAULT_TIMEOUT);
 	callInfo = _callInfo;
 	return result;
-}
-
-AtResultType SimcomGsm::EnableCallerId()
-{
-	SendAt_P(AtCommand::Generic, F("AT+CLIP=1"));
-	return PopCommandResult(AT_DEFAULT_TIMEOUT);
 }
 
 AtResultType SimcomGsm::Shutdown()

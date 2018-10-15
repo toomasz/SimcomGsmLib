@@ -82,27 +82,22 @@ bool DelimParser::NextToken()
 	return false;
 }
 
-bool DelimParser::NextString(char *d_str, uint8_t length)
+void DelimParser::Skip(int tokenCount)
 {
-	if (!NextToken())
-		return false;
-	int tokLength = n - 1 - tokStart;
-	// AS 2 char[2] = ['A',0] tokLength = 2, length = 2
-	if (tokLength >= length)
-		tokLength = length-1;
-	strncpy(d_str, str+tokStart, tokLength);
-	d_str[tokLength] = 0;
-	return true;
+	while (tokenCount-- > 0)
+	{
+		NextToken();
+	}
 }
-bool DelimParser::NextString(FixedStringBase *d_str)
+bool DelimParser::NextString(FixedStringBase& targetString)
 {
 	if (!NextToken())
 	{
 		return false;
 	}
 	int tokLength = n - 1 - tokStart;
-	d_str->clear();
-	d_str->append(str + tokStart, tokLength);
+	targetString.clear();
+	targetString.append(str + tokStart, tokLength);
 	return true;
 }
 

@@ -27,9 +27,8 @@ class DelimParser
 	void Init(char *str, uint8_t n, uint8_t strLength);
 	int state_transition(char c, uint8_t state);
 	bool NextToken();
-
-	bool NextString(char *d_str, uint8_t length);
-	bool NextString(FixedStringBase * d_str);
+	void Skip(int tokenCount);
+	bool NextString(FixedStringBase& targetString);
 	bool NextNum(uint16_t &dst, int base = 10);
 
 	int hexDigitToInt(char c);

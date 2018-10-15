@@ -187,11 +187,16 @@ ParserState SimcomResponseParser::ParseLine()
 			parser.Init((char*)_response.c_str(), 6, _response.length());
 			bufferedResult = ParserState::Error;
 
-			uint16_t firstNum;
-			if (parser.NextNum(firstNum) &&
-				parser.NextNum(ctx->batteryPercent)
-				&& parser.NextNum(ctx->batteryVoltage))
+			uint16_t batteryPercent;
+			uint16_t mVbatteryVoltage;
+
+			parser.Skip(1);
+
+			if (parser.NextNum(batteryPercent)
+				&& parser.NextNum(mVbatteryVoltage))
 			{
+				ctx->_batteryStatus->Voltage = mVbatteryVoltage / 1000.0;
+				ctx->_batteryStatus->Percent = batteryPercent;
 				bufferedResult = ParserState::Success;
 			}
 			return ParserState::None;
@@ -270,11 +275,11 @@ ParserState SimcomResponseParser::ParseLine()
 			parser.NextNum(tmp);
 			parser.NextNum(tmp);
 
-			char numberBuffer[20];
-
-			if (parser.NextString(numberBuffer, 20))
+			FixedString20 number;
+			
+			if (parser.NextString(number))
 			{
-				ctx->_callInfo.CallerNumber = numberBuffer;
+				ctx->_callInfo.CallerNumber = number;
 				ctx->_callInfo.HasAtiveCall = true;
 			}
 		}
@@ -328,7 +333,7 @@ ParserState SimcomResponseParser::ParseLine()
 			{
 				bufferedResult = ParserState::Error;
 			}
-			else if (!parser.NextString(ctx->_operatorName))
+			else if (!parser.NextString(*ctx->_operatorName))
 			{
 				bufferedResult = ParserState::Error;
 			}
@@ -383,8 +388,7 @@ ParserState SimcomResponseParser::ParseLine()
 			uint16_t tmp = 0;
 			if (parser.NextNum(tmp))
 			{
-				char ussd[200];
-				if (parser.NextString(ctx->buffer_ptr, ctx->buffer_size))
+				if (parser.NextString(*ctx->_ussdResponse))
 				{
 					return ParserState::Success;
 				}
