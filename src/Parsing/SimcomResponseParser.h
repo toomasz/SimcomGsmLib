@@ -12,7 +12,7 @@
 
 
 
-class ParserSim900
+class SimcomResponseParser
 {
 	enum LineState { PARSER_INITIAL, PARSER_CR, PARSER_LF, PARSER_LINE };
 	uint8_t lineParserState;
@@ -26,7 +26,7 @@ class ParserSim900
 	FixedString150 _response;
 
 public:
-	ParserSim900(CircularDataBuffer& dataBuffer, GsmLogger &logger);
+	SimcomResponseParser(CircularDataBuffer& dataBuffer, GsmLogger &logger);
 
 	GsmNetworkStatus _lastGsmResult;
 

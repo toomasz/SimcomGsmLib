@@ -8,7 +8,7 @@
 #include "Functions/FunctionBase.h"
 #include "Sim900Context.h"
 #include "Parsing/SequenceDetector.h"
-#include "Parsing/ParserSim900.h"
+#include "Parsing/SimcomResponseParser.h"
 #include "S900Socket.h"
 #include "CircularDataBuffer.h"
 #include "GsmLogger.h"
@@ -20,13 +20,15 @@ class S900Socket;
 class SimcomGsm: public Sim900Context
 {
 private:
-		Stream &serial;
+		Stream &_serial;
 		int _currentBaudRate;
-		void SendAt_P(AtCommand commandType, const __FlashStringHelper *command, ...);
+		GsmLogger _logger;
+		SimcomResponseParser _parser;
 		UpdateBaudRateCallback _updateBaudRateCallback;
 		// buffer for incoming data, used because fucking +++ needs 1000ms wait before issuing
 		CircularDataBuffer _dataBuffer;
-		GsmLogger _logger;
+
+		void SendAt_P(AtCommand commandType, const __FlashStringHelper *command, ...);
 public:
 		SimcomGsm(Stream& serial, UpdateBaudRateCallback updateBaudRateCallback);
 		bool EnsureModemConnected(long baudRate);
@@ -39,7 +41,6 @@ public:
 		}
 
 		//void data_printf(const __FlashStringHelper *str, ...);
-		ParserSim900 parser;
 		void PrintDataByte(uint8_t data);
 
 		// Standard modem functions

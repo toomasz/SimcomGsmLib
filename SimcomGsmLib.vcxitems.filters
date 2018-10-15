@@ -9,9 +9,9 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)src\Functions\FunctionGetImei.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)src\Functions\FunctionGetLocation.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)src\SimcomGsmLib.cpp" />
-    <ClCompile Include="$(MSBuildThisFileDirectory)src\Parsing\ParserSim900.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)src\Parsing\DelimParser.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)src\Parsing\SequenceDetector.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)src\Parsing\SimcomResponseParser.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="$(MSBuildThisFileDirectory)src\CircularDataBuffer.h" />
@@ -25,10 +25,10 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)src\Functions\FunctionGetImei.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)src\Functions\FunctionGetLocation.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)src\SimcomGsmLib.h" />
-    <ClInclude Include="$(MSBuildThisFileDirectory)src\Parsing\ParserSim900.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)src\Parsing\DelimParser.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)src\Parsing\SequenceDetector.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)src\SimcomGsmTypes.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)src\Parsing\SimcomResponseParser.h" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Functions">

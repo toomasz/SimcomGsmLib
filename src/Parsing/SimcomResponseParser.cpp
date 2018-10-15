@@ -1,8 +1,8 @@
-#include "ParserSim900.h"
+#include "SimcomResponseParser.h"
 
 #include "MappingHelpers.h"
 
-ParserSim900::ParserSim900(CircularDataBuffer& dataBuffer, GsmLogger& logger):
+SimcomResponseParser::SimcomResponseParser(CircularDataBuffer& dataBuffer, GsmLogger& logger):
 okSeqDetector(PSTR("\r\nOK\r\n")), 
 _dataBuffer(dataBuffer),
 _logger(logger)
@@ -13,7 +13,7 @@ _logger(logger)
 	function = 0;
 }
 
-AtResultType ParserSim900::GetAtResultType()
+AtResultType SimcomResponseParser::GetAtResultType()
 {
 	switch (lastResult)
 	{
@@ -29,7 +29,7 @@ AtResultType ParserSim900::GetAtResultType()
 	}
 }
 /* processes character read from serial port of gsm module */
-void ParserSim900::FeedChar(char c)
+void SimcomResponseParser::FeedChar(char c)
 {
 	if (commandType == AtCommand::SwitchToCommand)
 	{
@@ -96,7 +96,7 @@ void ParserSim900::FeedChar(char c)
 
 
 /* returns true if current line is error: ERROR, CME ERROR etc*/
-bool ParserSim900::IsErrorLine()
+bool SimcomResponseParser::IsErrorLine()
 {
 	if (_response == F("NO CARRIER"))
 	{
@@ -118,13 +118,13 @@ bool ParserSim900::IsErrorLine()
 	return false;
 }
 /* returns true if current line is OK*/
-bool ParserSim900::IsOkLine()
+bool SimcomResponseParser::IsOkLine()
 {
 	if (_response == F("OK"))
 		return true;
 	return false;
 }
-ParserState ParserSim900::ParseLine()
+ParserState SimcomResponseParser::ParseLine()
 {
 	if (commandReady)
 	{
@@ -432,7 +432,7 @@ ParserState ParserSim900::ParseLine()
 	return ParserState::Timeout;
 }
 
-void ParserSim900::SetCommandType(FunctionBase *command)
+void SimcomResponseParser::SetCommandType(FunctionBase *command)
 {
 	this->function = command;
 	commandReady = false;
@@ -441,7 +441,7 @@ void ParserSim900::SetCommandType(FunctionBase *command)
 	bufferedResult = ParserState::Timeout;
 }
 
-void ParserSim900::SetCommandType(AtCommand commandType)
+void SimcomResponseParser::SetCommandType(AtCommand commandType)
 {
 	//if(commandType != AT_SWITH_TO_COMMAND && commandType != AT_SWITCH_TO_DATA)
 	//	while(gsm->ser->available())
@@ -454,7 +454,7 @@ void ParserSim900::SetCommandType(AtCommand commandType)
 	bufferedResult = ParserState::Timeout;
 }
 
-int ParserSim900::StateTransition(char c)
+int SimcomResponseParser::StateTransition(char c)
 {
 	switch (lineParserState)
 	{

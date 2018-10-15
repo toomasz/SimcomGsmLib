@@ -1,12 +1,12 @@
 #include "SimcomGsmLib.h"
 
 SimcomGsm::SimcomGsm(Stream& serial, UpdateBaudRateCallback updateBaudRateCallback) :
-serial(serial),
-parser(_dataBuffer, _logger)
+_serial(serial),
+_parser(_dataBuffer, _logger)
 {
 	lastDataWrite = 0;
 
-	parser.ctx = this;
+	_parser.ctx = this;
 	_updateBaudRateCallback = updateBaudRateCallback;
 	_currentBaudRate = 0;
 }
@@ -18,7 +18,7 @@ AtResultType SimcomGsm::GetRegistrationStatus(GsmNetworkStatus& networkStatus)
 	auto result = PopCommandResult(AT_DEFAULT_TIMEOUT);
 	if (result == AtResultType::Success)
 	{
-		networkStatus = parser._lastGsmResult;
+		networkStatus = _parser._lastGsmResult;
 	}
 	return result;
 }
@@ -126,7 +126,7 @@ bool SimcomGsm::DataAvailable()
 	{
 		return true;
 	}
-	if (serial.available())
+	if (_serial.available())
 	{
 		return true;
 	}
@@ -160,7 +160,7 @@ int SimcomGsm::DataRead()
 		//PrintDataByte(ret);
 		return ret;
 	}
-	ret = serial.read();
+	ret = _serial.read();
 	if(ret != -1)
 	{
 	//	PrintDataByte(ret);
@@ -170,7 +170,7 @@ int SimcomGsm::DataRead()
 
 AtResultType SimcomGsm::SwitchToCommandMode()
 {
-	parser.SetCommandType(AtCommand::SwitchToCommand);
+	_parser.SetCommandType(AtCommand::SwitchToCommand);
 	_dataBuffer.commandBeforeRN = true;
 	// +++ escape sequence needs to wait 1000ms after last data was sent via transparent connection
 	// in the meantime data from tcp connection may arrive so we read it here to dataBuffer
@@ -188,26 +188,26 @@ AtResultType SimcomGsm::SwitchToCommandMode()
 		}
 	}*/
 	
-	serial.print(F("+++"));
+	_serial.print(F("+++"));
 	lastDataWrite = millis();
 	return PopCommandResult(500);
 }
 
 AtResultType SimcomGsm::SwitchToCommandModeDropData()
 {
-	parser.SetCommandType(AtCommand::SwitchToCommand);
-	serial.flush();
-	while (serial.available())
+	_parser.SetCommandType(AtCommand::SwitchToCommand);
+	_serial.flush();
+	while (_serial.available())
 	{
-		serial.read();
+		_serial.read();
 	}
 	delay(1500);
-	while (serial.available())
+	while (_serial.available())
 	{
-		serial.read();
+		_serial.read();
 	}
 
-	serial.print(F("+++"));
+	_serial.print(F("+++"));
 
 	return PopCommandResult(500);
 }
@@ -224,9 +224,9 @@ AtResultType SimcomGsm::SwitchToDataMode()
 	if(result == AtResultType::Success)
 	{
 		delay(100);
-		while(serial.available())
+		while(_serial.available())
 		{
-			int c = serial.read();
+			int c = _serial.read();
 			//pr("\nsd_data: %c\n", (char)c);
 			//ds.print("s_data: "); ds.println((int)c);
 			_dataBuffer.WriteDataBuffer(c);
@@ -240,17 +240,17 @@ AtResultType SimcomGsm::SwitchToDataMode()
 AtResultType SimcomGsm::PopCommandResult( int timeout )
 {
 	unsigned long start = millis();
-	while(parser.commandReady == false && (millis()-start) < (unsigned long)timeout)
+	while(_parser.commandReady == false && (millis()-start) < (unsigned long)timeout)
 	{
-		if(serial.available())
+		if(_serial.available())
 		{
-			char c = serial.read();
-			parser.FeedChar(c);
+			char c = _serial.read();
+			_parser.FeedChar(c);
 		}
 	}
 
-	auto commandResult = parser.GetAtResultType();
-	parser.SetCommandType(0);
+	auto commandResult = _parser.GetAtResultType();
+	_parser.SetCommandType(0);
 	auto elapsedMs = millis() - start;
 	_logger.Log_P(F(" --- %d ms ---"), elapsedMs);
 	return commandResult;
@@ -298,33 +298,33 @@ AtResultType SimcomGsm::SetApn(const char *apnName, const char *username,const c
 
 void SimcomGsm::DataWrite( const __FlashStringHelper* data )
 {
-	serial.print(data);
+	_serial.print(data);
 	lastDataWrite = millis();
 }
 
 void SimcomGsm::DataWrite( char* data )
 {
-	serial.print(data);
+	_serial.print(data);
 	lastDataWrite = millis();
 }
 
 void SimcomGsm::DataWrite( char *data, int length )
 {
-	serial.write((unsigned char*)data, length);
+	_serial.write((unsigned char*)data, length);
 	lastDataWrite = millis();
 }
 
 void SimcomGsm::DataWrite( char c )
 {
-	serial.write(c);
+	_serial.write(c);
 	lastDataWrite = millis();
 }
 
 
 void SimcomGsm::DataEndl()
 {
-	serial.print(F("\r\n"));
-	serial.flush();
+	_serial.print(F("\r\n"));
+	_serial.flush();
 	lastDataWrite = millis();
 }
 AtResultType SimcomGsm::At()
@@ -380,17 +380,17 @@ void SimcomGsm::wait(int ms)
 	unsigned long start = millis();
 	while ((millis() - start) <= (unsigned long)ms)
 	{
-		if (serial.available())
+		if (_serial.available())
 		{
-			parser.FeedChar(serial.read());
+			_parser.FeedChar(_serial.read());
 		}
 	}
 }
 
 AtResultType SimcomGsm::ExecuteFunction(FunctionBase &function)
 {
-	parser.SetCommandType(&function);
-	serial.println(function.getCommand());
+	_parser.SetCommandType(&function);
+	_serial.println(function.getCommand());
 	
 	auto initialResult = PopCommandResult(function.functionTimeout);
 	
@@ -423,8 +423,8 @@ AtResultType SimcomGsm::ExecuteFunction(FunctionBase &function)
 		p++;
 	}
 	delay(500);
-	parser.SetCommandType(&function);
-	serial.println(function.getCommand());
+	_parser.SetCommandType(&function);
+	_serial.println(function.getCommand());
 	return PopCommandResult(function.functionTimeout);
 }
 
@@ -434,11 +434,11 @@ AtResultType SimcomGsm::SendSms(char *number, char *message)
 	
 	uint64_t start = millis();
 	// wait for >
-	while (serial.read() != '>')
+	while (_serial.read() != '>')
 		if (millis() - start > 200)
 			return AtResultType::Error;
-	serial.print(message);
-	serial.print('\x1a');
+	_serial.print(message);
+	_serial.print('\x1a');
 	return PopCommandResult(AT_DEFAULT_TIMEOUT);
 }
 AtResultType SimcomGsm::SendUssdWaitResponse(char *ussd, char*response, int responseBufferLength)
@@ -451,7 +451,7 @@ AtResultType SimcomGsm::SendUssdWaitResponse(char *ussd, char*response, int resp
 }
 void SimcomGsm::SendAt_P(AtCommand commnd, const __FlashStringHelper* command, ...)
 {
-	parser.SetCommandType(commnd);
+	_parser.SetCommandType(commnd);
 
 	va_list argptr;
 	va_start(argptr, command);
@@ -459,7 +459,7 @@ void SimcomGsm::SendAt_P(AtCommand commnd, const __FlashStringHelper* command, .
 	char commandBuffer[200];
 	vsnprintf_P(commandBuffer, 200, (PGM_P)command, argptr);
 	_logger.Log_P(F(" => %s"), commandBuffer);
-	serial.println(commandBuffer);
+	_serial.println(commandBuffer);
 
 	va_end(argptr);
 }
@@ -498,12 +498,12 @@ AtResultType SimcomGsm::Cipshut()
 
 void SimcomGsm::DataWriteNumber(int c)
 {
-	serial.print(c);
+	_serial.print(c);
 	lastDataWrite = millis();
 }
 void SimcomGsm::DataWriteNumber(uint16_t c)
 {
-	serial.print(c);
+	_serial.print(c);
 	lastDataWrite = millis();
 }
 
