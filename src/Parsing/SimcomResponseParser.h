@@ -5,7 +5,7 @@
 #include "Sim900Constants.h"
 #include "Functions/FunctionBase.h"
 #include "CircularDataBuffer.h"
-#include "Sim900Context.h"
+#include "ParserContext.h"
 #include "DelimParser.h"
 #include "SequenceDetector.h"
 #include "GsmLogger.h"
@@ -22,13 +22,13 @@ class SimcomResponseParser
 	CircularDataBuffer& _dataBuffer;
 	GsmLogger &_logger;
 	FixedString150 _response;
+	ParserContext& _parserContext;
 public:
-	SimcomResponseParser(CircularDataBuffer& dataBuffer, GsmLogger &logger);
+	SimcomResponseParser(CircularDataBuffer& dataBuffer, ParserContext &parserContext, GsmLogger &logger);
 
 	GsmNetworkStatus _lastGsmResult;
 
 	AtResultType GetAtResultType();
-	Sim900Context *ctx;
 	volatile bool commandReady;
 	FunctionBase *function;
 	void SetCommandType(FunctionBase *command);

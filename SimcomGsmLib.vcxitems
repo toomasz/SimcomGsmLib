@@ -32,7 +32,7 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)src\Parsing\SequenceDetector.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)src\SimcomGsmLib.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)src\Sim900Constants.h" />
-    <ClInclude Include="$(MSBuildThisFileDirectory)src\Sim900Context.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)src\Parsing\ParserContext.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="$(MSBuildThisFileDirectory)src\Parsing\ParsingHelpers.cpp" />
