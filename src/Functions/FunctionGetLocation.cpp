@@ -7,6 +7,7 @@
 
 
 #include "FunctionGetLocation.h"
+#include "../Sim900Constants.h"
 
 // default constructor
 FunctionGetLocation::FunctionGetLocation()
@@ -16,7 +17,7 @@ FunctionGetLocation::FunctionGetLocation()
 	gpsLong[0] = 0;
 } //FunctionGetLocation
 
-int FunctionGetLocation::IncomingLine(unsigned char *line, int lineLength, uint8_t crc)
+ParserState FunctionGetLocation::IncomingLine(FixedString150& line)
 {
 //AT+CIPGSMLOC=1,1 // triangulate
 //+CIPGSMLOC: 0,19.667806,49.978185,2014/03/20,14:12:27
@@ -25,22 +26,22 @@ int FunctionGetLocation::IncomingLine(unsigned char *line, int lineLength, uint8
 // +CIPGSMLOC: 601
 
 		
-	if(crc == CRC_OK)
+	if(line == F("OK"))
 	{
-		if(parseOk)
-			return S900_OK;
+		if (parseOk)
+			return ParserState::Success;
 		else
-			return S900_ERR;
+			return ParserState::Error;
 	}
 	
 	
-	if(lineLength > 30)
+	if(line.length() > 30)
 	{
 		
-		char *p = (char*)line+14;
+		char *p = (char*)line.c_str()+14;
 				
 		int n = 0;
-		while(n < lineLength && *(p+n) != ',')	
+		while(n < line.length() && *(p+n) != ',')	
 			n++;
 			
 		strncpy(gpsLong, p, n);
@@ -51,7 +52,7 @@ int FunctionGetLocation::IncomingLine(unsigned char *line, int lineLength, uint8
 		p+=n+1;
 			
 		n=0;
-		while(n < lineLength && *(p+n) != ',')
+		while(n < line.length() && *(p+n) != ',')
 			n++;
 		gpsLat[n] = 0;
 		
@@ -60,7 +61,7 @@ int FunctionGetLocation::IncomingLine(unsigned char *line, int lineLength, uint8
 		parseOk = true;
 	}
 	
-	return S900_NONE;
+	return ParserState::None;
 }
 
 const __FlashStringHelper* FunctionGetLocation::getCommand()

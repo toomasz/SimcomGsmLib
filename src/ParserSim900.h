@@ -23,7 +23,7 @@ class ParserSim900
 	ParserState bufferedResult; // stores actual result for commands like CREG while parser is waiting for OK line
 	CircularDataBuffer& _dataBuffer;
 	GsmLogger &_logger;
-	FixedString<ResponseBufferSize> _response;
+	FixedString150 _response;
 
 public:
 	ParserSim900(CircularDataBuffer& dataBuffer, GsmLogger &logger);

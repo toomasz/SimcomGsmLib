@@ -1,14 +1,8 @@
-/* 
-* FunctionGetImei.h
-*
-* Created: 2014-03-21 18:52:17
-* Author: Tom
-*/
-
-#include "FunctionBase.h"
 #ifndef __FUNCTIONGETIMEI_H__
 #define __FUNCTIONGETIMEI_H__
 
+#include <FixedString.h>
+#include "FunctionBase.h"
 
 class FunctionGetImei: public FunctionBase
 {
@@ -16,7 +10,7 @@ public:
 	char Imei[16];
 	bool imeiOk;
 	FunctionGetImei();
-	int IncomingLine(unsigned char *line, int lineLength, uint8_t crc);
+	ParserState IncomingLine(FixedString150 &line);
     const __FlashStringHelper* getCommand();
 
 }; 

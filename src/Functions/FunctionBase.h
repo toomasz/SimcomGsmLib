@@ -23,7 +23,7 @@ class FunctionBase
     //508 551 395
 	FunctionBase();
 	
-    virtual ParserState IncomingLine(FixedStringBase &line)=0;
+    virtual ParserState IncomingLine(FixedString150 &line)=0;
 	virtual const __FlashStringHelper* getCommand() = 0;
 	virtual const __FlashStringHelper* GetInitSequence()
 	{

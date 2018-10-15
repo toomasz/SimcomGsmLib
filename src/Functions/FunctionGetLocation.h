@@ -18,7 +18,7 @@ class FunctionGetLocation: public FunctionBase
 	bool parseOk;
 	
 	FunctionGetLocation();
-	int IncomingLine(unsigned char *line, int lineLength, uint8_t crc);
+	ParserState IncomingLine(FixedString150& line);
 	const __FlashStringHelper* getCommand();
     virtual const __FlashStringHelper* GetInitSequence();
 
