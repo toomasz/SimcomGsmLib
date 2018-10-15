@@ -51,7 +51,7 @@ public:
 		AtResultType Shutdown();
 		AtResultType GetRegistrationStatus(GsmNetworkStatus& networkStatus);
 		AtResultType GetOperatorName(FixedStringBase &operatorName, bool returnImsi = false);
-		AtResultType GetIMEI();
+		AtResultType GetImei(FixedString20 &imei);
 		AtResultType GetBatteryStatus(BatteryStatus &batteryStatus);
 		AtResultType GetSignalQuality();
 		AtResultType SetEcho(bool echoEnabled);
@@ -89,9 +89,7 @@ public:
 		void DataWriteNumber( int c );
 		void DataWriteNumber( uint16_t c );
 	    void DataWrite(char c);
-		void DataEndl();	
-
-		bool IsPoweredUp();
+		void DataEndl();
 		void wait(int millis);
 };
 

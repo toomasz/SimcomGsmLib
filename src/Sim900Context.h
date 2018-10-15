@@ -10,12 +10,12 @@ struct Sim900Context
 	char ipAddress[16];
 	FixedStringBase* _operatorName;
 	bool _isOperatorNameReturnedInImsiFormat;
-	char imei[16];
 	uint16_t cellId;
 	uint16_t lac;
 	FixedString150*_ussdResponse;
+	FixedString20* _imei;
 	BatteryStatus* _batteryStatus;
-	IncomingCallInfo _callInfo;
+	IncomingCallInfo *_callInfo;
 	SimcomIpState _ipState;
 }; //Sim900Context
 

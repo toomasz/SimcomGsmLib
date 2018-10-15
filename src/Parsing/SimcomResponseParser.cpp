@@ -1,6 +1,7 @@
 #include "SimcomResponseParser.h"
 
 #include "MappingHelpers.h"
+#include "ParsingHelpers.h"
 
 SimcomResponseParser::SimcomResponseParser(CircularDataBuffer& dataBuffer, GsmLogger& logger):
 okSeqDetector(PSTR("\r\nOK\r\n")), 
@@ -279,8 +280,8 @@ ParserState SimcomResponseParser::ParseLine()
 			
 			if (parser.NextString(number))
 			{
-				ctx->_callInfo.CallerNumber = number;
-				ctx->_callInfo.HasAtiveCall = true;
+				ctx->_callInfo->CallerNumber = number;
+				ctx->_callInfo->HasAtiveCall = true;
 			}
 		}
 		if (IsOkLine())
@@ -354,24 +355,12 @@ ParserState SimcomResponseParser::ParseLine()
 	}
 	if(commandType == AtCommand::Gsn)
 	{
-		if(_response.length() > 10)
+		auto imeiValid = ParsingHelpers::IsImeiValid(_response);
+		if (imeiValid)
 		{
-			bool imeiOk = true;
-					
-			for (int i = 0; i < _response.length(); i++)
-			{
-				if (_response.c_str()[i] < '0' || _response.c_str()[i] > '9')
-				{
-					imeiOk = false;
-				}
-			}
-					
-			if(imeiOk)
-			{
-				strncpy(ctx->imei, (char*)_response.c_str(), _response.length());
-				return ParserState::None;
-			}
-		}
+			*ctx->_imei = _response;
+			return ParserState::None;
+		}		
 		if (lastResult == ParserState::None)
 		{
 			if (IsOkLine())

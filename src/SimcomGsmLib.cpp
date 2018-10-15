@@ -77,13 +77,10 @@ AtResultType SimcomGsm::GetBatteryStatus(BatteryStatus &batteryStatus)
 
 AtResultType SimcomGsm::GetIpState(SimcomIpState &status)
 {
+	_ipState = SimcomIpState::Unknown;
+
 	SendAt_P(AtCommand::Cipstatus, F("AT+CIPSTATUS"));
-	auto result = PopCommandResult(AT_DEFAULT_TIMEOUT);
-	if (result == AtResultType::Success)
-	{
-		status = _ipState;
-	}
-	return result;
+	return PopCommandResult(AT_DEFAULT_TIMEOUT);	
 }
 
 AtResultType SimcomGsm::GetIpAddress( )
@@ -362,15 +359,11 @@ bool SimcomGsm::EnsureModemConnected(long requestedBaudRate)
 	}
 	return atResult == AtResultType::Success;
 }
-AtResultType SimcomGsm::GetIMEI()
+AtResultType SimcomGsm::GetImei(FixedString20 &imei)
 {
-	SendAt_P(AtCommand::Generic, F("AT+GSN"));
-	return PopCommandResult(100);
-}
-
-bool SimcomGsm::IsPoweredUp()
-{
-	return GetIMEI() == AtResultType::Success;
+	_imei = &imei;
+	SendAt_P(AtCommand::Gsn, F("AT+GSN"));
+	return PopCommandResult(AT_DEFAULT_TIMEOUT);
 }
 
 void SimcomGsm::wait(int ms)
@@ -511,11 +504,9 @@ AtResultType SimcomGsm::Call(char *number)
 
 AtResultType SimcomGsm::GetIncomingCall(IncomingCallInfo & callInfo)
 {
-	_callInfo.CallerNumber.clear();
-	_callInfo.HasAtiveCall = false;
+	_callInfo = &callInfo;
 	SendAt_P(AtCommand::Clcc, F("AT+CLCC"));
 	auto result = PopCommandResult(AT_DEFAULT_TIMEOUT);
-	callInfo = _callInfo;
 	return result;
 }
 

@@ -18,11 +18,11 @@
   </ItemGroup>
   <ItemGroup>
     <!-- <ClInclude Include="$(MSBuildThisFileDirectory)Sim900NetLib.h" /> -->
+    <ClInclude Include="$(MSBuildThisFileDirectory)src\Parsing\ParsingHelpers.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)src\CircularDataBuffer.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)src\Parsing\DelimParser.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)src\GsmDebugHelpers.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)src\Functions\FunctionBase.h" />
-    <ClInclude Include="$(MSBuildThisFileDirectory)src\Functions\FunctionGetImei.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)src\Functions\FunctionGetLocation.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)src\GsmLogger.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)src\SimcomGsmTypes.h" />
@@ -35,10 +35,10 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)src\Sim900Context.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="$(MSBuildThisFileDirectory)src\Parsing\ParsingHelpers.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)src\CircularDataBuffer.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)src\Parsing\DelimParser.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)src\Functions\FunctionBase.cpp" />
-    <ClCompile Include="$(MSBuildThisFileDirectory)src\Functions\FunctionGetImei.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)src\Functions\FunctionGetLocation.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)src\GsmLogger.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)src\MappingHelpers.cpp" />
