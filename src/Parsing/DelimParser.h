@@ -11,14 +11,13 @@ enum ParserStates { INITIAL, INSIDE, START_Q, INSIDE_QUOTE, END_Q, DELIM, ERR, E
 class DelimParser
 {
 	public:
-	char *str;
-	uint8_t strLength;
+	FixedString150 _line;
 	uint8_t n;
 	uint8_t parserState;
 	uint8_t tokStart;
 	
 	bool BeginParsing(FixedString150 &line, const __FlashStringHelper* commandStart);
-	void Init(char *str, uint8_t n, uint8_t strLength);
+	void Init(FixedString150 &line, uint8_t n);
 	int state_transition(char c, uint8_t state);
 	bool NextToken();
 	void Skip(int tokenCount);

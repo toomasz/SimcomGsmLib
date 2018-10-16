@@ -1,16 +1,18 @@
 #include "DelimParser.h"
 
-void DelimParser::Init(char *str, uint8_t n, uint8_t strLength)
+void DelimParser::Init(FixedString150 &line, uint8_t n)
 {
-	this->str = str;
-	this->strLength = strLength;
+	_line = line;
 	this->tokStart = 0;
 	this->n = n;
 	parserState = INITIAL;
 }
 bool DelimParser::BeginParsing(FixedString150 &line, const __FlashStringHelper* commandStart)
 {
-
+	_line = line;
+	this->tokStart = 0;
+	this->n = strlen_P((PGM_P)commandStart);
+	parserState = INITIAL;
 }
 
 int DelimParser::state_transition(char c, uint8_t state)
@@ -47,32 +49,24 @@ int DelimParser::state_transition(char c, uint8_t state)
 
 bool DelimParser::NextToken()
 {
-	while (n <= strLength && (parserState != ERR))
+	while (n <= _line.length() && (parserState != ERR))
 	{
 		int prevState = parserState;
-		parserState = (n == strLength) ? END : state_transition(str[n], parserState);
+		parserState = (n == _line.length()) ? END : state_transition(_line.c_str()[n], parserState);
 
 		if (prevState != parserState)
 		{
-
-			//printf("%s -> %s\n", State2Str(prevState), State2Str(parserState));
-			// * -> INSIDE
 			if (parserState == INSIDE || parserState == INSIDE_QUOTE)
-			tokStart = n;
-
+			{
+				tokStart = n;
+			}
 			// INSIDE -> *
 			else if (prevState == INSIDE || prevState == INSIDE_QUOTE)
-			{
-				// token is between tokStart and n
-				//while (tokStart < n)
-				//	printf("%c", str[tokStart++]);
-				//printf("\n");
+			{				
 				n++;
 				return true;
 			}
 		}
-		//printf("%c\n", str[n]);
-
 		n++;
 	}
 	return false;
@@ -93,31 +87,35 @@ bool DelimParser::NextString(FixedStringBase& targetString)
 	}
 	int tokLength = n - 1 - tokStart;
 	targetString.clear();
-	targetString.append(str + tokStart, tokLength);
+	targetString.append(_line.c_str() + tokStart, tokLength);
 	return true;
 }
 
 bool DelimParser::NextNum(uint16_t &dst, int base /*= 10*/)
 {
 	if (!NextToken())
+	{
 		return false;
-		dst = 0;
+	}
+	dst = 0;
 
-		int x = 1;
-		int i = n - 1;
-		do
+	int x = 1;
+	int i = n - 1;
+	do
+	{
+		char c = _line.c_str()[i - 1];
+		int digitNum = hexDigitToInt(c);
+		if (digitNum == -1)
 		{
-			char c = str[i - 1];
-			int digitNum = hexDigitToInt(c);
-			if (digitNum == -1)
 			return false;
-
-			dst += x*digitNum;
-			x *= base;
 		}
-		while (--i > tokStart);
 
-		return true;
+		dst += x*digitNum;
+		x *= base;
+	}
+	while (--i > tokStart);
+
+	return true;
 }
 
 int DelimParser::hexDigitToInt(char c)
