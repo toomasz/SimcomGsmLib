@@ -70,6 +70,7 @@ public:
 		AtResultType GetCipmux(bool &cipmux);
 		AtResultType SetTransparentMode(bool transparentMode);
 		AtResultType SetApn(const char *apnName, const char *username, const char *password);
+		AtResultType SetCipmux(bool cipmux);
 		AtResultType AttachGprs();
 		AtResultType StartTransparentIpConnection(const char *address, int port, S900Socket *socket);
 		

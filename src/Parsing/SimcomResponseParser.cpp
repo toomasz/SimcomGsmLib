@@ -376,6 +376,20 @@ ParserState SimcomResponseParser::ParseLine()
 	{
 		if (parser.BeginParsing(_response, F("+CIPMUX: ")))
 		{
+			uint16_t isEnabled;
+			if (parser.NextNum(isEnabled))
+			{
+				_parserContext.Cipmux = isEnabled == 1;
+				return ParserState::None;
+			}
+			return ParserState::Error;
+		}
+		if (lastResult == ParserState::None)
+		{
+			if (IsOkLine())
+				return ParserState::Success;
+			if (IsErrorLine())
+				return ParserState::Error;
 		}
 	}
 	if(commandType == AtCommand::Creg)

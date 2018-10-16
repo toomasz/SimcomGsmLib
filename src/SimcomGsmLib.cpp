@@ -90,9 +90,19 @@ AtResultType SimcomGsm::GetIpAddress(FixedString20& ipAddress)
 AtResultType SimcomGsm::GetCipmux(bool& cipmux)
 {
 	SendAt_P(AtCommand::Cipmux, F("AT+CIPMUX?"));
-	return PopCommandResult();
+	auto result = PopCommandResult();
+	if (result == AtResultType::Success)
+	{
+		cipmux = _parserContext.Cipmux;
+	}
+	return result;
 }
 
+AtResultType SimcomGsm::SetCipmux(bool cipmux)
+{
+	SendAt_P(AtCommand::Generic, F("AT+CIPMUX=%d"), cipmux ? 1 : 0);
+	return PopCommandResult();
+}
 AtResultType SimcomGsm::AttachGprs()
 {
 	SendAt_P(AtCommand::Generic, F("AT+CIICR"));
@@ -277,20 +287,10 @@ AtResultType SimcomGsm::SetEcho(bool echoEnabled)
 	delay(100); // without 100ms wait, next command failed, idk wky
 	return r;
 }
-/*
-Set gsm modem to use transparent mode
-*/
-AtResultType SimcomGsm::SetTransparentMode( bool transparentMode )
-{	
-	if (transparentMode)
-	{
-		SendAt_P(AtCommand::Generic, F("AT+CIPMODE=1"));
-	}
-	else
-	{
-		SendAt_P(AtCommand::Generic, F("AT+CIPMODE=0"));
-	}
-		
+
+AtResultType SimcomGsm::SetTransparentMode(bool transparentMode)
+{
+	SendAt_P(AtCommand::Generic, F("AT+CIPMODE=%d"), transparentMode ? 1:0);
 	return PopCommandResult();
 }
 
