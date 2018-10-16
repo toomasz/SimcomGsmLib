@@ -1,18 +1,16 @@
 #include "DelimParser.h"
 
-void DelimParser::Init(FixedString150 &line, uint8_t n)
-{
-	_line = line;
-	this->tokStart = 0;
-	this->n = n;
-	parserState = INITIAL;
-}
 bool DelimParser::BeginParsing(FixedString150 &line, const __FlashStringHelper* commandStart)
 {
+	if (!line.startsWith(commandStart))
+	{
+		return false;
+	}
 	_line = line;
 	this->tokStart = 0;
 	this->n = strlen_P((PGM_P)commandStart);
 	parserState = INITIAL;
+	return true;
 }
 
 int DelimParser::state_transition(char c, uint8_t state)

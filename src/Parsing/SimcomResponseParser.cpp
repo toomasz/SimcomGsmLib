@@ -162,9 +162,8 @@ ParserState SimcomResponseParser::ParseLine()
 	if(commandType == AtCommand::Csq)
 	{
 		//+CSQ: 17,0
-		if(_response.startsWith(F("+CSQ:")))
+		if(parser.BeginParsing(_response,F("+CSQ: ")))
 		{
-			parser.Init(_response, 6);
 			bufferedResult = ParserState::Error;
 			uint16_t signalQuality;
 			uint16_t signalStrength;
@@ -188,9 +187,8 @@ ParserState SimcomResponseParser::ParseLine()
 
 	if (commandType == AtCommand::Cbc)
 	{
-		if (_response.startsWith(F("+CBC: ")))
+		if (parser.BeginParsing(_response,F("+CBC: ")))
 		{
-			parser.Init(_response, 6);
 			bufferedResult = ParserState::Error;
 
 			uint16_t batteryPercent;
@@ -258,9 +256,8 @@ ParserState SimcomResponseParser::ParseLine()
 
 	if (commandType == AtCommand::Clcc)
 	{		
-		if (_response.startsWith(F("+CLCC:")))
+		if (parser.BeginParsing(_response,F("+CLCC: ")))
 		{
-			parser.Init(_response, 6);
 			uint16_t tmp;
 			parser.NextNum(tmp);
 			parser.NextNum(tmp);
@@ -314,9 +311,8 @@ ParserState SimcomResponseParser::ParseLine()
 	if(commandType == AtCommand::Cops)
 	{
 		//+COPS: 0,0,"PLAY"
-		if(_response.startsWith(F("+COPS:")))
+		if(parser.BeginParsing(_response, F("+COPS:")))
 		{				
-			parser.Init(_response, 7);
 			uint16_t operatorNameFormat;
 			if (!parser.NextNum(operatorNameFormat))
 			{
@@ -363,9 +359,8 @@ ParserState SimcomResponseParser::ParseLine()
 	}
 	if (commandType == AtCommand::Cusd)
 	{
-		if (_response.startsWith(F("+CUSD:")))
+		if (parser.BeginParsing(_response, F("+CUSD: ")))
 		{
-			parser.Init(_response, 7);
 			uint16_t tmp = 0;
 			if (parser.NextNum(tmp))
 			{
@@ -379,16 +374,15 @@ ParserState SimcomResponseParser::ParseLine()
 	}
 	if (commandType == AtCommand::Cipmux)
 	{
-		if (parser.BeginParsing(_response, F("+CIPMUX:")))
+		if (parser.BeginParsing(_response, F("+CIPMUX: ")))
 		{
 		}
 	}
 	if(commandType == AtCommand::Creg)
 	{
 		// example valid line : +CREG: 2,1,"07E6","D68F"
-		if(_response.startsWith(F("+CREG:")))
+		if(parser.BeginParsing(_response, F("+CREG: ")))
 		{
-			parser.Init(_response, 7);
 			uint16_t tmp = 0;
 			if (parser.NextNum(tmp))
 			{

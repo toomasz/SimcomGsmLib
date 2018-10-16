@@ -6,7 +6,17 @@
 #include <FixedString.h>
 #include <WString.h>
 
-enum ParserStates { INITIAL, INSIDE, START_Q, INSIDE_QUOTE, END_Q, DELIM, ERR, END };
+enum ParserStates 
+{ 
+	INITIAL,
+	INSIDE, 
+	START_Q, 
+	INSIDE_QUOTE, 
+	END_Q, 
+	DELIM, 
+	ERR, 
+	END 
+};
 
 class DelimParser
 {
@@ -17,7 +27,6 @@ class DelimParser
 	uint8_t tokStart;
 	
 	bool BeginParsing(FixedString150 &line, const __FlashStringHelper* commandStart);
-	void Init(FixedString150 &line, uint8_t n);
 	int state_transition(char c, uint8_t state);
 	bool NextToken();
 	void Skip(int tokenCount);
