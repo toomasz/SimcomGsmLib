@@ -13,7 +13,7 @@ AtResultType SimcomGsm::GetRegistrationStatus(GsmNetworkStatus& networkStatus)
 {
 	SendAt_P(AtCommand::Creg ,F("AT+CREG?"));
 
-	auto result = PopCommandResult(AT_DEFAULT_TIMEOUT);
+	auto result = PopCommandResult();
 	if (result == AtResultType::Success)
 	{
 		networkStatus = _parser._lastGsmResult;
@@ -23,7 +23,7 @@ AtResultType SimcomGsm::GetRegistrationStatus(GsmNetworkStatus& networkStatus)
 AtResultType SimcomGsm::At(const __FlashStringHelper* command)
 {
 	SendAt_P(AtCommand::Generic, command);
-	auto result = PopCommandResult(AT_DEFAULT_TIMEOUT);
+	auto result = PopCommandResult();
 	return result;
 }
 AtResultType SimcomGsm::GetOperatorName(FixedStringBase &operatorName, bool returnImsi)
@@ -31,7 +31,7 @@ AtResultType SimcomGsm::GetOperatorName(FixedStringBase &operatorName, bool retu
 	SendAt_P(AtCommand::Cops, F("AT+COPS?"));
 	_parserContext.OperatorName = &operatorName;
 
-	auto result = PopCommandResult(AT_DEFAULT_TIMEOUT);
+	auto result = PopCommandResult();
 	if (result != AtResultType::Success)
 	{
 		return result;
@@ -52,7 +52,7 @@ AtResultType SimcomGsm::GetOperatorName(FixedStringBase &operatorName, bool retu
 	}
 
 	SendAt_P(AtCommand::Cops, F("AT+COPS?"));
-	result = PopCommandResult(AT_DEFAULT_TIMEOUT);
+	result = PopCommandResult();
 
 
 	return result;
@@ -62,7 +62,7 @@ AtResultType SimcomGsm::GetSignalQuality(int16_t& signalQuality)
 {
 	_parserContext.CsqSignalQuality = &signalQuality;
 	SendAt_P(AtCommand::Csq, F("AT+CSQ"));
-	auto result = PopCommandResult(AT_DEFAULT_TIMEOUT);
+	auto result = PopCommandResult();
 	return result;
 }
 
@@ -70,21 +70,27 @@ AtResultType SimcomGsm::GetBatteryStatus(BatteryStatus &batteryStatus)
 {
 	_parserContext.BatteryInfo = &batteryStatus;
 	SendAt_P(AtCommand::Cbc,F("AT+CBC"));
-	return PopCommandResult(AT_DEFAULT_TIMEOUT);
+	return PopCommandResult();
 }
 
 AtResultType SimcomGsm::GetIpState(SimcomIpState &ipState)
 {
 	_parserContext.IpState = &ipState;
 	SendAt_P(AtCommand::Cipstatus, F("AT+CIPSTATUS"));
-	return PopCommandResult(AT_DEFAULT_TIMEOUT);	
+	return PopCommandResult();	
 }
 
 AtResultType SimcomGsm::GetIpAddress(FixedString20& ipAddress)
 {
 	_parserContext.IpAddress = &ipAddress;
 	SendAt_P(AtCommand::Cifsr, F("AT+CIFSR"));
-	return PopCommandResult(AT_DEFAULT_TIMEOUT);
+	return PopCommandResult();
+}
+
+AtResultType SimcomGsm::GetCipmux(bool& cipmux)
+{
+	SendAt_P(AtCommand::Cipmux, F("AT+CIPMUX?"));
+	return PopCommandResult();
 }
 
 AtResultType SimcomGsm::AttachGprs()
@@ -110,7 +116,7 @@ AtResultType SimcomGsm::StartTransparentIpConnection(const char *address, int po
 AtResultType SimcomGsm::CloseConnection()
 {
 	SendAt_P(AtCommand::Cipclose, F("AT+CIPCLOSE=1"));
-	return PopCommandResult(AT_DEFAULT_TIMEOUT);
+	return PopCommandResult();
 }
 
 
@@ -215,7 +221,7 @@ AtResultType SimcomGsm::SwitchToDataMode()
 {
 	SendAt_P(AtCommand::SwitchToData, F("ATO"));
 
-	auto result = PopCommandResult(AT_DEFAULT_TIMEOUT);
+	auto result = PopCommandResult();
 	if(result == AtResultType::Success)
 	{
 		delay(100);
@@ -231,7 +237,10 @@ AtResultType SimcomGsm::SwitchToDataMode()
 	lastDataWrite = millis();
 	return result;
 }
-
+AtResultType SimcomGsm::PopCommandResult()
+{
+	return PopCommandResult(AT_DEFAULT_TIMEOUT);
+}
 AtResultType SimcomGsm::PopCommandResult( int timeout )
 {
 	unsigned long start = millis();
@@ -264,7 +273,7 @@ AtResultType SimcomGsm::SetEcho(bool echoEnabled)
 		SendAt_P(AtCommand::Generic, F("ATE0"));
 	}
 
-	auto r = PopCommandResult(AT_DEFAULT_TIMEOUT);
+	auto r = PopCommandResult();
 	delay(100); // without 100ms wait, next command failed, idk wky
 	return r;
 }
@@ -282,13 +291,13 @@ AtResultType SimcomGsm::SetTransparentMode( bool transparentMode )
 		SendAt_P(AtCommand::Generic, F("AT+CIPMODE=0"));
 	}
 		
-	return PopCommandResult(AT_DEFAULT_TIMEOUT);
+	return PopCommandResult();
 }
 
 AtResultType SimcomGsm::SetApn(const char *apnName, const char *username,const char *password )
 {
 	SendAt_P(AtCommand::Generic, F("AT+CSTT=\"%s\",\"%s\",\"%s\""), apnName, username, password);
-	return PopCommandResult(AT_DEFAULT_TIMEOUT);
+	return PopCommandResult();
 }
 
 void SimcomGsm::DataWrite( const __FlashStringHelper* data )
@@ -331,7 +340,7 @@ AtResultType SimcomGsm::At()
 AtResultType SimcomGsm::SetBaudRate(uint32_t baud)
 {
 	SendAt_P(AtCommand::Generic, F("AT+IPR=%d"), baud);
-	return PopCommandResult(AT_DEFAULT_TIMEOUT);
+	return PopCommandResult();
 }
 bool SimcomGsm::EnsureModemConnected(long requestedBaudRate)
 {
@@ -361,7 +370,7 @@ AtResultType SimcomGsm::GetImei(FixedString20 &imei)
 {
 	_parserContext.Imei = &imei;
 	SendAt_P(AtCommand::Gsn, F("AT+GSN"));
-	return PopCommandResult(AT_DEFAULT_TIMEOUT);
+	return PopCommandResult();
 }
 
 void SimcomGsm::wait(int ms)
@@ -399,7 +408,7 @@ AtResultType SimcomGsm::ExecuteFunction(FunctionBase &function)
 		//printf("Exec: %s\n", p);
 		wait(100);
 		SendAt_P(AtCommand::Generic, (__FlashStringHelper*)p);
-		auto r = PopCommandResult(AT_DEFAULT_TIMEOUT);
+		auto r = PopCommandResult();
 		if(r != AtResultType::Success)
 		{
 				
@@ -428,7 +437,7 @@ AtResultType SimcomGsm::SendSms(char *number, char *message)
 			return AtResultType::Error;
 	_serial.print(message);
 	_serial.print('\x1a');
-	return PopCommandResult(AT_DEFAULT_TIMEOUT);
+	return PopCommandResult();
 }
 AtResultType SimcomGsm::SendUssdWaitResponse(char *ussd, FixedString150& response)
 {
@@ -480,7 +489,7 @@ int SimcomGsm::FindCurrentBaudRate()
 AtResultType SimcomGsm::Cipshut()
 {
 	SendAt_P(AtCommand::Cipshut, F("AT+CIPSHUT"));
-	return PopCommandResult(AT_DEFAULT_TIMEOUT);
+	return PopCommandResult();
 }
 
 void SimcomGsm::DataWriteNumber(int c)
@@ -497,21 +506,21 @@ void SimcomGsm::DataWriteNumber(uint16_t c)
 AtResultType SimcomGsm::Call(char *number)
 {
 	SendAt_P(AtCommand::Generic, F("ATD%s;"), number);
-	return PopCommandResult(AT_DEFAULT_TIMEOUT);
+	return PopCommandResult();
 }
 
 AtResultType SimcomGsm::GetIncomingCall(IncomingCallInfo & callInfo)
 {
 	_parserContext.CallInfo = &callInfo;
 	SendAt_P(AtCommand::Clcc, F("AT+CLCC"));
-	auto result = PopCommandResult(AT_DEFAULT_TIMEOUT);
+	auto result = PopCommandResult();
 	return result;
 }
 
 AtResultType SimcomGsm::Shutdown()
 {
 	SendAt_P(AtCommand::Generic, F("AT+CPOWD=0"));
-	return PopCommandResult(AT_DEFAULT_TIMEOUT);
+	return PopCommandResult();
 }
 
 

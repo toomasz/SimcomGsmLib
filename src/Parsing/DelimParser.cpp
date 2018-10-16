@@ -1,11 +1,3 @@
-/* 
-* DelimParser.cpp
-*
-* Created: 2014-06-19 15:45:17
-* Author: Tomasz Œcis³owicz
-*/
-
-
 #include "DelimParser.h"
 
 void DelimParser::Init(char *str, uint8_t n, uint8_t strLength)
@@ -15,6 +7,10 @@ void DelimParser::Init(char *str, uint8_t n, uint8_t strLength)
 	this->tokStart = 0;
 	this->n = n;
 	parserState = INITIAL;
+}
+bool DelimParser::BeginParsing(FixedString150 &line, const __FlashStringHelper* commandStart)
+{
+
 }
 
 int DelimParser::state_transition(char c, uint8_t state)
@@ -134,21 +130,3 @@ int DelimParser::hexDigitToInt(char c)
 		return c - 'a' + 10;
 	return -1;
 }
-
-
-/*char *State2Str(int state)
-{
-switch (state)
-{
-case INITIAL: return "INITIAL";
-case INSIDE: return "INSIDE";
-case INSIDE_QUOTE: return "INSIDE_QUOTE";
-case START_Q: return "START_Q";
-case END_Q: return "END_Q";
-case ERR: return "ERR";
-case DELIM: return "DELIM";
-case END: return "END";
-default:
-break;
-}
-}*/

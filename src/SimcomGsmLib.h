@@ -30,6 +30,8 @@ private:
 		CircularDataBuffer _dataBuffer;
 
 		void SendAt_P(AtCommand commandType, const __FlashStringHelper *command, ...);
+		AtResultType PopCommandResult(int timeout);
+		AtResultType PopCommandResult();
 public:
 		SimcomGsm(Stream& serial, UpdateBaudRateCallback updateBaudRateCallback);
 		bool EnsureModemConnected(long baudRate);
@@ -59,11 +61,13 @@ public:
 		AtResultType SendSms(char *number, char *message);
 		AtResultType Call(char *number);
 		AtResultType GetIncomingCall(IncomingCallInfo &callInfo);
-		AtResultType PopCommandResult(int timeout);
+		
+
 		AtResultType SendUssdWaitResponse(char *ussd, FixedString150& response);
 		// Tcpip functions
 		AtResultType GetIpState(SimcomIpState &ipStatus);
 		AtResultType GetIpAddress(FixedString20 &ipAddress);
+		AtResultType GetCipmux(bool &cipmux);
 		AtResultType SetTransparentMode(bool transparentMode);
 		AtResultType SetApn(const char *apnName, const char *username, const char *password);
 		AtResultType AttachGprs();
@@ -76,6 +80,7 @@ public:
 		AtResultType SwitchToCommandMode();
 		AtResultType SwitchToCommandModeDropData();
 		AtResultType SwitchToDataMode();
+
 		
 		AtResultType ExecuteFunction(FunctionBase &function);
 		// Transparent mode data functions

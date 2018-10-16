@@ -14,6 +14,7 @@ struct ParserContext
 	IncomingCallInfo *CallInfo;
 	SimcomIpState* IpState;
 	bool IsOperatorNameReturnedInImsiFormat;
+	bool Cipmux;
 };
 
 #endif

@@ -377,6 +377,13 @@ ParserState SimcomResponseParser::ParseLine()
 			return ParserState::Error;
 		}
 	}
+	if (commandType == AtCommand::Cipmux)
+	{
+		if (parser.BeginParsing(_response, F("+CIPMUX:")))
+		{
+			parser.Init((char*)_response.c_str(), 7, _response.length());
+		}
+	}
 	if(commandType == AtCommand::Creg)
 	{
 		// example valid line : +CREG: 2,1,"07E6","D68F"

@@ -1,17 +1,10 @@
-/* 
-* DelimParser.h
-*
-* Created: 2014-06-19 15:45:17
-* Author: Tomasz Œcis³owicz
-*/
-
-
 #ifndef __DELIMPARSER_H__
 #define __DELIMPARSER_H__
 
 #include <inttypes.h>
 #include <string.h>
 #include <FixedString.h>
+#include <WString.h>
 
 enum ParserStates { INITIAL, INSIDE, START_Q, INSIDE_QUOTE, END_Q, DELIM, ERR, END };
 
@@ -24,6 +17,7 @@ class DelimParser
 	uint8_t parserState;
 	uint8_t tokStart;
 	
+	bool BeginParsing(FixedString150 &line, const __FlashStringHelper* commandStart);
 	void Init(char *str, uint8_t n, uint8_t strLength);
 	int state_transition(char c, uint8_t state);
 	bool NextToken();
