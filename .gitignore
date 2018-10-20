@@ -62,3 +62,7 @@ $RECYCLE.BIN/
 
 #Visual studio
 .vs
+Release
+Debug
+__vm
+*.user

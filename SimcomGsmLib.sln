@@ -1,0 +1,39 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 15
+VisualStudioVersion = 15.0.28010.2026
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "SerialAtProxy", "examples\SerialAtProxy\SerialAtProxy.vcxproj", "{C5F80730-F44F-4478-BDAE-6634EFC2CA88}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "SimcomGsmLib", "SimcomGsmLib.vcxitems", "{0FC0C7FE-BD9C-4D1A-A770-2418E669451A}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Examples", "Examples", "{971E9F6E-A6C9-40EF-9590-3CFD7B6AAB0F}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "WemosLolin32Lcd", "examples\WemosLolin32Lcd\WemosLolin32Lcd.vcxproj", "{E9F73FDA-32F5-40BF-9AF5-B7AFA27726F7}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|x86 = Debug|x86
+		Release|x86 = Release|x86
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{C5F80730-F44F-4478-BDAE-6634EFC2CA88}.Debug|x86.ActiveCfg = Debug|Win32
+		{C5F80730-F44F-4478-BDAE-6634EFC2CA88}.Debug|x86.Build.0 = Debug|Win32
+		{C5F80730-F44F-4478-BDAE-6634EFC2CA88}.Release|x86.ActiveCfg = Release|Win32
+		{C5F80730-F44F-4478-BDAE-6634EFC2CA88}.Release|x86.Build.0 = Release|Win32
+		{E9F73FDA-32F5-40BF-9AF5-B7AFA27726F7}.Debug|x86.ActiveCfg = Debug|Win32
+		{E9F73FDA-32F5-40BF-9AF5-B7AFA27726F7}.Debug|x86.Build.0 = Debug|Win32
+		{E9F73FDA-32F5-40BF-9AF5-B7AFA27726F7}.Release|x86.ActiveCfg = Release|Win32
+		{E9F73FDA-32F5-40BF-9AF5-B7AFA27726F7}.Release|x86.Build.0 = Release|Win32
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{C5F80730-F44F-4478-BDAE-6634EFC2CA88} = {971E9F6E-A6C9-40EF-9590-3CFD7B6AAB0F}
+		{E9F73FDA-32F5-40BF-9AF5-B7AFA27726F7} = {971E9F6E-A6C9-40EF-9590-3CFD7B6AAB0F}
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {2A2CB69B-0930-46BF-B908-349B381298C5}
+	EndGlobalSection
+EndGlobal
