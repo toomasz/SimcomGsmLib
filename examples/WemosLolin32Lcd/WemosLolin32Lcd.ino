@@ -3,6 +3,7 @@
 #include <WiFi.h>
 #include <SimcomGsmLib.h>
 #include <GsmDebugHelpers.h>
+#include <OperatorNameHelper.h>
 
 #include <SSD1306.h>
 
@@ -50,31 +51,6 @@ const char* RegistrationStatusToStr(GsmNetworkStatus regStatus)
 		break;
 	}
 	return "";
-}
-
-char* gsmNetworks[][2] =
-{
-	{"26001", "Plus"},
-	{"26002", "T-Mobile"},
-	{"26003", "Orange"},
-	{"26006", "Play"},
-
-	{ nullptr, nullptr }
-};
-
-const char *GetNetworkName(const char* networkName)
-{
-	int i = 0;
-	auto gsmNetwork = gsmNetworks[0];
-	while (gsmNetwork[0] != nullptr)
-	{
-		if (strcmp(networkName, gsmNetwork[0]) == 0)
-		{
-			return gsmNetwork[1];
-		}
-		gsmNetwork++;
-	}
-	return networkName;
 }
 
 void lcd_label(int y, int heigth, int fontSize, const __FlashStringHelper* format, ...)
@@ -129,7 +105,7 @@ void loop()
 		return;
 	}
 	FixedString20 operatorName;
-	if (gsm.GetOperatorName(operatorName, true) == AtResultType::Timeout)
+	if (OperatorNameHelper::GetRealOperatorName(gsm, operatorName) == AtResultType::Timeout)
 	{
 		return;
 	}
@@ -191,7 +167,7 @@ void loop()
 	lcd_label(0, 18, 16, F("batt: %d%%, %.2f V"), batteryInfo.Percent, batteryInfo.Voltage);
 	lcd_label(18, 18, 16, F("GSM: %d CSQ"), signalQuality);
 	lcd_label(34, 13, 10, F("%s [%s]"), RegistrationStatusToStr(gsmRegStatus), ipAddress.c_str());
-	lcd_label(47, 10, 10, F("Network: %s"), GetNetworkName(operatorName.c_str()));
+	lcd_label(47, 10, 10, F("Network: %s"), operatorName.c_str());
 
 
 	static bool rectState = false;

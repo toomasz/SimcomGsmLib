@@ -12,6 +12,7 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)src\Parsing\SequenceDetector.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)src\Parsing\SimcomResponseParser.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)src\Parsing\ParsingHelpers.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)src\OperatorNameHelper.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="$(MSBuildThisFileDirectory)src\CircularDataBuffer.h" />
@@ -29,6 +30,7 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)src\Parsing\ParsingHelpers.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)src\Parsing\ParserContext.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)src\GsmLibConstants.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)src\OperatorNameHelper.h" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Functions">
