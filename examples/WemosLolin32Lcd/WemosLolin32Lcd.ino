@@ -87,6 +87,7 @@ void lcd_label(int x, int y, const __FlashStringHelper* format, ...)
 
 void loop()
 {
+
 	if (!gsm.EnsureModemConnected(460800))
 	{
 		display.drawString(0, 2, "No shield");
@@ -94,6 +95,8 @@ void loop()
 		delay(200);
 		return;
 	}
+	Serial.println(" Begin loop ");
+    gsm.SetRegistrationMode(RegistrationMode::Manual, "26002");
 	int16_t signalQuality;
 	if (gsm.GetSignalQuality(signalQuality) == AtResultType::Timeout)
 	{
@@ -200,5 +203,5 @@ void loop()
 
 	display.display();
 
-	delay(200);
+	delay(500);
 }

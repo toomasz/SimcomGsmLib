@@ -12,6 +12,13 @@ struct BatteryStatus
 	uint8_t Percent;
 };
 
+enum class RegistrationMode: uint8_t
+{
+	Automatic = 0,
+	Manual = 1,
+	ManualWithFallback = 4
+};
+
 enum class AtCommand : uint8_t
 {
 	Generic,
@@ -24,7 +31,6 @@ enum class AtCommand : uint8_t
 	Cops,
 	Creg,
 	Gsn,
-	CustomFunction,
 	Cipshut,
 	Cipclose,
 	Cusd,

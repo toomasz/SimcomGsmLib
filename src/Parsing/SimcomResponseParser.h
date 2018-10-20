@@ -31,7 +31,6 @@ public:
 	AtResultType GetAtResultType();
 	volatile bool commandReady;
 	FunctionBase *function;
-	void SetCommandType(FunctionBase *command);
 	void SetCommandType(AtCommand commandType);
 
 

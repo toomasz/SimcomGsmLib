@@ -20,15 +20,34 @@ AtResultType SimcomGsm::GetRegistrationStatus(GsmNetworkStatus& networkStatus)
 	}
 	return result;
 }
-AtResultType SimcomGsm::At(const __FlashStringHelper* command, ...)
+AtResultType SimcomGsm::GenericAt(const __FlashStringHelper* command, ...)
 {
+	_parser.SetCommandType(AtCommand::Generic);
 	va_list argptr;
 	va_start(argptr, command);
 
-	SendAt_P(AtCommand::Generic, command, argptr);
+	char commandBuffer[200];
+	vsnprintf_P(commandBuffer, 200, (PGM_P)command, argptr);	
+	_logger.Log_P(F(" => %s"), commandBuffer);
+	_serial.println(commandBuffer);
 	auto result = PopCommandResult();
+
 	va_end(argptr);	
 	return result;
+}
+void SimcomGsm::SendAt_P(AtCommand commnd, const __FlashStringHelper* command, ...)
+{
+	_parser.SetCommandType(commnd);
+
+	va_list argptr;
+	va_start(argptr, command);
+
+	char commandBuffer[200];
+	vsnprintf_P(commandBuffer, 200, (PGM_P)command, argptr);
+	_logger.Log_P(F(" => %s"), commandBuffer);
+	_serial.println(commandBuffer);
+
+	va_end(argptr);
 }
 AtResultType SimcomGsm::GetOperatorName(FixedStringBase &operatorName, bool returnImsi)
 {
@@ -46,19 +65,18 @@ AtResultType SimcomGsm::GetOperatorName(FixedStringBase &operatorName, bool retu
 		return result;
 	}
 
-	if (returnImsi)
-	{
-		At(F("AT+COPS=%d,2"), _parserContext.operatorSelectionMode);
-	}
-	else
-	{
-		At(F("AT+COPS=%d,0"), _parserContext.operatorSelectionMode);
-	}
-
+	auto operatorFormat = returnImsi ? 2 : 0;	
+	GenericAt(F("AT+COPS=3,%d"), operatorFormat);	
 	SendAt_P(AtCommand::Cops, F("AT+COPS?"));
-	result = PopCommandResult();
+	return PopCommandResult();
+}
 
-
+AtResultType SimcomGsm::SetRegistrationMode(RegistrationMode mode, const char *operatorName)
+{
+	auto operatorFormat = _parserContext.IsOperatorNameReturnedInImsiFormat ? 2 : 0;
+	// don't need to use AtCommand::Cops here, AT+COPS write variant returns OK/ERROR
+	SendAt_P(AtCommand::Generic, F("AT+COPS=%d,%d,\"%s\""), mode, operatorFormat, operatorName);
+	auto result = PopCommandResult();
 	return result;
 }
 
@@ -264,12 +282,10 @@ AtResultType SimcomGsm::PopCommandResult( int timeout )
 		{
 			char c = _serial.read();
 			_parser.FeedChar(c);
-			yield();
 		}
 	}
 
 	auto commandResult = _parser.GetAtResultType();
-	_parser.SetCommandType(0);
 	auto elapsedMs = millis() - start;
 	_logger.Log_P(F(" --- %d ms ---"), elapsedMs);
 	return commandResult;
@@ -392,7 +408,7 @@ void SimcomGsm::wait(int ms)
 
 AtResultType SimcomGsm::ExecuteFunction(FunctionBase &function)
 {
-	_parser.SetCommandType(&function);
+//	_parser.SetCommandType(&function);
 	_serial.println(function.getCommand());
 	
 	auto initialResult = PopCommandResult(function.functionTimeout);
@@ -426,7 +442,7 @@ AtResultType SimcomGsm::ExecuteFunction(FunctionBase &function)
 		p++;
 	}
 	delay(500);
-	_parser.SetCommandType(&function);
+//	_parser.SetCommandType(&function);
 	_serial.println(function.getCommand());
 	return PopCommandResult(function.functionTimeout);
 }
@@ -450,20 +466,7 @@ AtResultType SimcomGsm::SendUssdWaitResponse(char *ussd, FixedString150& respons
 	SendAt_P(AtCommand::Cusd, F("AT+CUSD=1,\"%s\""), ussd);
 	auto result = PopCommandResult(10000);
 }
-void SimcomGsm::SendAt_P(AtCommand commnd, const __FlashStringHelper* command, ...)
-{
-	_parser.SetCommandType(commnd);
 
-	va_list argptr;
-	va_start(argptr, command);
-
-	char commandBuffer[200];
-	vsnprintf_P(commandBuffer, 200, (PGM_P)command, argptr);
-	_logger.Log_P(F(" => %s"), commandBuffer);
-	_serial.println(commandBuffer);
-
-	va_end(argptr);
-}
 int SimcomGsm::FindCurrentBaudRate()
 {
 	if (_updateBaudRateCallback == nullptr)

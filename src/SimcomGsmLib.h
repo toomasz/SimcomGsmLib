@@ -50,10 +50,11 @@ public:
 		AtResultType SetBaudRate(uint32_t baud);
 
 		AtResultType At();
-		AtResultType At(const __FlashStringHelper* command,...);
+		AtResultType GenericAt(const __FlashStringHelper* command,...);
 		AtResultType Shutdown();
 		AtResultType GetRegistrationStatus(GsmNetworkStatus& networkStatus);
 		AtResultType GetOperatorName(FixedStringBase &operatorName, bool returnImsi = false);
+		AtResultType SetRegistrationMode(RegistrationMode mode, const char * operatorName);
 		AtResultType GetImei(FixedString20 &imei);
 		AtResultType GetBatteryStatus(BatteryStatus &batteryStatus);
 		AtResultType GetSignalQuality(int16_t &signalQuality);

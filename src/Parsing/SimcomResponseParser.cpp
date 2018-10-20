@@ -79,6 +79,7 @@ void SimcomResponseParser::FeedChar(char c)
 		_logger.Log_P(F("  <= %s"), (char*)_response.c_str());
 
 		ParserState parseResult = ParseLine();
+
 		// if error or or success
 		if (parseResult == ParserState::Success || parseResult == ParserState::Error)
 		{
@@ -94,8 +95,6 @@ void SimcomResponseParser::FeedChar(char c)
 	}
 
 }
-
-
 
 /* returns true if current line is error: ERROR, CME ERROR etc*/
 bool SimcomResponseParser::IsErrorLine()
@@ -132,12 +131,7 @@ ParserState SimcomResponseParser::ParseLine()
 	{
 		return ParserState::None;
 	}
-		
-	if (commandType == AtCommand::CustomFunction)
-	{
-		return function->IncomingLine(_response);
-	}
-			
+
 	if(commandType == AtCommand::Generic)
 	{
 		if (IsErrorLine())
@@ -328,6 +322,7 @@ ParserState SimcomResponseParser::ParseLine()
 			}
 			else
 			{
+				_logger.Log_P(F("Op selection mode: %d"), _parserContext.operatorSelectionMode);
 				_parserContext.IsOperatorNameReturnedInImsiFormat = operatorNameFormat == 2;
 				bufferedResult = ParserState::Success;
 			}
@@ -428,15 +423,6 @@ ParserState SimcomResponseParser::ParseLine()
 		}
 	}
 	return ParserState::Timeout;
-}
-
-void SimcomResponseParser::SetCommandType(FunctionBase *command)
-{
-	this->function = command;
-	commandReady = false;
-	commandType = AtCommand::CustomFunction;
-	lastResult = ParserState::Timeout;
-	bufferedResult = ParserState::Timeout;
 }
 
 void SimcomResponseParser::SetCommandType(AtCommand commandType)
