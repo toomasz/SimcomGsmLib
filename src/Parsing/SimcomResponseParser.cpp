@@ -311,10 +311,10 @@ ParserState SimcomResponseParser::ParseLine()
 	if(commandType == AtCommand::Cops)
 	{
 		//+COPS: 0,0,"PLAY"
-		if(parser.BeginParsing(_response, F("+COPS:")))
+		if(parser.BeginParsing(_response, F("+COPS: ")))
 		{				
 			uint16_t operatorNameFormat;
-			if (!parser.NextNum(operatorNameFormat))
+			if (!parser.NextNum(_parserContext.operatorSelectionMode))
 			{
 				bufferedResult = ParserState::Error;
 			}

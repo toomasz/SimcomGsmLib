@@ -31,7 +31,8 @@ class DelimParser
 	bool NextToken();
 	void Skip(int tokenCount);
 	bool NextString(FixedStringBase& targetString);
-	bool NextNum(uint16_t &dst, int base = 10);
+	bool NextNum(int16_t& dst, int base = 10);
+	bool NextNum(uint16_t& dst, int base = 10);
 
 	int hexDigitToInt(char c);
 

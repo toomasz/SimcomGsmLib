@@ -20,10 +20,14 @@ AtResultType SimcomGsm::GetRegistrationStatus(GsmNetworkStatus& networkStatus)
 	}
 	return result;
 }
-AtResultType SimcomGsm::At(const __FlashStringHelper* command)
+AtResultType SimcomGsm::At(const __FlashStringHelper* command, ...)
 {
-	SendAt_P(AtCommand::Generic, command);
+	va_list argptr;
+	va_start(argptr, command);
+
+	SendAt_P(AtCommand::Generic, command, argptr);
 	auto result = PopCommandResult();
+	va_end(argptr);	
 	return result;
 }
 AtResultType SimcomGsm::GetOperatorName(FixedStringBase &operatorName, bool returnImsi)
@@ -44,11 +48,11 @@ AtResultType SimcomGsm::GetOperatorName(FixedStringBase &operatorName, bool retu
 
 	if (returnImsi)
 	{
-		At(F("AT+COPS=0,2"));
+		At(F("AT+COPS=%d,2"), _parserContext.operatorSelectionMode);
 	}
 	else
 	{
-		At(F("AT+COPS=0,0"));
+		At(F("AT+COPS=%d,0"), _parserContext.operatorSelectionMode);
 	}
 
 	SendAt_P(AtCommand::Cops, F("AT+COPS?"));
@@ -260,6 +264,7 @@ AtResultType SimcomGsm::PopCommandResult( int timeout )
 		{
 			char c = _serial.read();
 			_parser.FeedChar(c);
+			yield();
 		}
 	}
 
@@ -346,7 +351,7 @@ bool SimcomGsm::EnsureModemConnected(long requestedBaudRate)
 {
 	auto atResult = At();
 
-	if (_currentBaudRate == 0 || atResult != AtResultType::Success)
+	if (_currentBaudRate == 0 || atResult == AtResultType::Timeout)
 	{
 		_currentBaudRate = FindCurrentBaudRate();
 		if (_currentBaudRate != 0)
@@ -469,6 +474,7 @@ int SimcomGsm::FindCurrentBaudRate()
 	int baudRate = 0;
 	do
 	{
+		yield();
 		baudRate = _defaultBaudRates[i];
 		_logger.Log_P(F("Trying baud rate: %d"), baudRate);
 		yield();

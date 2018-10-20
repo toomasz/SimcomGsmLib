@@ -8,6 +8,7 @@ struct ParserContext
 	int16_t* CsqSignalQuality;
 	FixedString20* IpAddress;
 	FixedStringBase* OperatorName;
+	int16_t operatorSelectionMode;
 	FixedString150* UssdResponse;
 	FixedString20* Imei;
 	BatteryStatus* BatteryInfo;

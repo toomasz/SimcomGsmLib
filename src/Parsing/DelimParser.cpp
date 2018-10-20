@@ -88,7 +88,16 @@ bool DelimParser::NextString(FixedStringBase& targetString)
 	targetString.append(_line.c_str() + tokStart, tokLength);
 	return true;
 }
-
+bool DelimParser::NextNum(int16_t& dst, int base)
+{
+	uint16_t num;
+	if (NextNum(num, base))
+	{
+		dst = num;
+		return true;
+	}
+	return false;
+}
 bool DelimParser::NextNum(uint16_t &dst, int base /*= 10*/)
 {
 	if (!NextToken())
