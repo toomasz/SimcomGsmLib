@@ -21,8 +21,16 @@
     <ClInclude Include="__vm\.WemosLolin32Lcd.vsarduino.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="Gui.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Text Include="At_Commands.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="Gui.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>

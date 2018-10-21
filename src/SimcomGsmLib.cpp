@@ -76,7 +76,7 @@ AtResultType SimcomGsm::SetRegistrationMode(RegistrationMode mode, const char *o
 	auto operatorFormat = _parserContext.IsOperatorNameReturnedInImsiFormat ? 2 : 0;
 	// don't need to use AtCommand::Cops here, AT+COPS write variant returns OK/ERROR
 	SendAt_P(AtCommand::Generic, F("AT+COPS=%d,%d,\"%s\""), mode, operatorFormat, operatorName);
-	auto result = PopCommandResult();
+	auto result = PopCommandResult(120000);
 	return result;
 }
 
@@ -366,6 +366,13 @@ AtResultType SimcomGsm::SetBaudRate(uint32_t baud)
 bool SimcomGsm::EnsureModemConnected(long requestedBaudRate)
 {
 	auto atResult = At();
+
+	int n = 8;
+	while (atResult != AtResultType::Success && n--> 0)
+	{
+		delay(50);
+		atResult = At();		
+	}
 
 	if (_currentBaudRate == 0 || atResult == AtResultType::Timeout)
 	{

@@ -108,10 +108,14 @@
     </None>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Gui.h" />
     <ClInclude Include="__vm\.WemosLolin32Lcd.vsarduino.h" />
   </ItemGroup>
   <ItemGroup>
     <Text Include="At_Commands.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="Gui.cpp" />
   </ItemGroup>
   <PropertyGroup>
     <DebuggerFlavor>VisualMicroDebugger</DebuggerFlavor>

@@ -1,11 +1,10 @@
-
-//#include <MappingHelpers.h>
 #include <WiFi.h>
 #include <SimcomGsmLib.h>
 #include <GsmDebugHelpers.h>
 #include <OperatorNameHelper.h>
 
 #include <SSD1306.h>
+#include "Gui.h"
 
 void UpdateBaudRate(int baudRate)
 {
@@ -14,6 +13,7 @@ void UpdateBaudRate(int baudRate)
 }
 SimcomGsm gsm(Serial2, UpdateBaudRate);
 SSD1306 display(0x3c, 5, 4);
+Gui gui(display);
 
 void OnLog(const char* gsmLog)
 {
@@ -23,70 +23,15 @@ void OnLog(const char* gsmLog)
 
 void setup()
 {
-	WiFi.mode(WIFI_OFF);
-
+	gui.init();
 	Serial.begin(115200);
-	display.init();
-
-	display.setFont(ArialMT_Plain_16);
-	display.clear();
 	gsm.SetLogCallback(OnLog);
-}
-
-const char* RegistrationStatusToStr(GsmNetworkStatus regStatus)
-{
-	switch (regStatus)
-	{
-	case GsmNetworkStatus::SearchingForNetwork:
-		return "Net Search...";
-	case GsmNetworkStatus::HomeNetwork:
-		return "Home net";
-	case GsmNetworkStatus::RegistrationDenied:
-		return "Reg denied";
-	case GsmNetworkStatus::RegistrationUnknown:
-		return "Reg unknown";
-	case GsmNetworkStatus::Roaming:
-		return "Roaming";
-	default:
-		break;
-	}
-	return "";
-}
-
-void lcd_label(int y, int heigth, int fontSize, const __FlashStringHelper* format, ...)
-{
-	va_list argptr;
-	va_start(argptr, format);
-
-	if (fontSize == 16)
-	{
-		display.setFont(ArialMT_Plain_16);
-	}
-	if (fontSize == 10)
-	{
-		display.setFont(ArialMT_Plain_10);
-	}
-
-	char buffer[200];
-	vsnprintf_P(buffer, 200, (PGM_P)format, argptr);
-	display.setColor(OLEDDISPLAY_COLOR::BLACK);
-	display.fillRect(0, y, 128, heigth);
-	display.setColor(OLEDDISPLAY_COLOR::WHITE);
-	display.drawString(0, y, buffer);
-	va_end(argptr);
-}
-void lcd_label(int x, int y, const __FlashStringHelper* format, ...)
-{
-	va_list argptr;
-	va_start(argptr, format);
-	char buffer[200];
-	vsnprintf_P(buffer, 200, (PGM_P)format, argptr);
-	display.drawString(x, y, buffer);
-	va_end(argptr);
 }
 
 void loop()
 {
+	display.setColor(OLEDDISPLAY_COLOR::BLACK);
+	display.fillRect(0, 0, 128, 64);
 
 	if (!gsm.EnsureModemConnected(460800))
 	{
@@ -95,8 +40,7 @@ void loop()
 		delay(200);
 		return;
 	}
-	Serial.println(" Begin loop ");
-    gsm.SetRegistrationMode(RegistrationMode::Manual, "26002");
+
 	int16_t signalQuality;
 	if (gsm.GetSignalQuality(signalQuality) == AtResultType::Timeout)
 	{
@@ -139,7 +83,6 @@ void loop()
 				else
 				{
 					Serial.println("failed to set cipmux to 1");
-
 				}
 			}
 		}
@@ -167,39 +110,12 @@ void loop()
 	GsmNetworkStatus gsmRegStatus;
 	auto registrationStatus = gsm.GetRegistrationStatus(gsmRegStatus);
 
-	lcd_label(0, 18, 16, F("batt: %d%%, %.2f V"), batteryInfo.Percent, batteryInfo.Voltage);
-	lcd_label(18, 18, 16, F("GSM: %d CSQ"), signalQuality);
-	lcd_label(34, 13, 10, F("%s [%s]"), RegistrationStatusToStr(gsmRegStatus), ipAddress.c_str());
-	lcd_label(47, 10, 10, F("Network: %s"), operatorName.c_str());
 
-
-	static bool rectState = false;
-	rectState = !rectState;
-	if (rectState)
-	{
-		display.setColor(OLEDDISPLAY_COLOR::WHITE);
-	}
-	else
-	{
-		display.setColor(OLEDDISPLAY_COLOR::BLACK);
-	}
-
-	display.fillRect(128 - 10, 64 - 10, 10, 10);
-	display.setColor(OLEDDISPLAY_COLOR::WHITE);
-
-	if (callInfo.HasAtiveCall)
-	{
-		display.setColor(OLEDDISPLAY_COLOR::WHITE);
-		display.drawRect(5, 10, 128 - 10, 45);
-		display.setColor(OLEDDISPLAY_COLOR::BLACK);
-		display.fillRect(6, 11, 128 - 10 - 2, 45 - 2);
-		display.setColor(OLEDDISPLAY_COLOR::WHITE);
-		display.setFont(ArialMT_Plain_16);
-		lcd_label(10, 14, F("Calling: "));
-		lcd_label(10, 32, F("%s"), callInfo.CallerNumber.c_str());
-	}
-
-
+	gui.drawBattery(batteryInfo.Percent, batteryInfo.Voltage);
+	gui.drawGsmInfo(signalQuality, gsmRegStatus, operatorName);
+	gui.DisplayIp(ipAddress);
+	gui.DisplayBlinkIndicator();
+	gui.DisplayIncomingCall(callInfo);
 
 	display.display();
 
