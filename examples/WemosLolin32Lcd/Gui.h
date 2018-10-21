@@ -164,7 +164,7 @@ public:
 
 	void DisplayIncomingCall(IncomingCallInfo &callInfo)
 	{
-		if (callInfo.HasAtiveCall)
+		if (callInfo.HasIncomingCall)
 		{
 			_lcd.setColor(OLEDDISPLAY_COLOR::WHITE);
 			_lcd.drawRect(5, 10, 128 - 10, 45);

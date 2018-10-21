@@ -83,9 +83,9 @@ class IncomingCallInfo
 public:
 	IncomingCallInfo()
 	{
-		HasAtiveCall = false;
+		HasIncomingCall = false;
 	}
-	bool HasAtiveCall;
+	bool HasIncomingCall;
 	FixedString<20> CallerNumber;
 };
 

@@ -264,7 +264,7 @@ ParserState SimcomResponseParser::ParseLine()
 			if (parser.NextString(number))
 			{
 				_parserContext.CallInfo->CallerNumber = number;
-				_parserContext.CallInfo->HasAtiveCall = true;
+				_parserContext.CallInfo->HasIncomingCall = true;
 			}
 		}
 		if (IsOkLine())

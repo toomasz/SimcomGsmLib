@@ -42,27 +42,28 @@ void loop()
 	}
 
 	int16_t signalQuality;
+	BatteryStatus batteryInfo;
+	FixedString20 operatorName;
+	IncomingCallInfo callInfo;
+	SimcomIpState ipStatus;
+
 	if (gsm.GetSignalQuality(signalQuality) == AtResultType::Timeout)
 	{
 		return;
 	}
-	BatteryStatus batteryInfo;
 	if (gsm.GetBatteryStatus(batteryInfo) == AtResultType::Timeout)
 	{
 		return;
 	}
-	FixedString20 operatorName;
 	if (OperatorNameHelper::GetRealOperatorName(gsm, operatorName) == AtResultType::Timeout)
 	{
 		return;
 	}
-	IncomingCallInfo callInfo;
 	if (gsm.GetIncomingCall(callInfo) == AtResultType::Timeout)
 	{
 		return;
 	}
 
-	SimcomIpState ipStatus;
 	gsm.GetIpState(ipStatus);
 
 
