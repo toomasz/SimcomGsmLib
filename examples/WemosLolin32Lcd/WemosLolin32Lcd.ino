@@ -77,17 +77,10 @@ void loop()
 			{
 				Serial.println("Failed to set cipmux");
 				gsm.Cipshut();
-				if (gsm.SetCipmux(true) == AtResultType::Success)
-				{
-					Serial.println("cipmux set to 1");
-				}
-				else
-				{
-					Serial.println("failed to set cipmux to 1");
-				}
+				gsm.SetCipmux(true);
+				
 			}
 		}
-		Serial.printf("CIPMUX = %d\n", hasCipmux);
 	}
 
 	if (ipStatus == SimcomIpState::PdpDeact)
@@ -120,5 +113,5 @@ void loop()
 
 	display.display();
 
-	delay(500);
+	delay(200);
 }
