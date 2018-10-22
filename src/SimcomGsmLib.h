@@ -85,19 +85,8 @@ public:
 
 		
 		AtResultType ExecuteFunction(FunctionBase &function);
-		// Transparent mode data functions
-		bool DataAvailable();
-		int DataRead();
-		unsigned long lastDataWrite;
-	
-		void DataWrite(const __FlashStringHelper* data);
-		void DataWrite(char* data);	
-		void DataWrite(char *data, int length);
-	
-		void DataWriteNumber( int c );
-		void DataWriteNumber( uint16_t c );
-	    void DataWrite(char c);
-		void DataEndl();
+
+		unsigned long lastDataWrite;	
 		void wait(int millis);
 };
 

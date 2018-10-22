@@ -151,20 +151,6 @@ AtResultType SimcomGsm::CloseConnection()
 	return PopCommandResult();
 }
 
-
-/* returns true if any data is available to read from transparent connection */
-bool SimcomGsm::DataAvailable()
-{
-	if (_dataBuffer.DataAvailable())
-	{
-		return true;
-	}
-	if (_serial.available())
-	{
-		return true;
-	}
-	return false;
-}
 void SimcomGsm::PrintDataByte(uint8_t data) // prints 8-bit data in hex
 {
 	char tmp[3];
@@ -183,22 +169,6 @@ void SimcomGsm::PrintDataByte(uint8_t data) // prints 8-bit data in hex
 //	ds.write(' ');
 //	ds.print(tmp);
 //	ds.write(' ');
-}
-
-int SimcomGsm::DataRead()
-{
-	int ret = _dataBuffer.ReadDataBuffer();
-	if(ret != -1)
-	{
-		//PrintDataByte(ret);
-		return ret;
-	}
-	ret = _serial.read();
-	if(ret != -1)
-	{
-	//	PrintDataByte(ret);
-	}
-	return ret;
 }
 
 AtResultType SimcomGsm::SwitchToCommandMode()
@@ -321,37 +291,6 @@ AtResultType SimcomGsm::SetApn(const char *apnName, const char *username,const c
 	return PopCommandResult();
 }
 
-void SimcomGsm::DataWrite( const __FlashStringHelper* data )
-{
-	_serial.print(data);
-	lastDataWrite = millis();
-}
-
-void SimcomGsm::DataWrite( char* data )
-{
-	_serial.print(data);
-	lastDataWrite = millis();
-}
-
-void SimcomGsm::DataWrite( char *data, int length )
-{
-	_serial.write((unsigned char*)data, length);
-	lastDataWrite = millis();
-}
-
-void SimcomGsm::DataWrite( char c )
-{
-	_serial.write(c);
-	lastDataWrite = millis();
-}
-
-
-void SimcomGsm::DataEndl()
-{
-	_serial.print(F("\r\n"));
-	_serial.flush();
-	lastDataWrite = millis();
-}
 AtResultType SimcomGsm::At()
 {
 	SendAt_P(AtCommand::Generic, F("AT"));
@@ -506,17 +445,6 @@ AtResultType SimcomGsm::Cipshut()
 {
 	SendAt_P(AtCommand::Cipshut, F("AT+CIPSHUT"));
 	return PopCommandResult();
-}
-
-void SimcomGsm::DataWriteNumber(int c)
-{
-	_serial.print(c);
-	lastDataWrite = millis();
-}
-void SimcomGsm::DataWriteNumber(uint16_t c)
-{
-	_serial.print(c);
-	lastDataWrite = millis();
 }
 
 AtResultType SimcomGsm::Call(char *number)

@@ -24,27 +24,6 @@ uint16_t S900Socket::read_blocking(char *data, uint16_t count, unsigned long tim
 	unsigned long startTime = millis();
 	uint16_t dataReceived = 0;
 	
-	while(dataReceived < count && (millis()-startTime) < timeout)
-	{
-		if( s900->DataAvailable())
-		{
-			char c = s900->DataRead();
-			if(data != 0)
-				data[dataReceived] = c;
-			if(detectorClosed.NextChar(c))
-			{
-				socket_state = SOCKET_CLOSED;
-				return 0;
-			}
-			if(detectorPdpDeact.NextChar(c))
-			{
-				socket_state = SOCKET_PDP_DEACT;
-				return 0;
-			}
-				
-			dataReceived++;
-		}
-	}
 	
 	return dataReceived;
 }

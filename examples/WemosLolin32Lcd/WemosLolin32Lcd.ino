@@ -96,6 +96,7 @@ void loop()
 		gsm.SetApn("virgin-internet", "", "");
 		display.clear();
 		display.drawString(0, 0, "Connecting to gprs..");
+		display.display();
 		gsm.AttachGprs();
 	}
 	FixedString20 ipAddress;
