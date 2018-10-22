@@ -1,5 +1,7 @@
 #include "SimcomGsmLib.h"
 
+#include "MappingHelpers.h"
+
 SimcomGsm::SimcomGsm(Stream& serial, UpdateBaudRateCallback updateBaudRateCallback) :
 _serial(serial),
 _parser(_dataBuffer, _parserContext, _logger)
@@ -129,26 +131,6 @@ AtResultType SimcomGsm::AttachGprs()
 {
 	SendAt_P(AtCommand::Generic, F("AT+CIICR"));
 	return PopCommandResult(60000);
-}
-
-AtResultType SimcomGsm::StartTransparentIpConnection(const char *address, int port, S900Socket *socket = 0 )
-{
-	_dataBuffer.Clear();
-
-	// Execute command like AT+CIPSTART="TCP","example.com","80"
-	SendAt_P(AtCommand::Cipstart, F("AT+CIPSTART=\"TCP\",\"%s\",\"%d\""), address, port);
-
-	if (socket != 0)
-	{
-		socket->s900 = this;
-	}
-	return PopCommandResult(60000);
-}
-
-AtResultType SimcomGsm::CloseConnection()
-{
-	SendAt_P(AtCommand::Cipclose, F("AT+CIPCLOSE=1"));
-	return PopCommandResult();
 }
 
 void SimcomGsm::PrintDataByte(uint8_t data) // prints 8-bit data in hex
@@ -464,6 +446,29 @@ AtResultType SimcomGsm::GetIncomingCall(IncomingCallInfo & callInfo)
 AtResultType SimcomGsm::Shutdown()
 {
 	SendAt_P(AtCommand::Generic, F("AT+CPOWD=0"));
+	return PopCommandResult();
+}
+
+AtResultType SimcomGsm::BeginConnect(ProtocolType protocol, uint8_t mux, const char *address, int port)
+{
+	// Execute command like AT+CIPSTART="TCP","example.com","80"
+	SendAt_P(AtCommand::Generic, F("AT+CIPSTART=%d,\"%s\",\"%s\",\"%d\""),
+		mux, ProtocolToStr(protocol), address, port);
+
+	
+	return PopCommandResult(60000);
+}
+
+AtResultType SimcomGsm::CloseConnection(uint8_t mux)
+{
+	SendAt_P(AtCommand::Cipclose, F("AT+CIPCLOSE=%d"), mux);
+	return PopCommandResult();
+}
+
+AtResultType SimcomGsm::GetConnectionInfo(uint8_t mux, ConnectionInfo &connectionInfo)
+{
+	_parserContext.CurrentConnectionInfo = &connectionInfo;
+	SendAt_P(AtCommand::CipstatusSingleConnection, F("AT+CIPSTATUS=%d"), mux);
 	return PopCommandResult();
 }
 

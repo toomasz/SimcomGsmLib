@@ -97,10 +97,16 @@ void loop()
 		display.clear();
 		display.drawString(0, 0, "Connecting to gprs..");
 		display.display();
+
 		gsm.AttachGprs();
 	}
+	
+
 	FixedString20 ipAddress;
+	Serial.println("begin get ip");
+
 	gsm.GetIpAddress(ipAddress);
+	Serial.println("end get ip");
 
 	GsmNetworkStatus gsmRegStatus;
 	auto registrationStatus = gsm.GetRegistrationStatus(gsmRegStatus);
@@ -114,5 +120,5 @@ void loop()
 
 	display.display();
 
-	delay(200);
+	delay(1000);
 }

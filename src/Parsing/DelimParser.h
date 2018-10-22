@@ -3,39 +3,41 @@
 
 #include <inttypes.h>
 #include <string.h>
-#include <FixedString.h>
+#include "FixedString.h"
 #include <WString.h>
 
-enum ParserStates 
-{ 
-	INITIAL,
-	INSIDE, 
-	START_Q, 
-	INSIDE_QUOTE, 
-	END_Q, 
-	DELIM, 
-	ERR, 
-	END 
+enum class LineParserState
+{
+	Initial,
+	Expression,
+	StartQuote,
+	QuotedExpression,
+	EndQuote,
+	Delimiter,
+	Error,
+	END
 };
 
 class DelimParser
 {
-	public:
 	FixedString150 _line;
-	uint8_t n;
-	uint8_t parserState;
-	uint8_t tokStart;
-	
-	bool BeginParsing(FixedString150 &line, const __FlashStringHelper* commandStart);
-	int state_transition(char c, uint8_t state);
-	bool NextToken();
-	void Skip(int tokenCount);
-	bool NextString(FixedStringBase& targetString);
-	bool NextNum(int16_t& dst, int base = 10);
-	bool NextNum(uint16_t& dst, int base = 10);
-
+	uint8_t _position;
+	LineParserState _currentState;
+	uint8_t _tokenStart;
+	LineParserState GetNextState(char c, LineParserState state);
 	int hexDigitToInt(char c);
 
+public:
+	bool BeginParsing(FixedString150 &line, const __FlashStringHelper* commandStart);
+	bool NextToken();
+	FixedString150 CurrentToken();
+	bool Skip(int tokenCount);
+	bool NextString(FixedStringBase& targetString);
+	bool NextNum(uint8_t & dst, bool allowNull = false, int base = 10);
+	bool NextNum(int16_t& dst, bool allowNull = false, int base = 10);
+	bool NextNum(uint16_t& dst, bool allowNull = false, int base = 10);
+
+	static const  __FlashStringHelper* StateToStr(LineParserState state);
 }; //DelimParser
 
 #endif //__DELIMPARSER_H__

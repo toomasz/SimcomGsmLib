@@ -2,7 +2,7 @@
 #define _SIMCOM_GSM_TYPES_H
 
 #include <FixedString.h>
-#include <inttypes.h>
+#include <stdint.h>
 
 typedef void(*UpdateBaudRateCallback)(int baudRate);
 
@@ -12,6 +12,33 @@ struct BatteryStatus
 	uint8_t Percent;
 };
 
+enum class ConnectionState : uint8_t
+{
+	Initial,
+	Connecting,
+	Connected,
+	RemoteClosing,
+	Closing,
+	Closed
+};
+
+enum class ProtocolType : uint8_t
+{
+	Tcp,
+	Udp
+};
+
+class ConnectionInfo
+{
+public:
+	uint8_t Mux;
+	uint8_t Bearer;
+	ProtocolType Protocol;
+	IPAddress RemoteAddress;
+	int Port;
+	ConnectionState State;
+};
+
 enum class RegistrationMode: uint8_t
 {
 	Automatic = 0,
@@ -19,10 +46,13 @@ enum class RegistrationMode: uint8_t
 	ManualWithFallback = 4
 };
 
+
+
 enum class AtCommand : uint8_t
 {
 	Generic,
 	Cipstatus,
+	CipstatusSingleConnection,
 	Csq,
 	Cifsr,
 	Cipstart,

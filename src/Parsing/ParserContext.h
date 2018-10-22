@@ -12,10 +12,11 @@ struct ParserContext
 	FixedString150* UssdResponse;
 	FixedString20* Imei;
 	BatteryStatus* BatteryInfo;
-	IncomingCallInfo *CallInfo;
+	IncomingCallInfo* CallInfo;
 	SimcomIpState* IpState;
 	bool IsOperatorNameReturnedInImsiFormat;
 	bool Cipmux;
+	ConnectionInfo* CurrentConnectionInfo;
 };
 
 #endif

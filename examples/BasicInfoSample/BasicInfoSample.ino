@@ -6,9 +6,14 @@ void UpdateBaudRate(int baudRate)
 	Serial2.end();
 	Serial2.begin(baudRate, SERIAL_8N1, 19, 18, false);
 }
-
+void OnLog(const char* gsmLog)
+{
+	Serial.print("[GSM]");
+	Serial.println(gsmLog);
+}
 void setup()
 {
+	gsm.SetLogCallback(OnLog);
 	Serial.begin(115200);
 }
 

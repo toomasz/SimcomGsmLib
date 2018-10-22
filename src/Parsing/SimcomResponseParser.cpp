@@ -152,6 +152,53 @@ ParserState SimcomResponseParser::ParseLine()
 			return ParserState::Success;
 		}
 	}
+	if (commandType == AtCommand::CipstatusSingleConnection)
+	{
+		if (parser.BeginParsing(_response, F("+CIPSTATUS: ")))
+		{
+			_logger.Log_P(F("Begin parsing sipstatus"));
+
+			uint8_t mux;
+			uint8_t bearer;
+			FixedString20 protocolStr;
+			FixedString20 portStr;
+			FixedString20 connectionStateStr;
+			if (parser.NextNum(mux) &&
+				parser.NextNum(bearer, true) &&
+				parser.NextString(protocolStr) &&
+				parser.Skip(1) && 
+				parser.NextString(portStr) &&
+				parser.NextString(connectionStateStr))
+			{
+				ProtocolType protocolType;
+				ConnectionState connectionState;
+
+				if(!ParseProtocolType(protocolStr, protocolType) &&
+					ParseConnectionState(connectionStateStr, connectionState))
+				{
+					auto connInfo = _parserContext.CurrentConnectionInfo;
+					connInfo->Mux = mux;
+					connInfo->Bearer = bearer;
+					connInfo->Protocol = protocolType;
+					//connInfo->Port = port;
+					connInfo->State = connectionState;
+					return ParserState::None;
+				}
+			}
+			return ParserState::Error;
+		}
+		if (lastResult == ParserState::None)
+		{
+			if (IsOkLine())
+			{
+				return ParserState::Success;
+			}
+			if (IsErrorLine())
+			{
+				return ParserState::Error;
+			}
+		}
+	}
 
 	if(commandType == AtCommand::Csq)
 	{

@@ -73,9 +73,11 @@ public:
 		AtResultType SetApn(const char *apnName, const char *username, const char *password);
 		AtResultType SetCipmux(bool cipmux);
 		AtResultType AttachGprs();
-		AtResultType StartTransparentIpConnection(const char *address, int port, S900Socket *socket);
-		
-		AtResultType CloseConnection();
+
+		AtResultType BeginConnect(ProtocolType protocol, uint8_t mux, const char *address, int port);		
+		AtResultType CloseConnection(uint8_t mux);
+		AtResultType GetConnectionInfo(uint8_t mux, ConnectionInfo &connectionInfo);
+
 		AtResultType Cipshut();
 
 		// Data/command mode switching

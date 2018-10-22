@@ -7,75 +7,154 @@ bool DelimParser::BeginParsing(FixedString150 &line, const __FlashStringHelper* 
 		return false;
 	}
 	_line = line;
-	this->tokStart = 0;
-	this->n = strlen_P((PGM_P)commandStart);
-	parserState = INITIAL;
+	_position = strlen_P((PGM_P)commandStart);
+	_tokenStart = _position;
+
+	_currentState = LineParserState::Initial;
 	return true;
 }
 
-int DelimParser::state_transition(char c, uint8_t state)
+LineParserState DelimParser::GetNextState(char c, LineParserState state)
 {
 	switch (state)
 	{
-		case DELIM:
-			if (c == ' ')
-				return DELIM;
-			if (c == ',')
-				return ERR;
-		case INITIAL:
-			if (c != '"')
-				return INSIDE;
-			return START_Q;
-
-		case INSIDE_QUOTE:
-			if (c == '"')
-				return END_Q;
-			return INSIDE_QUOTE;
-		case INSIDE:
-			if (c == ',' || c == ' ')
-				return DELIM;
-			return INSIDE;
-		case START_Q:
-			return INSIDE_QUOTE;
-		case END_Q:
-			if (c == ',' || c == ' ')
-				return DELIM;
-			return ERR;
+	case LineParserState::Delimiter:
+		if (c == ',')
+		{
+			return LineParserState::Delimiter;
+		}
+		if (c == '"')
+		{
+			return LineParserState::StartQuote;
+		}
+		if (c == ' ')
+		{
+			return LineParserState::Initial;
+		}
+		return LineParserState::Expression;
+	case LineParserState::Initial:
+		if (c == ' ')
+		{
+			return LineParserState::Initial;
+		}
+		if (c == ',')
+		{
+			return LineParserState::Delimiter;
+		}
+		if (c == '"')
+		{
+			return LineParserState::StartQuote;
+		}
+		return LineParserState::Expression;
+	case LineParserState::QuotedExpression:
+		if (c == '"')
+		{
+			return LineParserState::EndQuote;
+		}
+		return LineParserState::QuotedExpression;
+	case LineParserState::Expression:
+		if (c == ',')
+		{
+			return LineParserState::Delimiter;
+		}
+		return LineParserState::Expression;
+	case LineParserState::StartQuote:
+		if (c == '\"')
+		{
+			return LineParserState::EndQuote;
+		}
+		return LineParserState::QuotedExpression;
+	case LineParserState::EndQuote:
+		if (c == ',' || c == ' ')
+		{
+			return LineParserState::Delimiter;
+		}
+		return LineParserState::Error;
 	}
-	return ERR;
+	return LineParserState::Error;
 }
 
 bool DelimParser::NextToken()
 {
-	while (n <= _line.length() && (parserState != ERR))
+	while (_position <= _line.length() && (_currentState != LineParserState::Error))
 	{
-		int prevState = parserState;
-		parserState = (n == _line.length()) ? END : state_transition(_line.c_str()[n], parserState);
-
-		if (prevState != parserState)
+		auto previousState = _currentState;
+		if (_position == _line.length())
 		{
-			if (parserState == INSIDE || parserState == INSIDE_QUOTE)
+			_currentState = LineParserState::END;
+		}
+		else
+		{
+			auto c = _line.c_str()[_position];
+			_currentState = GetNextState(c, _currentState);
+		}
+
+		if (previousState == LineParserState::Delimiter && _currentState == LineParserState::Delimiter)
+		{
+			_tokenStart = _position;
+			_position++;
+			return true;
+		}
+
+		if (previousState != _currentState)
+		{
+			//	printf("state %s -> %s\n", StateToStr(previousState), StateToStr(_currentState));
+			if (_currentState == LineParserState::Expression)
 			{
-				tokStart = n;
+				_tokenStart = _position;
 			}
-			// INSIDE -> *
-			else if (prevState == INSIDE || prevState == INSIDE_QUOTE)
-			{				
-				n++;
+			else if (_currentState == LineParserState::StartQuote)
+			{
+				_tokenStart = _position + 1;
+			}
+			else if (_currentState == LineParserState::Delimiter && previousState == LineParserState::Initial)
+			{
+				_tokenStart = _position;
+				_position++;
+				return true;
+			}
+			// INSIDE -> "
+			else if (previousState == LineParserState::Expression)
+			{
+				_position++;
+				return true;
+			}
+			else if (_currentState == LineParserState::EndQuote)
+			{
+				_position++;
 				return true;
 			}
 		}
-		n++;
+		_position++;
 	}
 	return false;
 }
 
-void DelimParser::Skip(int tokenCount)
+FixedString150 DelimParser::CurrentToken()
+{
+	FixedString150 str;
+	auto tokEnd = _position - 1;
+	if (_tokenStart <= tokEnd)
+	{
+		str.append(_line.c_str() + _tokenStart, tokEnd - _tokenStart);
+	}
+	else
+	{
+		str = "[invalid]";
+	}
+	return str;
+}
+
+bool DelimParser::Skip(int tokenCount)
 {
 	while (tokenCount-- > 0)
 	{
-		NextToken();
+		if (!NextToken())
+		{
+			return false;
+		}
 	}
+	return true;
 }
 bool DelimParser::NextString(FixedStringBase& targetString)
 {
@@ -83,31 +162,52 @@ bool DelimParser::NextString(FixedStringBase& targetString)
 	{
 		return false;
 	}
-	int tokLength = n - 1 - tokStart;
+	int tokLength = _position - 1 - _tokenStart;
 	targetString.clear();
-	targetString.append(_line.c_str() + tokStart, tokLength);
+	targetString.append(_line.c_str() + _tokenStart, tokLength);
 	return true;
 }
-bool DelimParser::NextNum(int16_t& dst, int base)
+
+bool DelimParser::NextNum(uint8_t& dst, bool allowNull, int base)
 {
 	uint16_t num;
-	if (NextNum(num, base))
+	if (NextNum(num, allowNull, base))
 	{
 		dst = num;
 		return true;
 	}
 	return false;
 }
-bool DelimParser::NextNum(uint16_t &dst, int base /*= 10*/)
+
+bool DelimParser::NextNum(int16_t& dst, bool allowNull, int base)
+{
+	uint16_t num;
+	if (NextNum(num, allowNull, base))
+	{
+		dst = num;
+		return true;
+	}
+	return false;
+}
+bool DelimParser::NextNum(uint16_t &dst, bool allowNull, int base)
 {
 	if (!NextToken())
 	{
 		return false;
 	}
+
+	auto tokenEnd = _position - 1;
+
+	if (allowNull && _tokenStart == tokenEnd)
+	{
+		dst = 0;
+		return true;
+	}
+
 	dst = 0;
 
 	int x = 1;
-	int i = n - 1;
+	int i = tokenEnd;
 	do
 	{
 		char c = _line.c_str()[i - 1];
@@ -117,10 +217,9 @@ bool DelimParser::NextNum(uint16_t &dst, int base /*= 10*/)
 			return false;
 		}
 
-		dst += x*digitNum;
+		dst += x * digitNum;
 		x *= base;
-	}
-	while (--i > tokStart);
+	} while (--i > _tokenStart);
 
 	return true;
 }
@@ -135,3 +234,20 @@ int DelimParser::hexDigitToInt(char c)
 		return c - 'a' + 10;
 	return -1;
 }
+
+const __FlashStringHelper* DelimParser::StateToStr(LineParserState state)
+{
+	switch (state)
+	{
+	case LineParserState::Initial: return F("INITIAL");
+	case LineParserState::Expression: return F("INSIDE");
+	case LineParserState::StartQuote: return F("START_Q");
+	case LineParserState::QuotedExpression: return F("INSIDE_QUOTE");
+	case LineParserState::EndQuote: return F("END_Q");
+	case LineParserState::Delimiter: return F("DELIM");
+	case LineParserState::Error: return F("ERR");
+	case LineParserState::END: return F("END");
+	}
+}
+
+
