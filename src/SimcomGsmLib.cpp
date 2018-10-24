@@ -137,7 +137,7 @@ AtResultType SimcomGsm::PopCommandResult()
 {
 	return PopCommandResult(AT_DEFAULT_TIMEOUT);
 }
-AtResultType SimcomGsm::PopCommandResult( int timeout )
+AtResultType SimcomGsm::PopCommandResult(int timeout)
 {
 	unsigned long start = millis();
 	while(_parser.commandReady == false && (millis()-start) < (unsigned long)timeout)
@@ -150,8 +150,16 @@ AtResultType SimcomGsm::PopCommandResult( int timeout )
 	}
 
 	auto commandResult = _parser.GetAtResultType();
-	auto elapsedMs = millis() - start;
+	auto elapsedMs = millis() - start;	
 	_logger.Log_P(F(" --- %d ms ---"), elapsedMs);
+	if (commandResult == AtResultType::Timeout)
+	{
+		_logger.Log_P(F("                      --- !!!TIMEOUT!!! ---      "), elapsedMs);
+	}
+	if (commandResult == AtResultType::Error)
+	{
+		_logger.Log_P(F("                      --- !!!ERROR!!! ---      "), elapsedMs);
+	}
 	return commandResult;
 }
 /*

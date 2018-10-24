@@ -43,9 +43,6 @@ public:
 			_logger.SetLogCallback(onLog);
 		}
 
-		//void data_printf(const __FlashStringHelper *str, ...);
-		void PrintDataByte(uint8_t data);
-
 		// Standard modem functions
 		AtResultType SetBaudRate(uint32_t baud);
 
@@ -65,7 +62,7 @@ public:
 		
 
 		AtResultType SendUssdWaitResponse(char *ussd, FixedString150& response);
-		// Tcpip functions
+		// TCP/UDP
 		AtResultType GetIpState(SimcomIpState &ipStatus);
 		AtResultType GetIpAddress(GsmIp &ipAddress);
 		AtResultType GetCipmux(bool &cipmux);
@@ -77,14 +74,7 @@ public:
 		AtResultType BeginConnect(ProtocolType protocol, uint8_t mux, const char *address, int port);		
 		AtResultType CloseConnection(uint8_t mux);
 		AtResultType GetConnectionInfo(uint8_t mux, ConnectionInfo &connectionInfo);
-
-		AtResultType Cipshut();
-
-		// Data/command mode switching
-		AtResultType SwitchToCommandMode();
-		AtResultType SwitchToCommandModeDropData();
-		AtResultType SwitchToDataMode();
-
+		AtResultType Cipshut();	
 		
 		AtResultType ExecuteFunction(FunctionBase &function);
 

@@ -16,8 +16,7 @@ class SimcomResponseParser
 	uint8_t lineParserState;
 	AtCommand commandType;
 	SequenceDetector okSeqDetector;
-	ParserState lastResult;
-	ParserState bufferedResult; // stores actual result for commands like CREG while parser is waiting for OK line
+	ParserState _state;
 	CircularDataBuffer& _dataBuffer;
 	GsmLogger &_logger;
 	FixedString150 _response;

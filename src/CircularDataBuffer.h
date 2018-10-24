@@ -15,8 +15,6 @@ public:
 	int UnwriteDataBuffer();
 	void WriteDataBuffer(char c);
 	int ReadDataBuffer();
-
-	bool commandBeforeRN; // todo figure out what this is and refactor
 };
 
 #endif

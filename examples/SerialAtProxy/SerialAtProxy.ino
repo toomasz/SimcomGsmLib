@@ -10,8 +10,8 @@ SimcomGsm gsm(Serial2, UpdateBaudRate);
 
 void setup()
 {
-	Serial.begin(115200);
-	delay(1000);
+	Serial.begin(500000);
+	delay(500);
 	Serial.println("Trying to find modem baud rate...");
 	auto baudRate = gsm.FindCurrentBaudRate();
 	Serial.printf("Found baud rate: %d\nPlease use AT commands!\n", baudRate);

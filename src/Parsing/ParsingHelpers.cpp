@@ -100,7 +100,8 @@ bool ParsingHelpers::ParseConnectionState(FixedString20& connectionStateStr, Con
 	{
 		connectionState = ConnectionState::Closing;
 		return true;
-	}if (connectionStateStr == F("CLOSED"))
+	}
+	if (connectionStateStr == F("CLOSED"))
 	{
 		connectionState = ConnectionState::Closed;
 		return true;

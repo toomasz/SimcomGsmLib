@@ -106,10 +106,12 @@ enum class SimcomIpState : uint8_t
 
 enum class ParserState : uint8_t
 {
+	None,
+	Timeout,
 	Success,
 	Error,
-	Timeout,
-	None
+	PartialSuccess,
+	PartialError
 };
 
 enum class AtResultType : uint8_t

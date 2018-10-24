@@ -11,23 +11,25 @@ _logger(logger)
 {
 	commandType = AtCommand::Generic;
 	lineParserState = PARSER_INITIAL;
-	lastResult = ParserState::Timeout;
+	_state = ParserState::Timeout;
 	function = 0;
 }
 
 AtResultType SimcomResponseParser::GetAtResultType()
 {
-	switch (lastResult)
+	switch (_state)
 	{
-	case ParserState::Success:
-		return AtResultType::Success;
-	case ParserState::Error:
-		return AtResultType::Error;
-	case ParserState::Timeout:
-	case ParserState::None:
-		return AtResultType::Timeout;
-	default:
-		return AtResultType::Error;
+		case ParserState::Success:
+			return AtResultType::Success;
+		case ParserState::Error:
+			return AtResultType::Error;
+
+		case ParserState::PartialSuccess:
+		case ParserState::PartialError:
+		case ParserState::Timeout:
+		case ParserState::None:
+		default:
+			return AtResultType::Timeout;
 	}
 }
 /* processes character read from serial port of gsm module */
@@ -38,22 +40,19 @@ void SimcomResponseParser::FeedChar(char c)
 	lineParserState = StateTransition(c);
 
 	if(prevState  == PARSER_INITIAL || prevState == PARSER_LF || prevState == PARSER_LINE)
-	{
-		
+	{		
 		if (lineParserState == PARSER_LINE)
 		{
 			_response.append(c);
 		}
 	}
-	if (lineParserState != PARSER_LINE)
-	{
-		_dataBuffer.commandBeforeRN = false;
-	}
 	// line -> delimiter
 	if ((prevState == PARSER_LINE || prevState == PARSER_CR) && (lineParserState == PARSER_LF))
 	{
 		if (_response.length() == 0)
+		{
 			return;
+		}
 
 		_logger.Log_P(F("  <= %s"), (char*)_response.c_str());
 
@@ -63,12 +62,16 @@ void SimcomResponseParser::FeedChar(char c)
 		if (parseResult == ParserState::Success || parseResult == ParserState::Error)
 		{
 			commandReady = true;
-			lastResult = parseResult;
+			_state = parseResult;
+		}
+		else if (parseResult == ParserState::PartialSuccess || parseResult == ParserState::PartialError)
+		{
+			_state = parseResult;
 		}
 		// if command not parsed yet
 		else if (parseResult == ParserState::None)
 		{
-			lastResult = ParserState::None;
+			// do nothing, do not change _state to none
 		}
 		_response.clear();
 	}
@@ -107,11 +110,18 @@ bool SimcomResponseParser::IsOkLine()
 ParserState SimcomResponseParser::ParseLine()
 {
 	DelimParser parser(_response);
-
-	if (commandReady)
+			
+	if (IsOkLine())
 	{
-		return ParserState::None;
+		if (_state == ParserState::PartialSuccess)
+		{
+			return ParserState::Success;
+		}		
 	}
+	if (IsErrorLine())
+	{
+		return ParserState::Error;
+	}	
 
 	if(commandType == AtCommand::Generic)
 	{
@@ -164,30 +174,19 @@ ParserState SimcomResponseParser::ParseLine()
 					if (protocolStr.length() > 0 && !ParsingHelpers::ParseProtocolType(protocolStr, connInfo->Protocol))
 					{
 						Serial.printf("Failed to parser proto: %s\n", protocolStr.c_str());
-						return ParserState::Error;
+						return ParserState::PartialError;
 					}
 					if (ipAddressStr.length() > 0 && !ParsingHelpers::ParseIpAddress(ipAddressStr, connInfo->RemoteAddress))
 					{
-						return ParserState::Error;
+						return ParserState::PartialError;
 					}
 
 					connInfo->Port = port;
 					connInfo->State = connectionState;
-					return ParserState::None;
+					return ParserState::PartialSuccess;
 				}
 			}
-			return ParserState::Error;
-		}
-		if (lastResult == ParserState::None)
-		{
-			if (IsOkLine())
-			{
-				return ParserState::Success;
-			}
-			if (IsErrorLine())
-			{
-				return ParserState::Error;
-			}
+			return ParserState::PartialError;
 		}
 	}
 
@@ -196,24 +195,15 @@ ParserState SimcomResponseParser::ParseLine()
 		//+CSQ: 17,0
 		if(parser.StartsWith(F("+CSQ: ")))
 		{
-			bufferedResult = ParserState::Error;
 			uint16_t signalQuality;
 			uint16_t signalStrength;
 
 			if (parser.NextNum(signalQuality) && parser.NextNum(signalStrength))
 			{
 				*_parserContext.CsqSignalQuality = signalQuality;
-				bufferedResult = ParserState::Success;
+				return ParserState::PartialSuccess;
 			}
-			return ParserState::None;
-		}
-		if (lastResult == ParserState::None)
-		{
-			if (IsErrorLine())
-			{
-				return ParserState::Error;
-			}
-			return bufferedResult;
+			return ParserState::PartialError;
 		}
 	}
 
@@ -221,32 +211,18 @@ ParserState SimcomResponseParser::ParseLine()
 	{
 		if (parser.StartsWith(F("+CBC: ")))
 		{
-			bufferedResult = ParserState::Error;
-
 			uint16_t batteryPercent;
 			uint16_t mVbatteryVoltage;
 
-			parser.Skip(1);
-
-			if (parser.NextNum(batteryPercent)
-				&& parser.NextNum(mVbatteryVoltage))
+			if (!parser.Skip(1) || 
+				!parser.NextNum(batteryPercent) ||
+				!parser.NextNum(mVbatteryVoltage))
 			{
-				_parserContext.BatteryInfo->Voltage = mVbatteryVoltage / 1000.0;
-				_parserContext.BatteryInfo->Percent = batteryPercent;
-				bufferedResult = ParserState::Success;
+				return ParserState::PartialError;
 			}
-			return ParserState::None;
-		}
-		if (lastResult == ParserState::None)
-		{
-			if (IsOkLine())
-			{
-				return bufferedResult;
-			}
-			if (IsErrorLine())
-			{
-				return ParserState::Error;
-			}
+			_parserContext.BatteryInfo->Voltage = mVbatteryVoltage / 1000.0;
+			_parserContext.BatteryInfo->Percent = batteryPercent;
+			return ParserState::PartialSuccess;			
 		}
 	}
 
@@ -256,40 +232,30 @@ ParserState SimcomResponseParser::ParseLine()
 		if (ParsingHelpers::ParseIpAddress(_response, ip))
 		{
 			*_parserContext.IpAddress = ip;
-			return ParserState::None;
-		}
-		if (lastResult == ParserState::None)
-		{
-			if (IsOkLine())
-			{
-				return ParserState::Success;
-			}
-			if (IsErrorLine())
-			{
-				return ParserState::Error;
-			}
+			return ParserState::PartialSuccess;
 		}
 	}
 
 	if (commandType == AtCommand::Clcc)
-	{		
+	{
 		if (parser.StartsWith(F("+CLCC: ")))
 		{
-			parser.Skip(5);
-			FixedString20 number;			
-			if (parser.NextString(number))
+			if (!parser.Skip(5))
 			{
-				_parserContext.CallInfo->CallerNumber = number;
-				_parserContext.CallInfo->HasIncomingCall = true;
+				return ParserState::PartialError;
 			}
+			FixedString20 number;			
+			if (!parser.NextString(number))
+			{
+				return ParserState::PartialError;
+			}
+			_parserContext.CallInfo->CallerNumber = number;
+			_parserContext.CallInfo->HasIncomingCall = true;			
 		}
+		// CLCC can return no records so its ok
 		if (IsOkLine())
 		{
 			return ParserState::Success;
-		}
-		if (IsErrorLine())
-		{
-			return ParserState::Error;
 		}
 	}
 
@@ -324,33 +290,26 @@ ParserState SimcomResponseParser::ParseLine()
 		if(parser.StartsWith(F("+COPS: ")))
 		{				
 			uint16_t operatorNameFormat;
+
 			if (!parser.NextNum(_parserContext.operatorSelectionMode))
 			{
-				bufferedResult = ParserState::Error;
+				return ParserState::PartialError;
 			}
 			else if (!parser.NextNum(operatorNameFormat))
 			{
-				bufferedResult = ParserState::Error;
+				return ParserState::PartialError;
 			}
 			else if (!parser.NextString(*_parserContext.OperatorName))
 			{
-				bufferedResult = ParserState::Error;
+				return ParserState::PartialError;
 			}
 			else
 			{
 				_logger.Log_P(F("Op selection mode: %d"), _parserContext.operatorSelectionMode);
 				_parserContext.IsOperatorNameReturnedInImsiFormat = operatorNameFormat == 2;
-				bufferedResult = ParserState::Success;
+				return ParserState::PartialSuccess;
 			}
-			return ParserState::None;
-		}
-		if (lastResult == ParserState::None)
-		{
-			if (IsErrorLine())
-				return ParserState::Error;
-			return bufferedResult;
-		}
-				
+		}				
 	}
 	if(commandType == AtCommand::Gsn)
 	{
@@ -358,18 +317,7 @@ ParserState SimcomResponseParser::ParseLine()
 		if (imeiValid)
 		{
 			*_parserContext.Imei = _response;
-			return ParserState::None;
-		}		
-		if (lastResult == ParserState::None)
-		{
-			if (IsOkLine())
-			{
-				return ParserState::Success;
-			}
-			if (IsErrorLine())
-			{
-				return ParserState::Error;
-			}
+			return ParserState::PartialSuccess;
 		}
 	}
 	if (commandType == AtCommand::Cusd)
@@ -377,14 +325,12 @@ ParserState SimcomResponseParser::ParseLine()
 		if (parser.StartsWith(F("+CUSD: ")))
 		{
 			uint16_t tmp = 0;
-			if (parser.NextNum(tmp))
-			{
-				if (parser.NextString(*_parserContext.UssdResponse))
-				{
-					return ParserState::Success;
-				}
+			if (!parser.NextNum(tmp) ||	
+				!parser.NextString(*_parserContext.UssdResponse))
+			{				
+				return ParserState::PartialError;				
 			}
-			return ParserState::Error;
+			return ParserState::PartialSuccess;
 		}
 	}
 	if (commandType == AtCommand::Cipmux)
@@ -392,24 +338,13 @@ ParserState SimcomResponseParser::ParseLine()
 		if (parser.StartsWith(F("+CIPMUX: ")))
 		{
 			uint16_t isEnabled;
-			if (parser.NextNum(isEnabled))
+			if (!parser.NextNum(isEnabled))
 			{
-				_parserContext.Cipmux = isEnabled == 1;
-				return ParserState::None;
+				return ParserState::PartialError;
 			}
-			return ParserState::Error;
-		}
-		if (lastResult == ParserState::None)
-		{
-			if (IsOkLine())
-			{
-				return ParserState::Success;
-			}
-			if (IsErrorLine())
-			{
-				return ParserState::Error;
-			}
-		}
+			_parserContext.Cipmux = isEnabled == 1;
+			return ParserState::PartialSuccess;			
+		}		
 	}
 	if(commandType == AtCommand::Creg)
 	{
@@ -418,51 +353,30 @@ ParserState SimcomResponseParser::ParseLine()
 		{
 			if (!parser.Skip(1))
 			{
-				Serial.println("1");
-				return ParserState::Error;
+				return ParserState::PartialError;
 			}
 			uint8_t cregRegistrationState;
 			if (!parser.NextNum(cregRegistrationState))
 			{
-				Serial.println("2");
-
-				return ParserState::Error;
+				return ParserState::PartialError;
 			}
 
 			if (!ParsingHelpers::ParseRegistrationStatus(cregRegistrationState, _parserContext.RegistrationStatus))
 			{
-				Serial.println("3");
-
-				return ParserState::Error;
-			}			
-			lastResult = ParserState::None;
-		}
-		if (lastResult == ParserState::None)
-		{
-			if (IsOkLine())
-			{				
-				return ParserState::Success;
+				return ParserState::PartialError;
 			}
-			if (IsErrorLine())
-			{
-				return ParserState::Error;
-			}
-		}
+			return ParserState::PartialSuccess;
+		}	
 	}
-	return ParserState::Timeout;
+	return ParserState::None;
 }
 
 void SimcomResponseParser::SetCommandType(AtCommand commandType)
-{
-	//if(commandType != AT_SWITH_TO_COMMAND && commandType != AT_SWITCH_TO_DATA)
-	//	while(gsm->ser->available())
-	//		gsm->ser->read();
-		
+{		
 	this->commandType = commandType;
 	commandReady = false;	
 	_response.clear();
-	lastResult = ParserState::Timeout;
-	bufferedResult = ParserState::Timeout;
+	_state = ParserState::Timeout;
 }
 
 int SimcomResponseParser::StateTransition(char c)
@@ -471,32 +385,56 @@ int SimcomResponseParser::StateTransition(char c)
 	{
 		case PARSER_INITIAL:
 			if (c == '\r')
+			{
 				return PARSER_CR;
+			}
 			else if (c == '\n')
+			{
 				return PARSER_LF;
+			}
 			else
+			{
 				return PARSER_LINE;
+			}
 		case PARSER_CR:
 			if (c == '\r')
+			{
 				return PARSER_CR;
+			}
 			else if (c == '\n')
+			{
 				return PARSER_LF;
+			}
 			else
+			{
 				return PARSER_INITIAL;
+			}
 		case PARSER_LF:
 			if (c == '\r')
+			{
 				return PARSER_CR;
+			}
 			else if (c == '\n')
+			{
 				return PARSER_LF;
+			}
 			else
+			{
 				return PARSER_LINE;
+			}
 		case PARSER_LINE:
 			if (c == '\r')
+			{
 				return PARSER_CR;
+			}
 			else if (c == '\n')
+			{
 				return PARSER_LF;
+			}
 			else
+			{
 				return PARSER_LINE;
+			}
 
 	}
 
