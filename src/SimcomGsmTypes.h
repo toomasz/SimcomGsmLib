@@ -12,6 +12,22 @@ struct BatteryStatus
 	uint8_t Percent;
 };
 
+class GsmIp
+{
+public:
+	GsmIp()
+	{
+		memset(_octets, 0, 4);		
+	}
+	uint8_t _octets[4];
+	FixedString20 ToString()
+	{
+		FixedString20 str;
+		str.appendFormat("%d.%d.%d.%d", _octets[0], _octets[1], _octets[2], _octets[3]);
+		return str;
+	}
+};
+
 enum class ConnectionState : uint8_t
 {
 	Initial,
@@ -31,11 +47,17 @@ enum class ProtocolType : uint8_t
 class ConnectionInfo
 {
 public:
+	ConnectionInfo()
+	{
+		Mux = 0;
+		Bearer = 0;
+		Port = 0;
+	}
 	uint8_t Mux;
 	uint8_t Bearer;
 	ProtocolType Protocol;
-	IPAddress RemoteAddress;
-	int Port;
+	GsmIp RemoteAddress;	 
+	uint16_t Port;
 	ConnectionState State;
 };
 
@@ -56,8 +78,6 @@ enum class AtCommand : uint8_t
 	Csq,
 	Cifsr,
 	Cipstart,
-	SwitchToCommand,
-	SwitchToData,
 	Cops,
 	Creg,
 	Gsn,
@@ -99,7 +119,7 @@ enum class AtResultType : uint8_t
 	Timeout
 };
 
-enum class GsmNetworkStatus : uint8_t
+enum class GsmRegistrationState : uint8_t
 {
 	SearchingForNetwork,
 	HomeNetwork,

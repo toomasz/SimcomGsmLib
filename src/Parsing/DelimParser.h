@@ -20,15 +20,16 @@ enum class LineParserState
 
 class DelimParser
 {
-	FixedString150 _line;
+	FixedStringBase &_line;
 	uint8_t _position;
 	LineParserState _currentState;
 	uint8_t _tokenStart;
 	LineParserState GetNextState(char c, LineParserState state);
 	int hexDigitToInt(char c);
-
+	char _separator;
 public:
-	bool BeginParsing(FixedString150 &line, const __FlashStringHelper* commandStart);
+	bool StartsWith(const __FlashStringHelper* commandStart);
+	DelimParser(FixedStringBase &line, char separator = ',');
 	bool NextToken();
 	FixedString150 CurrentToken();
 	bool Skip(int tokenCount);
@@ -38,6 +39,6 @@ public:
 	bool NextNum(uint16_t& dst, bool allowNull = false, int base = 10);
 
 	static const  __FlashStringHelper* StateToStr(LineParserState state);
-}; //DelimParser
+};
 
 #endif //__DELIMPARSER_H__

@@ -6,7 +6,7 @@
 struct ParserContext
 {
 	int16_t* CsqSignalQuality;
-	FixedString20* IpAddress;
+	GsmIp* IpAddress;
 	FixedStringBase* OperatorName;
 	uint16_t operatorSelectionMode;
 	FixedString150* UssdResponse;
@@ -17,6 +17,7 @@ struct ParserContext
 	bool IsOperatorNameReturnedInImsiFormat;
 	bool Cipmux;
 	ConnectionInfo* CurrentConnectionInfo;
+	GsmRegistrationState RegistrationStatus;
 };
 
 #endif

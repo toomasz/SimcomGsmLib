@@ -52,7 +52,7 @@ public:
 		AtResultType At();
 		AtResultType GenericAt(const __FlashStringHelper* command,...);
 		AtResultType Shutdown();
-		AtResultType GetRegistrationStatus(GsmNetworkStatus& networkStatus);
+		AtResultType GetRegistrationStatus(GsmRegistrationState& networkStatus);
 		AtResultType GetOperatorName(FixedStringBase &operatorName, bool returnImsi = false);
 		AtResultType SetRegistrationMode(RegistrationMode mode, const char * operatorName);
 		AtResultType GetImei(FixedString20 &imei);
@@ -67,7 +67,7 @@ public:
 		AtResultType SendUssdWaitResponse(char *ussd, FixedString150& response);
 		// Tcpip functions
 		AtResultType GetIpState(SimcomIpState &ipStatus);
-		AtResultType GetIpAddress(FixedString20 &ipAddress);
+		AtResultType GetIpAddress(GsmIp &ipAddress);
 		AtResultType GetCipmux(bool &cipmux);
 		AtResultType SetTransparentMode(bool transparentMode);
 		AtResultType SetApn(const char *apnName, const char *username, const char *password);

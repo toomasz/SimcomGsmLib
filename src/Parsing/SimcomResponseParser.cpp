@@ -32,22 +32,7 @@ AtResultType SimcomResponseParser::GetAtResultType()
 }
 /* processes character read from serial port of gsm module */
 void SimcomResponseParser::FeedChar(char c)
-{
-	if (commandType == AtCommand::SwitchToCommand)
-	{
-		//printf("w\n");
-		_dataBuffer.WriteDataBuffer(c);
-		if (okSeqDetector.NextChar(c))
-		{
-			commandReady = true;
-			lastResult = ParserState::Success;
-			for (uint8_t i = 0; i < okSeqDetector.length; i++)
-			{
-				_dataBuffer.UnwriteDataBuffer();
-			}
-		}
-		return;
-	}
+{	
 	int prevState = lineParserState;
 
 	lineParserState = StateTransition(c);
@@ -57,12 +42,6 @@ void SimcomResponseParser::FeedChar(char c)
 		
 		if (lineParserState == PARSER_LINE)
 		{
-
-			if (commandType == AtCommand::SwitchToCommand && _dataBuffer.commandBeforeRN)
-			{
-				_dataBuffer.WriteDataBuffer(c);
-			}
-
 			_response.append(c);
 		}
 	}
@@ -127,6 +106,8 @@ bool SimcomResponseParser::IsOkLine()
 }
 ParserState SimcomResponseParser::ParseLine()
 {
+	DelimParser parser(_response);
+
 	if (commandReady)
 	{
 		return ParserState::None;
@@ -143,44 +124,54 @@ ParserState SimcomResponseParser::ParseLine()
 			return ParserState::Success;
 		}
 	}
-			
-			
+
 	if(commandType == AtCommand::Cipstatus)
 	{
-		if (ParseIpStatus(_response.c_str(), *_parserContext.IpState))
+		if (ParsingHelpers::ParseIpStatus(_response.c_str(), *_parserContext.IpState))
 		{
 			return ParserState::Success;
 		}
 	}
 	if (commandType == AtCommand::CipstatusSingleConnection)
 	{
-		if (parser.BeginParsing(_response, F("+CIPSTATUS: ")))
+		if (parser.StartsWith(F("+CIPSTATUS: ")))
 		{
 			_logger.Log_P(F("Begin parsing sipstatus"));
 
 			uint8_t mux;
 			uint8_t bearer;
 			FixedString20 protocolStr;
-			FixedString20 portStr;
+			FixedString20 ipAddressStr;
+			uint16_t port;
 			FixedString20 connectionStateStr;
 			if (parser.NextNum(mux) &&
 				parser.NextNum(bearer, true) &&
 				parser.NextString(protocolStr) &&
-				parser.Skip(1) && 
-				parser.NextString(portStr) &&
+				parser.NextString(ipAddressStr) &&
+				parser.NextNum(port, true) &&
 				parser.NextString(connectionStateStr))
 			{
 				ProtocolType protocolType;
 				ConnectionState connectionState;
 
-				if(!ParseProtocolType(protocolStr, protocolType) &&
-					ParseConnectionState(connectionStateStr, connectionState))
+				if(ParsingHelpers::ParseConnectionState(connectionStateStr, connectionState))
 				{
 					auto connInfo = _parserContext.CurrentConnectionInfo;
+
 					connInfo->Mux = mux;
 					connInfo->Bearer = bearer;
-					connInfo->Protocol = protocolType;
-					//connInfo->Port = port;
+
+					if (protocolStr.length() > 0 && !ParsingHelpers::ParseProtocolType(protocolStr, connInfo->Protocol))
+					{
+						Serial.printf("Failed to parser proto: %s\n", protocolStr.c_str());
+						return ParserState::Error;
+					}
+					if (ipAddressStr.length() > 0 && !ParsingHelpers::ParseIpAddress(ipAddressStr, connInfo->RemoteAddress))
+					{
+						return ParserState::Error;
+					}
+
+					connInfo->Port = port;
 					connInfo->State = connectionState;
 					return ParserState::None;
 				}
@@ -203,7 +194,7 @@ ParserState SimcomResponseParser::ParseLine()
 	if(commandType == AtCommand::Csq)
 	{
 		//+CSQ: 17,0
-		if(parser.BeginParsing(_response,F("+CSQ: ")))
+		if(parser.StartsWith(F("+CSQ: ")))
 		{
 			bufferedResult = ParserState::Error;
 			uint16_t signalQuality;
@@ -228,7 +219,7 @@ ParserState SimcomResponseParser::ParseLine()
 
 	if (commandType == AtCommand::Cbc)
 	{
-		if (parser.BeginParsing(_response,F("+CBC: ")))
+		if (parser.StartsWith(F("+CBC: ")))
 		{
 			bufferedResult = ParserState::Error;
 
@@ -258,56 +249,34 @@ ParserState SimcomResponseParser::ParseLine()
 			}
 		}
 	}
-	if(commandType == AtCommand::SwitchToData)
-	{
-		if (_response == F("CONNECT"))
-		{
-			return ParserState::Success;
-		}
-		
-		if (_response == F("NO CARRIER"))
-		{
-			return ParserState::Error;
-		}
-		
-		if(_response == F("CLOSED"))
-		{
-			return ParserState::Error;
-		}
-	}
-	if(commandType == AtCommand::SwitchToCommand)
-	{
-		if(IsOkLine())
-		{
-			return ParserState::Success;
-		}
-	}
+
 	if(commandType == AtCommand::Cifsr)
 	{
-		if (ParsingHelpers::IsIpAddressValid(_response))
+		GsmIp ip;
+		if (ParsingHelpers::ParseIpAddress(_response, ip))
 		{
-			*_parserContext.IpAddress = _response;
-			return ParserState::Success;
+			*_parserContext.IpAddress = ip;
+			return ParserState::None;
 		}
-		if (IsErrorLine())
+		if (lastResult == ParserState::None)
 		{
-			return ParserState::Error;
+			if (IsOkLine())
+			{
+				return ParserState::Success;
+			}
+			if (IsErrorLine())
+			{
+				return ParserState::Error;
+			}
 		}
 	}
 
 	if (commandType == AtCommand::Clcc)
 	{		
-		if (parser.BeginParsing(_response,F("+CLCC: ")))
+		if (parser.StartsWith(F("+CLCC: ")))
 		{
-			uint16_t tmp;
-			parser.NextNum(tmp);
-			parser.NextNum(tmp);
-			parser.NextNum(tmp);
-			parser.NextNum(tmp);
-			parser.NextNum(tmp);
-
-			FixedString20 number;
-			
+			parser.Skip(5);
+			FixedString20 number;			
 			if (parser.NextString(number))
 			{
 				_parserContext.CallInfo->CallerNumber = number;
@@ -352,7 +321,7 @@ ParserState SimcomResponseParser::ParseLine()
 	if(commandType == AtCommand::Cops)
 	{
 		//+COPS: 0,0,"PLAY"
-		if(parser.BeginParsing(_response, F("+COPS: ")))
+		if(parser.StartsWith(F("+COPS: ")))
 		{				
 			uint16_t operatorNameFormat;
 			if (!parser.NextNum(_parserContext.operatorSelectionMode))
@@ -394,14 +363,18 @@ ParserState SimcomResponseParser::ParseLine()
 		if (lastResult == ParserState::None)
 		{
 			if (IsOkLine())
+			{
 				return ParserState::Success;
+			}
 			if (IsErrorLine())
+			{
 				return ParserState::Error;
+			}
 		}
 	}
 	if (commandType == AtCommand::Cusd)
 	{
-		if (parser.BeginParsing(_response, F("+CUSD: ")))
+		if (parser.StartsWith(F("+CUSD: ")))
 		{
 			uint16_t tmp = 0;
 			if (parser.NextNum(tmp))
@@ -416,7 +389,7 @@ ParserState SimcomResponseParser::ParseLine()
 	}
 	if (commandType == AtCommand::Cipmux)
 	{
-		if (parser.BeginParsing(_response, F("+CIPMUX: ")))
+		if (parser.StartsWith(F("+CIPMUX: ")))
 		{
 			uint16_t isEnabled;
 			if (parser.NextNum(isEnabled))
@@ -429,44 +402,51 @@ ParserState SimcomResponseParser::ParseLine()
 		if (lastResult == ParserState::None)
 		{
 			if (IsOkLine())
+			{
 				return ParserState::Success;
+			}
 			if (IsErrorLine())
+			{
 				return ParserState::Error;
+			}
 		}
 	}
 	if(commandType == AtCommand::Creg)
 	{
 		// example valid line : +CREG: 2,1,"07E6","D68F"
-		if(parser.BeginParsing(_response, F("+CREG: ")))
+		if(parser.StartsWith(F("+CREG: ")))
 		{
-			uint16_t tmp = 0;
-			if (parser.NextNum(tmp))
+			if (!parser.Skip(1))
 			{
-				if (parser.NextNum(tmp))
-				{
-					_lastGsmResult = CregToNetworkStatus(tmp);
-					bufferedResult = ParserState::Success;
-					uint16_t lac, cellId;
-					if (parser.NextNum(lac, 16) && parser.NextNum(cellId, 16))
-					{
-						// todo - use lac and cellId
-					}
-					return ParserState::None;
-				}
+				Serial.println("1");
+				return ParserState::Error;
 			}
-			
+			uint8_t cregRegistrationState;
+			if (!parser.NextNum(cregRegistrationState))
+			{
+				Serial.println("2");
+
+				return ParserState::Error;
+			}
+
+			if (!ParsingHelpers::ParseRegistrationStatus(cregRegistrationState, _parserContext.RegistrationStatus))
+			{
+				Serial.println("3");
+
+				return ParserState::Error;
+			}			
+			lastResult = ParserState::None;
 		}
 		if (lastResult == ParserState::None)
 		{
 			if (IsOkLine())
 			{				
-				return bufferedResult;
+				return ParserState::Success;
 			}
 			if (IsErrorLine())
 			{
 				return ParserState::Error;
 			}
-
 		}
 	}
 	return ParserState::Timeout;

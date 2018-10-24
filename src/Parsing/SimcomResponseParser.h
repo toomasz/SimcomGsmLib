@@ -15,7 +15,6 @@ class SimcomResponseParser
 	enum LineState { PARSER_INITIAL, PARSER_CR, PARSER_LF, PARSER_LINE };
 	uint8_t lineParserState;
 	AtCommand commandType;
-	DelimParser parser;
 	SequenceDetector okSeqDetector;
 	ParserState lastResult;
 	ParserState bufferedResult; // stores actual result for commands like CREG while parser is waiting for OK line
@@ -25,9 +24,6 @@ class SimcomResponseParser
 	ParserContext& _parserContext;
 public:
 	SimcomResponseParser(CircularDataBuffer& dataBuffer, ParserContext &parserContext, GsmLogger &logger);
-
-	GsmNetworkStatus _lastGsmResult;
-
 	AtResultType GetAtResultType();
 	volatile bool commandReady;
 	FunctionBase *function;

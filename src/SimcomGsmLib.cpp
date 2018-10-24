@@ -11,14 +11,14 @@ _parser(_dataBuffer, _parserContext, _logger)
 	_currentBaudRate = 0;
 }
 
-AtResultType SimcomGsm::GetRegistrationStatus(GsmNetworkStatus& networkStatus)
+AtResultType SimcomGsm::GetRegistrationStatus(GsmRegistrationState& registrationStatus)
 {
 	SendAt_P(AtCommand::Creg ,F("AT+CREG?"));
 
 	auto result = PopCommandResult();
 	if (result == AtResultType::Success)
 	{
-		networkStatus = _parser._lastGsmResult;
+		registrationStatus = _parserContext.RegistrationStatus;
 	}
 	return result;
 }
@@ -104,10 +104,10 @@ AtResultType SimcomGsm::GetIpState(SimcomIpState &ipState)
 	return PopCommandResult();	
 }
 
-AtResultType SimcomGsm::GetIpAddress(FixedString20& ipAddress)
+AtResultType SimcomGsm::GetIpAddress(GsmIp& ipAddress)
 {
 	_parserContext.IpAddress = &ipAddress;
-	SendAt_P(AtCommand::Cifsr, F("AT+CIFSR"));
+	SendAt_P(AtCommand::Cifsr, F("AT+CIFSR;E0"));
 	return PopCommandResult();
 }
 
@@ -133,94 +133,6 @@ AtResultType SimcomGsm::AttachGprs()
 	return PopCommandResult(60000);
 }
 
-void SimcomGsm::PrintDataByte(uint8_t data) // prints 8-bit data in hex
-{
-	char tmp[3];
-	byte first;
-	byte second;
-
-	first = (data >> 4) & 0x0f;
-	second = data & 0x0f;
-
-	tmp[0] = first+48;
-	tmp[1] = second+48;
-	if (first > 9) tmp[0] += 39;
-	if (second > 9) tmp[1] += 39;
-	
-	tmp[2] = 0;
-//	ds.write(' ');
-//	ds.print(tmp);
-//	ds.write(' ');
-}
-
-AtResultType SimcomGsm::SwitchToCommandMode()
-{
-	_parser.SetCommandType(AtCommand::SwitchToCommand);
-	_dataBuffer.commandBeforeRN = true;
-	// +++ escape sequence needs to wait 1000ms after last data was sent via transparent connection
-	// in the meantime data from tcp connection may arrive so we read it here to dataBuffer
-	// ex: lastDataWrite = 1500
-	// loop will exit when millis()-1500<1000 so when millis is 2500
-	
-	delay(1000);
-  /* while(ser->available() || (millis()-lastDataWrite) < 1000)
-	{
-		while(ser->available())
-		{
-			int c = ser->read();
-			pr("\nsc_data: %c\n", (char)c);
-			WriteDataBuffer(c);
-		}
-	}*/
-	
-	_serial.print(F("+++"));
-	lastDataWrite = millis();
-	return PopCommandResult(500);
-}
-
-AtResultType SimcomGsm::SwitchToCommandModeDropData()
-{
-	_parser.SetCommandType(AtCommand::SwitchToCommand);
-	_serial.flush();
-	while (_serial.available())
-	{
-		_serial.read();
-	}
-	delay(1500);
-	while (_serial.available())
-	{
-		_serial.read();
-	}
-
-	_serial.print(F("+++"));
-
-	return PopCommandResult(500);
-}
-
-/*
-Switches to data mode ATO
-Return values S900_OK, S900_ERROR, S900_TIMEOUT
-*/
-AtResultType SimcomGsm::SwitchToDataMode()
-{
-	SendAt_P(AtCommand::SwitchToData, F("ATO"));
-
-	auto result = PopCommandResult();
-	if(result == AtResultType::Success)
-	{
-		delay(100);
-		while(_serial.available())
-		{
-			int c = _serial.read();
-			//pr("\nsd_data: %c\n", (char)c);
-			//ds.print("s_data: "); ds.println((int)c);
-			_dataBuffer.WriteDataBuffer(c);
-		}
-		
-	}
-	lastDataWrite = millis();
-	return result;
-}
 AtResultType SimcomGsm::PopCommandResult()
 {
 	return PopCommandResult(AT_DEFAULT_TIMEOUT);
@@ -408,9 +320,7 @@ int SimcomGsm::FindCurrentBaudRate()
 		yield();
 		baudRate = _defaultBaudRates[i];
 		_logger.Log_P(F("Trying baud rate: %d"), baudRate);
-		yield();
 		_updateBaudRateCallback(baudRate);
-		yield();
 		if (At() == AtResultType::Success)
 		{
 			_logger.Log_P(F(" Found baud rate: %d"), baudRate);
@@ -451,11 +361,9 @@ AtResultType SimcomGsm::Shutdown()
 
 AtResultType SimcomGsm::BeginConnect(ProtocolType protocol, uint8_t mux, const char *address, int port)
 {
-	// Execute command like AT+CIPSTART="TCP","example.com","80"
-	SendAt_P(AtCommand::Generic, F("AT+CIPSTART=%d,\"%s\",\"%s\",\"%d\""),
-		mux, ProtocolToStr(protocol), address, port);
-
-	
+	SendAt_P(AtCommand::Generic, 
+		F("AT+CIPSTART=%d,\"%s\",\"%s\",\"%d\""),
+		mux, ProtocolToStr(protocol), address, port);	
 	return PopCommandResult(60000);
 }
 

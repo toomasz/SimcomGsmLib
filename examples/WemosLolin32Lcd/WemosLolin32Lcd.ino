@@ -2,7 +2,7 @@
 #include <SimcomGsmLib.h>
 #include <GsmDebugHelpers.h>
 #include <OperatorNameHelper.h>
-
+#include <MappingHelpers.h>
 #include <SSD1306.h>
 #include "Gui.h"
 
@@ -24,7 +24,7 @@ void OnLog(const char* gsmLog)
 void setup()
 {
 	gui.init();
-	Serial.begin(115200);
+	Serial.begin(500000);
 	gsm.SetLogCallback(OnLog);
 }
 
@@ -102,13 +102,29 @@ void loop()
 	}
 	
 
-	FixedString20 ipAddress;
-	Serial.println("begin get ip");
+	GsmIp ipAddress;
 
 	gsm.GetIpAddress(ipAddress);
-	Serial.println("end get ip");
+	ConnectionInfo info;
+	if (gsm.GetConnectionInfo(0, info) == AtResultType::Success)
+	{
+		Serial.printf("Conn info: bearer=%d, ctx=%d,proto=%s  endpoint = [%s:%d] state = [%s]\n", 
+			info.Mux, info.Bearer, 
+			ProtocolToStr(info.Protocol), info.RemoteAddress.ToString().c_str(), 
 
-	GsmNetworkStatus gsmRegStatus;
+			info.Port, ConnectionStateToStr(info.State));
+
+		if (info.State == ConnectionState::Closed || info.State == ConnectionState::Initial)
+		{
+			gsm.BeginConnect(ProtocolType::Tcp, 0, "conti.ml", 12668);
+		}
+	}
+	else
+	{
+		Serial.println("Connection info failed");
+	}
+
+	GsmRegistrationState gsmRegStatus;
 	auto registrationStatus = gsm.GetRegistrationStatus(gsmRegStatus);
 
 
@@ -120,5 +136,5 @@ void loop()
 
 	display.display();
 
-	delay(1000);
+	gsm.wait(1000);
 }

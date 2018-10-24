@@ -4,62 +4,17 @@
 #include <stdio.h>
 #include <WString.h>
 
-struct IpStatusEntry
+const __FlashStringHelper * RegStatusToStr(GsmRegistrationState state)
 {
-	const __FlashStringHelper *str;
-	SimcomIpState status;
-};
-struct IpStatusEntry IpStatusMap[] =
-{
-	F("STATE: IP INITIAL"), SimcomIpState::IpInitial,
-	F("STATE: IP START"), SimcomIpState::IpStart,
-	F("STATE: IP CONFIG"), SimcomIpState::IpConfig,
-	F("STATE: IP GPRSACT"), SimcomIpState::IpGprsact,
-	F("STATE: IP STATUS"), SimcomIpState::IpStatus,
-	F("STATE: TCP CONNECTING"), SimcomIpState::TcpConnecting,
-	F("STATE: TCP CLOSED"), SimcomIpState::TcpClosed,
-	F("STATE: PDP DEACT"), SimcomIpState::PdpDeact,
-	F("STATE: CONNECT OK"), SimcomIpState::ConnectOk,
-	F("STATE: IP PROCESSING"), SimcomIpState::IpProcessing,
-	0,SimcomIpState::Unknown
-};
-
-GsmNetworkStatus CregToNetworkStatus(uint16_t status)
-{
-	switch (status)
+	switch (state)
 	{
-	case 0:
-	case 2:
-		return GsmNetworkStatus::SearchingForNetwork;
-	case 1:
-		return GsmNetworkStatus::HomeNetwork;
-	case 3:
-		return GsmNetworkStatus::RegistrationDenied;
-	case 4:
-		return GsmNetworkStatus::RegistrationUnknown;
-	case 5:
-		return GsmNetworkStatus::Roaming;
-	default:
-		return GsmNetworkStatus::RegistrationUnknown;
-
+		case GsmRegistrationState::HomeNetwork: return F("HomeNetwork");
+		case GsmRegistrationState::RegistrationDenied: return F("RegistrationDenied");
+		case GsmRegistrationState::RegistrationUnknown: return F("RegistrationUnknown");
+		case GsmRegistrationState::Roaming: return F("Roaming");
+		case GsmRegistrationState::SearchingForNetwork: return F("SearchingForNetwork");
+		default: return F("Unknown");
 	}
-}
-
-bool ParseIpStatus(const char *str, SimcomIpState &status)
-{
-	int i = 0;
-
-	auto key = IpStatusMap[i].str;
-	while (key)
-	{
-		if (strcmp_P(str, (PGM_P)key) == 0)
-		{
-			status = IpStatusMap[i].status;
-			return true;
-		}
-		key = IpStatusMap[++i].str;
-	}
-	return false;
 }
 
 const __FlashStringHelper* ProtocolToStr(ProtocolType protocol)
@@ -75,53 +30,17 @@ const __FlashStringHelper* ProtocolToStr(ProtocolType protocol)
 	}
 }
 
-bool ParseProtocolType(FixedString20& protocolStr, ProtocolType& protocol)
+const __FlashStringHelper* ConnectionStateToStr(ConnectionState state)
 {
-	if (protocolStr == F("TCP"))
+	switch (state)
 	{
-		protocol = ProtocolType::Tcp;
-		return true;
+		case ConnectionState::Initial: return F("Initial");
+		case ConnectionState::Connected: return F("Connected");
+		case ConnectionState::Connecting: return F("Connecting");
+		case ConnectionState::RemoteClosing: return F("RemoteClosing");
+		case ConnectionState::Closing: return F("Closing");
+		case ConnectionState::Closed: return F("Closed");
+		default: return F("Unknown");
 	}
-	if (protocolStr == F("UDP"))
-	{
-		protocol = ProtocolType::Tcp;
-		return true;
-	}
-	return false;
 }
-
-bool ParseConnectionState(FixedString20& connectionStateStr, ConnectionState& connectionState)
-{
-	if (connectionStateStr == F("INITIAL"))
-	{
-		connectionState = ConnectionState::Initial;
-		return true;
-	}
-	if (connectionStateStr == F("CONNECTING"))
-	{
-		connectionState = ConnectionState::Connecting;
-		return true;
-	}
-	if (connectionStateStr == F("CONNECTED"))
-	{
-		connectionState = ConnectionState::Connected;
-		return true;
-	}
-	if (connectionStateStr == F("REMOTE CLOSING"))
-	{
-		connectionState = ConnectionState::RemoteClosing;
-		return true;
-	}if (connectionStateStr == F("CLOSING"))
-	{
-		connectionState = ConnectionState::Closing;
-		return true;
-	}if (connectionStateStr == F("CLOSED"))
-	{
-		connectionState = ConnectionState::Closed;
-		return true;
-	}
-
-	return false;
-}
-
 

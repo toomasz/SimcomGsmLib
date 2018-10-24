@@ -1,17 +1,25 @@
 #include "DelimParser.h"
 
-bool DelimParser::BeginParsing(FixedString150 &line, const __FlashStringHelper* commandStart)
+
+DelimParser::DelimParser(FixedStringBase &line, char separator):
+	_line(line),
+	_separator(separator)
 {
-	if (!line.startsWith(commandStart))
+	_position = 0;
+	_tokenStart = 0;
+	_currentState = LineParserState::Initial;
+}
+
+bool DelimParser::StartsWith(const __FlashStringHelper* commandStart)
+{
+	if (!_line.startsWith(commandStart))
 	{
 		return false;
 	}
-	_line = line;
 	_position = strlen_P((PGM_P)commandStart);
 	_tokenStart = _position;
 
 	_currentState = LineParserState::Initial;
-	return true;
 }
 
 LineParserState DelimParser::GetNextState(char c, LineParserState state)
@@ -19,7 +27,7 @@ LineParserState DelimParser::GetNextState(char c, LineParserState state)
 	switch (state)
 	{
 	case LineParserState::Delimiter:
-		if (c == ',')
+		if (c == _separator)
 		{
 			return LineParserState::Delimiter;
 		}
@@ -37,7 +45,7 @@ LineParserState DelimParser::GetNextState(char c, LineParserState state)
 		{
 			return LineParserState::Initial;
 		}
-		if (c == ',')
+		if (c == _separator)
 		{
 			return LineParserState::Delimiter;
 		}
@@ -53,7 +61,7 @@ LineParserState DelimParser::GetNextState(char c, LineParserState state)
 		}
 		return LineParserState::QuotedExpression;
 	case LineParserState::Expression:
-		if (c == ',')
+		if (c == _separator)
 		{
 			return LineParserState::Delimiter;
 		}
@@ -65,7 +73,7 @@ LineParserState DelimParser::GetNextState(char c, LineParserState state)
 		}
 		return LineParserState::QuotedExpression;
 	case LineParserState::EndQuote:
-		if (c == ',' || c == ' ')
+		if (c == _separator || c == ' ')
 		{
 			return LineParserState::Delimiter;
 		}
@@ -88,6 +96,7 @@ bool DelimParser::NextToken()
 			auto c = _line.c_str()[_position];
 			_currentState = GetNextState(c, _currentState);
 		}
+		//printf("state %s -> %s\n", StateToStr(previousState), StateToStr(_currentState));
 
 		if (previousState == LineParserState::Delimiter && _currentState == LineParserState::Delimiter)
 		{
@@ -98,7 +107,6 @@ bool DelimParser::NextToken()
 
 		if (previousState != _currentState)
 		{
-			//	printf("state %s -> %s\n", StateToStr(previousState), StateToStr(_currentState));
 			if (_currentState == LineParserState::Expression)
 			{
 				_tokenStart = _position;

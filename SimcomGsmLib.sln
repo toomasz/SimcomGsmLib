@@ -16,7 +16,9 @@ EndProject
 Global
 	GlobalSection(SharedMSBuildProjectFiles) = preSolution
 		SimcomGsmLib.vcxitems*{0fc0c7fe-bd9c-4d1a-a770-2418e669451a}*SharedItemsImports = 9
+		SimcomGsmLib.vcxitems*{c5f80730-f44f-4478-bdae-6634efc2ca88}*SharedItemsImports = 4
 		SimcomGsmLib.vcxitems*{e9f73fda-32f5-40bf-9af5-b7afa27726f7}*SharedItemsImports = 4
+		SimcomGsmLib.vcxitems*{ff4d4f2e-dad0-4312-9544-8580ddfb7ec4}*SharedItemsImports = 4
 	EndGlobalSection
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x86 = Debug|x86

@@ -99,15 +99,15 @@ public:
 		_lcd.drawString(128 - triangleWidth-2, 0, buffer);
 	}
 
-	const char* RegistrationStatusToStr(GsmNetworkStatus regStatus)
+	const char* RegistrationStatusToStr(GsmRegistrationState regStatus)
 	{
 		switch (regStatus)
 		{
-		case GsmNetworkStatus::SearchingForNetwork:
+		case GsmRegistrationState::SearchingForNetwork:
 			return "Net Search...";
-		case GsmNetworkStatus::RegistrationDenied:
+		case GsmRegistrationState::RegistrationDenied:
 			return "Reg denied";
-		case GsmNetworkStatus::RegistrationUnknown:
+		case GsmRegistrationState::RegistrationUnknown:
 			return "Reg unknown";
 		default:
 			break;
@@ -144,11 +144,11 @@ public:
 		va_end(argptr);
 	}
 
-	void drawGsmInfo(int signalQuality, GsmNetworkStatus gsmNetworkStatus, FixedString20& operatorName)
+	void drawGsmInfo(int signalQuality, GsmRegistrationState gsmNetworkStatus, FixedString20& operatorName)
 	{
 		_lcd.setColor(OLEDDISPLAY_COLOR::WHITE);
-		if (gsmNetworkStatus == GsmNetworkStatus::HomeNetwork || 
-			gsmNetworkStatus == GsmNetworkStatus::Roaming)
+		if (gsmNetworkStatus == GsmRegistrationState::HomeNetwork || 
+			gsmNetworkStatus == GsmRegistrationState::Roaming)
 		{
 			_lcd.setFont(ArialMT_Plain_10);
 			auto opWidth = _lcd.getStringWidth(operatorName.c_str());
@@ -177,9 +177,9 @@ public:
 		}
 	}
 
-	void DisplayIp(FixedString20& ip)
+	void DisplayIp(GsmIp& ip)
 	{
-		lcd_label(26, 13, 10, F("ip: %s"), ip.c_str());
+		lcd_label(26, 13, 10, F("ip: %s"), ip.ToString().c_str());
 	}
 
 	void DisplayBlinkIndicator()
