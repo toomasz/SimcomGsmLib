@@ -5,20 +5,38 @@
 #include <MappingHelpers.h>
 #include <SSD1306.h>
 #include "Gui.h"
+#include "ConnectionDataValidator.h"
 
 void UpdateBaudRate(int baudRate)
 {
-	Serial2.end();
-	Serial2.begin(baudRate, SERIAL_8N1, 19, 18, false);
+	Serial1.end();	
+	Serial1.setRxBufferSize(3000);
+	Serial1.begin(baudRate, SERIAL_8N1, 19, 18, false);
 }
-SimcomGsm gsm(Serial2, UpdateBaudRate);
+SimcomGsm gsm(Serial1, UpdateBaudRate);
 SSD1306 display(0x3c, 5, 4);
 Gui gui(display);
+ConnectionDataValidator connectionValidator;
 
 void OnLog(const char* gsmLog)
 {
 	Serial.print("[GSM]");
 	Serial.println(gsmLog);
+}
+int receivedBytes = 0;
+
+void OnDataReceived(uint8_t mux, FixedStringBase &data)
+{
+	if (connectionValidator.HasError())
+	{
+		return;
+	}
+	receivedBytes += data.length();
+	Serial.printf(" #####  Data received: %s\n", data.c_str());
+	for (int i = 0; i < data.length(); i++)
+	{
+		connectionValidator.ValidateIncomingByte(data[i], i, receivedBytes);
+	}
 }
 
 void setup()
@@ -26,14 +44,22 @@ void setup()
 	gui.init();
 	Serial.begin(500000);
 	gsm.SetLogCallback(OnLog);
+	gsm.OnDataReceived(OnDataReceived);
 }
 
 void loop()
 {
-	display.setColor(OLEDDISPLAY_COLOR::BLACK);
-	display.fillRect(0, 0, 128, 64);
+	gui.Clear();
 
-	if (!gsm.EnsureModemConnected(460800))
+	if (connectionValidator.HasError())
+	{
+		display.drawString(0, 2, connectionValidator.GetError().c_str());
+		display.display();
+		delay(500);
+		return;
+	}
+
+	if (!gsm.EnsureModemConnected(115200))
 	{
 		display.drawString(0, 2, "No shield");
 		display.display();
@@ -93,8 +119,9 @@ void loop()
 		ipStatus == SimcomIpState::IpGprsact ||
 		ipStatus == SimcomIpState::IpStart)
 	{
-		gsm.SetApn("virgin-internet", "", "");
-		display.clear();
+		gui.Clear();
+
+		gsm.SetApn("virgin-internet", "", "");		
 		display.drawString(0, 0, "Connecting to gprs..");
 		display.display();
 
@@ -108,7 +135,7 @@ void loop()
 	ConnectionInfo info;
 	if (gsm.GetConnectionInfo(0, info) == AtResultType::Success)
 	{
-		Serial.printf("Conn info: bearer=%d, ctx=%d,proto=%s  endpoint = [%s:%d] state = [%s]\n", 
+		Serial.printf("Conn info: bearer=%d, ctx=%d,proto=%s endpoint = [%s:%d] state = [%s]\n", 
 			info.Mux, info.Bearer, 
 			ProtocolToStr(info.Protocol), info.RemoteAddress.ToString().c_str(), 
 
@@ -116,6 +143,9 @@ void loop()
 
 		if (info.State == ConnectionState::Closed || info.State == ConnectionState::Initial)
 		{
+			Serial.printf("Trying to connect...\n");
+			receivedBytes = 0;
+			connectionValidator.SetJustConnected();
 			gsm.BeginConnect(ProtocolType::Tcp, 0, "conti.ml", 12668);
 		}
 	}
@@ -133,6 +163,13 @@ void loop()
 	gui.DisplayIp(ipAddress);
 	gui.DisplayBlinkIndicator();
 	gui.DisplayIncomingCall(callInfo);
+
+	FixedString50 receivedBytesStr;
+	receivedBytesStr.appendFormat("received: %d b", receivedBytes);
+	display.setColor(OLEDDISPLAY_COLOR::WHITE);
+
+	display.drawString(0, 64 - 22, ConnectionStateToStr(info.State));
+	display.drawString(0, 64 - 12, receivedBytesStr.c_str());
 
 	display.display();
 

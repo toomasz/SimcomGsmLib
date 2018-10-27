@@ -7,7 +7,9 @@ SimcomResponseParser::SimcomResponseParser(CircularDataBuffer& dataBuffer, Parse
 okSeqDetector(PSTR("\r\nOK\r\n")), 
 _dataBuffer(dataBuffer),
 _parserContext(parserContext),
-_logger(logger)
+_logger(logger),
+_dataReceivedCallback(nullptr),
+_bytesToReadFromReceive(false)
 {
 	commandType = AtCommand::Generic;
 	lineParserState = PARSER_INITIAL;
@@ -35,6 +37,20 @@ AtResultType SimcomResponseParser::GetAtResultType()
 /* processes character read from serial port of gsm module */
 void SimcomResponseParser::FeedChar(char c)
 {	
+	if (_bytesToReadFromReceive > 0)
+	{
+		_rxDataBuffer.append(c);
+		_bytesToReadFromReceive--;
+		if (_bytesToReadFromReceive == 0 || _rxDataBuffer.freeBytes() == 0)
+		{
+			if (_dataReceivedCallback != nullptr)
+			{
+				_dataReceivedCallback(0, _rxDataBuffer);
+			}
+			_rxDataBuffer.clear();
+		}
+		return;
+	}
 	int prevState = lineParserState;
 
 	lineParserState = StateTransition(c);
@@ -56,26 +72,36 @@ void SimcomResponseParser::FeedChar(char c)
 
 		_logger.Log_P(F("  <= %s"), (char*)_response.c_str());
 
-		ParserState parseResult = ParseLine();
+		auto isUnsolicited = ParseUnsolicited(_response);
 
-		// if error or or success
-		if (parseResult == ParserState::Success || parseResult == ParserState::Error)
+		if (!isUnsolicited)
 		{
-			commandReady = true;
-			_state = parseResult;
-		}
-		else if (parseResult == ParserState::PartialSuccess || parseResult == ParserState::PartialError)
-		{
-			_state = parseResult;
-		}
-		// if command not parsed yet
-		else if (parseResult == ParserState::None)
-		{
-			// do nothing, do not change _state to none
+			ParserState parseResult = ParseLine();
+
+			// if error or or success
+			if (parseResult == ParserState::Success || parseResult == ParserState::Error)
+			{
+				commandReady = true;
+				_state = parseResult;
+			}
+			else if (parseResult == ParserState::PartialSuccess || parseResult == ParserState::PartialError)
+			{
+				_state = parseResult;
+			}
+			// if command not parsed yet
+			else if (parseResult == ParserState::None)
+			{
+				// do nothing, do not change _state to none
+			}
 		}
 		_response.clear();
 	}
 
+}
+
+void SimcomResponseParser::OnDataReceived(DataReceivedCallback onDataReceived)
+{
+	_dataReceivedCallback = onDataReceived;
 }
 
 /* returns true if current line is error: ERROR, CME ERROR etc*/
@@ -93,7 +119,6 @@ bool SimcomResponseParser::IsErrorLine()
 	{
 		return true;
 	}
-
 	if (_response.startsWith(F("+CME ERROR:")))
 	{
 		return true;
@@ -103,10 +128,33 @@ bool SimcomResponseParser::IsErrorLine()
 /* returns true if current line is OK*/
 bool SimcomResponseParser::IsOkLine()
 {
-	if (_response == F("OK"))
+	return _response == F("OK");
+}
+
+bool SimcomResponseParser::ParseUnsolicited(FixedStringBase& line)
+{
+	DelimParser parser(line);
+	if (parser.StartsWith(F("+RECEIVE,")))
+	{
+
+		uint8_t mux;
+		uint16_t dataLength;
+		if (!parser.NextNum(mux))
+		{
+			return false;
+		}
+		parser.SetSeparator(':');
+		if (!parser.NextNum(dataLength))
+		{
+			return false;
+		}
+		_bytesToReadFromReceive = dataLength;
 		return true;
+		
+	}
 	return false;
 }
+
 ParserState SimcomResponseParser::ParseLine()
 {
 	DelimParser parser(_response);
@@ -116,7 +164,11 @@ ParserState SimcomResponseParser::ParseLine()
 		if (_state == ParserState::PartialSuccess)
 		{
 			return ParserState::Success;
-		}		
+		}
+		if (_state == ParserState::PartialError)
+		{
+			return ParserState::Error;
+		}
 	}
 	if (IsErrorLine())
 	{
@@ -146,8 +198,6 @@ ParserState SimcomResponseParser::ParseLine()
 	{
 		if (parser.StartsWith(F("+CIPSTATUS: ")))
 		{
-			_logger.Log_P(F("Begin parsing sipstatus"));
-
 			uint8_t mux;
 			uint8_t bearer;
 			FixedString20 protocolStr;
@@ -286,30 +336,20 @@ ParserState SimcomResponseParser::ParseLine()
 	}
 	if(commandType == AtCommand::Cops)
 	{
-		//+COPS: 0,0,"PLAY"
 		if(parser.StartsWith(F("+COPS: ")))
 		{				
 			uint16_t operatorNameFormat;
 
-			if (!parser.NextNum(_parserContext.operatorSelectionMode))
+			if (!parser.NextNum(_parserContext.operatorSelectionMode) ||
+				!parser.NextNum(operatorNameFormat) || 
+				!parser.NextString(*_parserContext.OperatorName))
 			{
 				return ParserState::PartialError;
 			}
-			else if (!parser.NextNum(operatorNameFormat))
-			{
-				return ParserState::PartialError;
-			}
-			else if (!parser.NextString(*_parserContext.OperatorName))
-			{
-				return ParserState::PartialError;
-			}
-			else
-			{
-				_logger.Log_P(F("Op selection mode: %d"), _parserContext.operatorSelectionMode);
-				_parserContext.IsOperatorNameReturnedInImsiFormat = operatorNameFormat == 2;
-				return ParserState::PartialSuccess;
-			}
-		}				
+
+			_parserContext.IsOperatorNameReturnedInImsiFormat = operatorNameFormat == 2;
+			return ParserState::PartialSuccess;			
+		}
 	}
 	if(commandType == AtCommand::Gsn)
 	{
@@ -373,9 +413,8 @@ ParserState SimcomResponseParser::ParseLine()
 
 void SimcomResponseParser::SetCommandType(AtCommand commandType)
 {		
-	this->commandType = commandType;
+	commandType = commandType;
 	commandReady = false;	
-	_response.clear();
 	_state = ParserState::Timeout;
 }
 

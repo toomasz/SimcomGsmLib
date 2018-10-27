@@ -24,12 +24,18 @@
     <ClInclude Include="Gui.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="ConnectionDataValidator.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Text Include="At_Commands.txt" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Gui.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="ConnectionDataValidator.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

@@ -182,6 +182,13 @@ public:
 		lcd_label(26, 13, 10, F("ip: %s"), ip.ToString().c_str());
 	}
 
+	void Clear()
+	{
+		_lcd.setColor(OLEDDISPLAY_COLOR::BLACK);
+		_lcd.fillRect(0, 0, 128, 64);
+		_lcd.setColor(OLEDDISPLAY_COLOR::WHITE);
+	}
+
 	void DisplayBlinkIndicator()
 	{
 		static bool rectState = false;

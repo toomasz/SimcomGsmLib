@@ -21,7 +21,10 @@ bool DelimParser::StartsWith(const __FlashStringHelper* commandStart)
 
 	_currentState = LineParserState::Initial;
 }
-
+void DelimParser::SetSeparator(char separator)
+{
+	_separator = separator;
+}
 LineParserState DelimParser::GetNextState(char c, LineParserState state)
 {
 	switch (state)

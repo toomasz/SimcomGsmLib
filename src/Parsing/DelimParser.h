@@ -28,6 +28,7 @@ class DelimParser
 	int hexDigitToInt(char c);
 	char _separator;
 public:
+	void SetSeparator(char separator);
 	bool StartsWith(const __FlashStringHelper* commandStart);
 	DelimParser(FixedStringBase &line, char separator = ',');
 	bool NextToken();

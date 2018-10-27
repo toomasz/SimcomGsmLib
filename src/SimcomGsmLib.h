@@ -42,6 +42,7 @@ public:
 		{
 			_logger.SetLogCallback(onLog);
 		}
+		void OnDataReceived(DataReceivedCallback onDataReceived);
 
 		// Standard modem functions
 		AtResultType SetBaudRate(uint32_t baud);

@@ -1,5 +1,4 @@
 #include "SimcomGsmLib.h"
-
 #include "MappingHelpers.h"
 
 SimcomGsm::SimcomGsm(Stream& serial, UpdateBaudRateCallback updateBaudRateCallback) :
@@ -145,6 +144,7 @@ AtResultType SimcomGsm::PopCommandResult(int timeout)
 		if(_serial.available())
 		{
 			char c = _serial.read();
+			Serial.printf("c: %c\n", c);
 			_parser.FeedChar(c);
 		}
 	}
@@ -199,6 +199,11 @@ AtResultType SimcomGsm::At()
 	return PopCommandResult(30);
 }
 
+void SimcomGsm::OnDataReceived(DataReceivedCallback onDataReceived)
+{
+	_parser.OnDataReceived(onDataReceived);
+}
+
 AtResultType SimcomGsm::SetBaudRate(uint32_t baud)
 {
 	SendAt_P(AtCommand::Generic, F("AT+IPR=%d"), baud);
@@ -249,7 +254,9 @@ void SimcomGsm::wait(int ms)
 	{
 		if (_serial.available())
 		{
-			_parser.FeedChar(_serial.read());
+			auto c = _serial.read();
+			Serial.printf("c: %c\n", c);
+			_parser.FeedChar(c);
 		}
 	}
 }

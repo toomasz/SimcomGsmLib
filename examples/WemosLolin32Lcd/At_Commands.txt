@@ -5,13 +5,16 @@ AT+CIPSHUT
 
 AT+CGATT?
 AT+CGATT=1
-AT+CSTT="virgin-internet","",""
 
+
+
+AT+CIPMUX?
+AT+CIPMUX=1
+AT+CSTT="virgin-internet","",""
 AT+CIICR
 AT+CIFSR
 AT+CIPSTART=0,"tcp","conti.ml","12668"
-AT+CIPMUX?
-AT+CIPMUX=1
+
 
 AT+CREG?
 AT+CBC
@@ -28,3 +31,6 @@ AT+COPS=1,2,"26002"
 
 
 AT+CIPSGTXT?
+
+
+SIM800 R14.18

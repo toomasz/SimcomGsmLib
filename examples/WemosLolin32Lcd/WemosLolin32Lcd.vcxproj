@@ -108,6 +108,7 @@
     </None>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="ConnectionDataValidator.h" />
     <ClInclude Include="Gui.h" />
     <ClInclude Include="__vm\.WemosLolin32Lcd.vsarduino.h" />
   </ItemGroup>
@@ -115,6 +116,7 @@
     <Text Include="At_Commands.txt" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="ConnectionDataValidator.cpp" />
     <ClCompile Include="Gui.cpp" />
   </ItemGroup>
   <PropertyGroup>
@@ -123,4 +125,9 @@
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
+  <ProjectExtensions>
+    <VisualStudio>
+      <UserProperties arduino.upload.port="COM7" />
+    </VisualStudio>
+  </ProjectExtensions>
 </Project>

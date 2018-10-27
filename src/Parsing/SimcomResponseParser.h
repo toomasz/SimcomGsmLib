@@ -10,6 +10,8 @@
 #include "SequenceDetector.h"
 #include "GsmLogger.h"
 
+typedef void(*DataReceivedCallback)(uint8_t mux, FixedStringBase& data);
+
 class SimcomResponseParser
 {
 	enum LineState { PARSER_INITIAL, PARSER_CR, PARSER_LF, PARSER_LINE };
@@ -21,24 +23,22 @@ class SimcomResponseParser
 	GsmLogger &_logger;
 	FixedString150 _response;
 	ParserContext& _parserContext;
+	uint16_t _bytesToReadFromReceive;
+	FixedString150 _rxDataBuffer;
+	DataReceivedCallback _dataReceivedCallback;
+	bool IsErrorLine();
+	bool IsOkLine();
+	bool ParseUnsolicited(FixedStringBase & line);
+	ParserState ParseLine();
+	int StateTransition(char c);
 public:
 	SimcomResponseParser(CircularDataBuffer& dataBuffer, ParserContext &parserContext, GsmLogger &logger);
 	AtResultType GetAtResultType();
 	volatile bool commandReady;
 	FunctionBase *function;
 	void SetCommandType(AtCommand commandType);
-
-
-	bool IsErrorLine();
-	bool IsOkLine();
-
-	//int currNumber =
-	// this function uses class scope variables responseBuffer, n
-	ParserState ParseLine();
-	
-	int StateTransition(char c);
-	void FeedChar(char c);
-	
+	void FeedChar(char c);	
+	void OnDataReceived(DataReceivedCallback onDataReceived);
 };
 
 
