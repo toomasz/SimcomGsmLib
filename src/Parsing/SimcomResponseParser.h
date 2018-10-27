@@ -16,8 +16,7 @@ class SimcomResponseParser
 {
 	enum LineState { PARSER_INITIAL, PARSER_CR, PARSER_LF, PARSER_LINE };
 	uint8_t lineParserState;
-	AtCommand commandType;
-	SequenceDetector okSeqDetector;
+	AtCommand _currentCommand;
 	ParserState _state;
 	CircularDataBuffer& _dataBuffer;
 	GsmLogger &_logger;

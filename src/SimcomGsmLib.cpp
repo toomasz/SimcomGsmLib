@@ -144,7 +144,7 @@ AtResultType SimcomGsm::PopCommandResult(int timeout)
 		if(_serial.available())
 		{
 			char c = _serial.read();
-			Serial.printf("c: %c\n", c);
+			//Serial.printf("c: %c\n", c);
 			_parser.FeedChar(c);
 		}
 	}
@@ -255,7 +255,7 @@ void SimcomGsm::wait(int ms)
 		if (_serial.available())
 		{
 			auto c = _serial.read();
-			Serial.printf("c: %c\n", c);
+			//Serial.printf("c: %c\n", c);
 			_parser.FeedChar(c);
 		}
 	}

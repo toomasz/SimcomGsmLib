@@ -10,7 +10,7 @@
 void UpdateBaudRate(int baudRate)
 {
 	Serial1.end();	
-	Serial1.setRxBufferSize(3000);
+	Serial1.setRxBufferSize(50000);
 	Serial1.begin(baudRate, SERIAL_8N1, 19, 18, false);
 }
 SimcomGsm gsm(Serial1, UpdateBaudRate);
@@ -72,6 +72,7 @@ void loop()
 	FixedString20 operatorName;
 	IncomingCallInfo callInfo;
 	SimcomIpState ipStatus;
+	GsmRegistrationState gsmRegStatus;
 
 	if (gsm.GetSignalQuality(signalQuality) == AtResultType::Timeout)
 	{
@@ -81,6 +82,8 @@ void loop()
 	{
 		return;
 	}
+	Serial.printf("batt: %d\n", batteryInfo.Percent);
+
 	if (OperatorNameHelper::GetRealOperatorName(gsm, operatorName) == AtResultType::Timeout)
 	{
 		return;
@@ -90,8 +93,14 @@ void loop()
 		return;
 	}
 
-	gsm.GetIpState(ipStatus);
-
+	if (gsm.GetIpState(ipStatus) == AtResultType::Timeout)
+	{
+		return;
+	}
+	if (gsm.GetRegistrationStatus(gsmRegStatus) == AtResultType::Timeout)
+	{
+		return;
+	}
 
 	bool hasCipmux;
 	if (gsm.GetCipmux(hasCipmux) == AtResultType::Success)
@@ -114,49 +123,51 @@ void loop()
 		gsm.Cipshut();
 	}
 
-	if (ipStatus == SimcomIpState::PdpDeact ||
-		ipStatus == SimcomIpState::IpInitial ||
-		ipStatus == SimcomIpState::IpGprsact ||
-		ipStatus == SimcomIpState::IpStart)
+	if (gsmRegStatus == GsmRegistrationState::Roaming || gsmRegStatus == GsmRegistrationState::HomeNetwork)
 	{
-		gui.Clear();
-
-		gsm.SetApn("virgin-internet", "", "");		
-		display.drawString(0, 0, "Connecting to gprs..");
-		display.display();
-
-		gsm.AttachGprs();
+		if (ipStatus == SimcomIpState::PdpDeact ||
+			ipStatus == SimcomIpState::IpInitial ||
+			ipStatus == SimcomIpState::IpGprsact ||
+			ipStatus == SimcomIpState::IpStart)
+		{
+			gui.Clear();
+			display.setFont(ArialMT_Plain_10);
+			gsm.SetApn("virgin-internet", "", "");
+			display.drawString(0, 0, "Connecting to gprs..");
+			display.display();
+			delay(400);
+			gsm.AttachGprs();
+		}
 	}
 	
 
 	GsmIp ipAddress;
+	ConnectionInfo info;
 
 	gsm.GetIpAddress(ipAddress);
-	ConnectionInfo info;
-	if (gsm.GetConnectionInfo(0, info) == AtResultType::Success)
+	if (ipStatus == SimcomIpState::IpStatus)
 	{
-		Serial.printf("Conn info: bearer=%d, ctx=%d,proto=%s endpoint = [%s:%d] state = [%s]\n", 
-			info.Mux, info.Bearer, 
-			ProtocolToStr(info.Protocol), info.RemoteAddress.ToString().c_str(), 
-
-			info.Port, ConnectionStateToStr(info.State));
-
-		if (info.State == ConnectionState::Closed || info.State == ConnectionState::Initial)
+		if (gsm.GetConnectionInfo(0, info) == AtResultType::Success)
 		{
-			Serial.printf("Trying to connect...\n");
-			receivedBytes = 0;
-			connectionValidator.SetJustConnected();
-			gsm.BeginConnect(ProtocolType::Tcp, 0, "conti.ml", 12668);
+			Serial.printf("Conn info: bearer=%d, ctx=%d,proto=%s endpoint = [%s:%d] state = [%s]\n",
+				info.Mux, info.Bearer,
+				ProtocolToStr(info.Protocol), info.RemoteAddress.ToString().c_str(),
+
+				info.Port, ConnectionStateToStr(info.State));
+
+			if (info.State == ConnectionState::Closed || info.State == ConnectionState::Initial)
+			{
+				Serial.printf("Trying to connect...\n");
+				receivedBytes = 0;
+				connectionValidator.SetJustConnected();
+				gsm.BeginConnect(ProtocolType::Tcp, 0, "conti.ml", 12668);
+			}
+		}
+		else
+		{
+			Serial.println("Connection info failed");
 		}
 	}
-	else
-	{
-		Serial.println("Connection info failed");
-	}
-
-	GsmRegistrationState gsmRegStatus;
-	auto registrationStatus = gsm.GetRegistrationStatus(gsmRegStatus);
-
 
 	gui.drawBattery(batteryInfo.Percent, batteryInfo.Voltage);
 	gui.drawGsmInfo(signalQuality, gsmRegStatus, operatorName);
@@ -164,12 +175,16 @@ void loop()
 	gui.DisplayBlinkIndicator();
 	gui.DisplayIncomingCall(callInfo);
 
-	FixedString50 receivedBytesStr;
-	receivedBytesStr.appendFormat("received: %d b", receivedBytes);
-	display.setColor(OLEDDISPLAY_COLOR::WHITE);
+	
+	if (ipStatus == SimcomIpState::IpStatus || ipStatus == SimcomIpState::IpProcessing)
+	{
+		FixedString50 receivedBytesStr;
+		receivedBytesStr.appendFormat("received: %d b", receivedBytes);
+		display.setColor(OLEDDISPLAY_COLOR::WHITE);
 
-	display.drawString(0, 64 - 22, ConnectionStateToStr(info.State));
-	display.drawString(0, 64 - 12, receivedBytesStr.c_str());
+		display.drawString(0, 64 - 22, ConnectionStateToStr(info.State));
+		display.drawString(0, 64 - 12, receivedBytesStr.c_str());
+	}
 
 	display.display();
 

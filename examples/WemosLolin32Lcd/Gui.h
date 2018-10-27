@@ -159,7 +159,7 @@ public:
 		
 		auto gsmStatusStr = RegistrationStatusToStr(gsmNetworkStatus);
 		auto statusStrWidth = _lcd.getStringWidth(gsmStatusStr);
-		_lcd.drawString(128 - statusStrWidth, 0, operatorName.c_str());
+		_lcd.drawString(128 - statusStrWidth, 17, gsmStatusStr);
 	}
 
 	void DisplayIncomingCall(IncomingCallInfo &callInfo)
