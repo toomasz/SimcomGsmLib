@@ -2,27 +2,47 @@
 
 #include <stdarg.h>
 #include <stdio.h>
+#include <FixedString.h>
 
 GsmLogger::GsmLogger()
 {
 	_onLog = nullptr;
+	LogAtCommands = false;
 }
-void GsmLogger::SetLogCallback(GsmLogCallback onLog)
+void GsmLogger::OnLog(GsmLogCallback onLog)
 {
 	_onLog = onLog;
 }
 
-void GsmLogger::Log_P(const __FlashStringHelper* format, ...)
+void GsmLogger::Log(const __FlashStringHelper* format, ...)
 {
 	va_list argptr;
 	va_start(argptr, format);
 
-	char logBuffer[200];
-	vsnprintf_P(logBuffer, 200, (PGM_P)format, argptr);
-
+	FixedString200 buffer;
+	buffer.appendFormat(format, argptr);
 	if (_onLog != nullptr)
 	{
-		_onLog(logBuffer);
+		_onLog(buffer.c_str());
+	}
+
+	va_end(argptr);
+}
+
+void GsmLogger::LogAt(const __FlashStringHelper* format, ...)
+{
+	if (!LogAtCommands)
+	{
+		return;
+	}
+	va_list argptr;
+	va_start(argptr, format);
+
+	FixedString200 buffer;
+	buffer.appendFormat(format, argptr);
+	if (_onLog != nullptr)
+	{
+		_onLog(buffer.c_str());
 	}
 
 	va_end(argptr);

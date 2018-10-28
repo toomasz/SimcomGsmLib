@@ -31,17 +31,16 @@ private:
 
 		void SendAt_P(AtCommand commandType, const __FlashStringHelper *command, ...);
 		AtResultType PopCommandResult(int timeout);
-		AtResultType PopCommandResult();
+		AtResultType PopCommandResult();		
 public:
+		GsmLogger& Logger() 
+		{
+			return _logger;
+		}
 		SimcomGsm(Stream& serial, UpdateBaudRateCallback updateBaudRateCallback);
 		bool EnsureModemConnected(long baudRate);
 
-		int FindCurrentBaudRate();		
-
-		void SetLogCallback(GsmLogCallback onLog)
-		{
-			_logger.SetLogCallback(onLog);
-		}
+		int FindCurrentBaudRate();
 		void OnDataReceived(DataReceivedCallback onDataReceived);
 
 		// Standard modem functions

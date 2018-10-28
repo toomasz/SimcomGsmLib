@@ -6,6 +6,7 @@
 #include <SSD1306.h>
 #include "Gui.h"
 #include "ConnectionDataValidator.h"
+#include <Wire.h>
 
 void UpdateBaudRate(int baudRate)
 {
@@ -41,9 +42,10 @@ void OnDataReceived(uint8_t mux, FixedStringBase &data)
 
 void setup()
 {
-	gui.init();
+	gsm.Logger().LogAtCommands = true;
+	gsm.Logger().OnLog(OnLog);
 	Serial.begin(500000);
-	gsm.SetLogCallback(OnLog);
+	gui.init();
 	gsm.OnDataReceived(OnDataReceived);
 }
 
@@ -82,8 +84,6 @@ void loop()
 	{
 		return;
 	}
-	Serial.printf("batt: %d\n", batteryInfo.Percent);
-
 	if (OperatorNameHelper::GetRealOperatorName(gsm, operatorName) == AtResultType::Timeout)
 	{
 		return;
@@ -145,7 +145,7 @@ void loop()
 	ConnectionInfo info;
 
 	gsm.GetIpAddress(ipAddress);
-	if (ipStatus == SimcomIpState::IpStatus)
+	if (ipStatus == SimcomIpState::IpStatus || ipStatus == SimcomIpState::IpProcessing)
 	{
 		if (gsm.GetConnectionInfo(0, info) == AtResultType::Success)
 		{
@@ -185,7 +185,7 @@ void loop()
 		display.drawString(0, 64 - 22, ConnectionStateToStr(info.State));
 		display.drawString(0, 64 - 12, receivedBytesStr.c_str());
 	}
-
+	Serial.println("Display");
 	display.display();
 
 	gsm.wait(1000);

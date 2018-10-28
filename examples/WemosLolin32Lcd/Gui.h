@@ -14,10 +14,16 @@ public:
 	}
 	void init()
 	{
-		_lcd.init();
+		if (!_lcd.init())
+		{
+			Serial.println("Failed to init lcd");
+		}
+		else
+		{
+			Serial.println("Lcd initialized successfully");
+		}
 		_lcd.setFont(ArialMT_Plain_16);
 		_lcd.clear();
-		_lcd.resetDisplay();
 	}
 	void drawBatterySymbol(int percent, float voltage)
 	{

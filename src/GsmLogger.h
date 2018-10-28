@@ -10,9 +10,11 @@ class GsmLogger
 {
 	GsmLogCallback _onLog;
 public:
-	GsmLogger();
-	void SetLogCallback(GsmLogCallback onLog);
-	void Log_P(const __FlashStringHelper* format, ...);
+	bool LogAtCommands;
+	GsmLogger();	 
+	void OnLog(GsmLogCallback onLog);
+	void Log(const __FlashStringHelper * format, ...);
+	void LogAt(const __FlashStringHelper* format, ...);
 };
 
 #endif

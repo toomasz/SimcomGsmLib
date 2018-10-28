@@ -69,7 +69,7 @@ void SimcomResponseParser::FeedChar(char c)
 			return;
 		}
 
-		_logger.Log_P(F("  <= %s"), (char*)_response.c_str());
+		_logger.LogAt(F("  <= %s"), (char*)_response.c_str());
 
 		auto isUnsolicited = ParseUnsolicited(_response);
 
@@ -93,6 +93,7 @@ void SimcomResponseParser::FeedChar(char c)
 		// if command not parsed yet
 		else if (parseResult == ParserState::None)
 		{
+			_logger.Log(F("Unknown response: %s\n"), _response.c_str());
 			// do nothing, do not change _state to none
 		}
 		
@@ -134,7 +135,6 @@ bool SimcomResponseParser::ParseUnsolicited(FixedStringBase& line)
 	DelimParser parser(line);
 	if (parser.StartsWith(F("+RECEIVE,")))
 	{
-
 		uint8_t mux;
 		uint16_t dataLength;
 		if (!parser.NextNum(mux))
@@ -184,12 +184,42 @@ ParserState SimcomResponseParser::ParseLine()
 			return ParserState::Success;
 		}
 	}
-
+	
 	if(_currentCommand == AtCommand::Cipstatus)
 	{
-		if (ParsingHelpers::ParseIpStatus(_response.c_str(), *_parserContext.IpState))
+		static uint8_t internalState = 0;
+		// Cipstatus returns OK first, then IP STATE: xxxx
+		if (IsOkLine())
 		{
-			return ParserState::Success;
+			internalState = 0;
+			return ParserState::PartialSuccess;
+		}
+		if (_state == ParserState::PartialSuccess)
+		{
+			if (internalState == 0)
+			{
+				if (ParsingHelpers::ParseIpStatus(_response.c_str(), *_parserContext.IpState))
+				{
+					if (!_parserContext.Cipmux)
+					{
+						return ParserState::Success;
+					}
+					internalState = 1;
+					return ParserState::PartialSuccess;
+				}
+			}
+			if (internalState >= 1)
+			{
+				if(parser.StartsWith(F("C: ")))
+				{ 
+					internalState++;
+					if (internalState == 7)
+					{
+						return ParserState::Success;
+					}
+					return ParserState::PartialSuccess;
+				}
+			}			
 		}
 	}
 	if (_currentCommand == AtCommand::CipstatusSingleConnection)
