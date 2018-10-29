@@ -11,7 +11,7 @@
 void UpdateBaudRate(int baudRate)
 {
 	Serial1.end();	
-	Serial1.setRxBufferSize(50000);
+	Serial1.setRxBufferSize(2000);
 	Serial1.begin(baudRate, SERIAL_8N1, 19, 18, false);
 }
 SimcomGsm gsm(Serial1, UpdateBaudRate);
@@ -68,13 +68,24 @@ void loop()
 		delay(200);
 		return;
 	}
+	SimState simStatus;
+	if (gsm.GetSimStatus(simStatus) == AtResultType::Success)
+	{
+		if (simStatus != SimState::Ok)
+		{
+			gui.DisplaySimError(simStatus);
+			delay(1000);
+			return;
+		}
+	}
 
 	int16_t signalQuality;
 	BatteryStatus batteryInfo;
 	FixedString20 operatorName;
 	IncomingCallInfo callInfo;
-	SimcomIpState ipStatus;
 	GsmRegistrationState gsmRegStatus;
+	GsmIp ipAddress;
+	SimcomIpState ipStatus;
 
 	if (gsm.GetSignalQuality(signalQuality) == AtResultType::Timeout)
 	{
@@ -92,11 +103,17 @@ void loop()
 	{
 		return;
 	}
-
 	if (gsm.GetIpState(ipStatus) == AtResultType::Timeout)
 	{
 		return;
 	}
+
+	auto getIpResult = gsm.GetIpAddress(ipAddress);
+	if (getIpResult == AtResultType::Timeout)
+	{
+		return;
+	}
+	bool hasIpAddress = getIpResult == AtResultType::Success;	
 	if (gsm.GetRegistrationStatus(gsmRegStatus) == AtResultType::Timeout)
 	{
 		return;
@@ -118,17 +135,14 @@ void loop()
 		}
 	}
 
-	if (ipStatus == SimcomIpState::PdpDeact)
+	if (!hasIpAddress)
 	{
 		gsm.Cipshut();
 	}
 
 	if (gsmRegStatus == GsmRegistrationState::Roaming || gsmRegStatus == GsmRegistrationState::HomeNetwork)
 	{
-		if (ipStatus == SimcomIpState::PdpDeact ||
-			ipStatus == SimcomIpState::IpInitial ||
-			ipStatus == SimcomIpState::IpGprsact ||
-			ipStatus == SimcomIpState::IpStart)
+		if (!hasIpAddress)
 		{
 			gui.Clear();
 			display.setFont(ArialMT_Plain_10);
@@ -141,11 +155,9 @@ void loop()
 	}
 	
 
-	GsmIp ipAddress;
 	ConnectionInfo info;
 
-	gsm.GetIpAddress(ipAddress);
-	if (ipStatus == SimcomIpState::IpStatus || ipStatus == SimcomIpState::IpProcessing)
+	if (hasIpAddress)
 	{
 		if (gsm.GetConnectionInfo(0, info) == AtResultType::Success)
 		{
@@ -173,10 +185,8 @@ void loop()
 	gui.drawGsmInfo(signalQuality, gsmRegStatus, operatorName);
 	gui.DisplayIp(ipAddress);
 	gui.DisplayBlinkIndicator();
-	gui.DisplayIncomingCall(callInfo);
 
-	
-	if (ipStatus == SimcomIpState::IpStatus || ipStatus == SimcomIpState::IpProcessing)
+	if (hasIpAddress)
 	{
 		FixedString50 receivedBytesStr;
 		receivedBytesStr.appendFormat("received: %d b", receivedBytes);
@@ -185,7 +195,11 @@ void loop()
 		display.drawString(0, 64 - 22, ConnectionStateToStr(info.State));
 		display.drawString(0, 64 - 12, receivedBytesStr.c_str());
 	}
-	Serial.println("Display");
+
+	gui.DisplayIncomingCall(callInfo);
+
+	
+	
 	display.display();
 
 	gsm.wait(1000);

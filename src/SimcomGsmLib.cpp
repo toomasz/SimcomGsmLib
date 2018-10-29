@@ -9,9 +9,27 @@ _parser(_dataBuffer, _parserContext, _logger)
 	_updateBaudRateCallback = updateBaudRateCallback;
 	_currentBaudRate = 0;
 }
+AtResultType SimcomGsm::GetSimStatus(SimState &simStatus)
+{
+	if (_parser.IsReceivingData())
+	{
+		return AtResultType::Error;
+	}
+	SendAt_P(AtCommand::Cpin, F("AT+CPIN?"));
+	auto result = PopCommandResult();
+	if (result == AtResultType::Success)
+	{
+		simStatus = _parserContext.SimStatus;
+	}
+	return result;
+}
 
 AtResultType SimcomGsm::GetRegistrationStatus(GsmRegistrationState& registrationStatus)
 {
+	if (_parser.IsReceivingData())
+	{
+		return AtResultType::Error;
+	}
 	SendAt_P(AtCommand::Creg ,F("AT+CREG?"));
 
 	auto result = PopCommandResult();
@@ -23,6 +41,10 @@ AtResultType SimcomGsm::GetRegistrationStatus(GsmRegistrationState& registration
 }
 AtResultType SimcomGsm::GenericAt(const __FlashStringHelper* command, ...)
 {
+	if (_parser.IsReceivingData())
+	{
+		return AtResultType::Error;
+	}
 	_parser.SetCommandType(AtCommand::Generic);
 	va_list argptr;
 	va_start(argptr, command);
@@ -52,6 +74,10 @@ void SimcomGsm::SendAt_P(AtCommand commnd, const __FlashStringHelper* command, .
 }
 AtResultType SimcomGsm::GetOperatorName(FixedStringBase &operatorName, bool returnImsi)
 {
+	if (_parser.IsReceivingData())
+	{
+		return AtResultType::Error;
+	}
 	SendAt_P(AtCommand::Cops, F("AT+COPS?"));
 	_parserContext.OperatorName = &operatorName;
 
@@ -74,6 +100,10 @@ AtResultType SimcomGsm::GetOperatorName(FixedStringBase &operatorName, bool retu
 
 AtResultType SimcomGsm::SetRegistrationMode(RegistrationMode mode, const char *operatorName)
 {
+	if (_parser.IsReceivingData())
+	{
+		return AtResultType::Error;
+	}
 	auto operatorFormat = _parserContext.IsOperatorNameReturnedInImsiFormat ? 2 : 0;
 	// don't need to use AtCommand::Cops here, AT+COPS write variant returns OK/ERROR
 	SendAt_P(AtCommand::Generic, F("AT+COPS=%d,%d,\"%s\""), mode, operatorFormat, operatorName);
@@ -83,6 +113,10 @@ AtResultType SimcomGsm::SetRegistrationMode(RegistrationMode mode, const char *o
 
 AtResultType SimcomGsm::GetSignalQuality(int16_t& signalQuality)
 {
+	if (_parser.IsReceivingData())
+	{
+		return AtResultType::Error;
+	}
 	_parserContext.CsqSignalQuality = &signalQuality;
 	SendAt_P(AtCommand::Csq, F("AT+CSQ"));
 	auto result = PopCommandResult();
@@ -91,6 +125,10 @@ AtResultType SimcomGsm::GetSignalQuality(int16_t& signalQuality)
 
 AtResultType SimcomGsm::GetBatteryStatus(BatteryStatus &batteryStatus)
 {
+	if (_parser.IsReceivingData())
+	{
+		return AtResultType::Error;
+	}
 	_parserContext.BatteryInfo = &batteryStatus;
 	SendAt_P(AtCommand::Cbc,F("AT+CBC"));
 	return PopCommandResult();
@@ -98,6 +136,10 @@ AtResultType SimcomGsm::GetBatteryStatus(BatteryStatus &batteryStatus)
 
 AtResultType SimcomGsm::GetIpState(SimcomIpState &ipState)
 {
+	if (_parser.IsReceivingData())
+	{
+		return AtResultType::Error;
+	}
 	_parserContext.IpState = &ipState;
 	SendAt_P(AtCommand::Cipstatus, F("AT+CIPSTATUS"));
 	return PopCommandResult();	
@@ -105,6 +147,10 @@ AtResultType SimcomGsm::GetIpState(SimcomIpState &ipState)
 
 AtResultType SimcomGsm::GetIpAddress(GsmIp& ipAddress)
 {
+	if (_parser.IsReceivingData())
+	{
+		return AtResultType::Error;
+	}
 	_parserContext.IpAddress = &ipAddress;
 	SendAt_P(AtCommand::Cifsr, F("AT+CIFSR;E0"));
 	return PopCommandResult();
@@ -112,6 +158,10 @@ AtResultType SimcomGsm::GetIpAddress(GsmIp& ipAddress)
 
 AtResultType SimcomGsm::GetCipmux(bool& cipmux)
 {
+	if (_parser.IsReceivingData())
+	{
+		return AtResultType::Error;
+	}
 	SendAt_P(AtCommand::Cipmux, F("AT+CIPMUX?"));
 	auto result = PopCommandResult();
 	if (result == AtResultType::Success)
@@ -123,6 +173,10 @@ AtResultType SimcomGsm::GetCipmux(bool& cipmux)
 
 AtResultType SimcomGsm::SetCipmux(bool cipmux)
 {
+	if (_parser.IsReceivingData())
+	{
+		return AtResultType::Error;
+	}
 	SendAt_P(AtCommand::Generic, F("AT+CIPMUX=%d"), cipmux ? 1 : 0);
 	
 	auto result = PopCommandResult();
@@ -134,6 +188,10 @@ AtResultType SimcomGsm::SetCipmux(bool cipmux)
 }
 AtResultType SimcomGsm::AttachGprs()
 {
+	if (_parser.IsReceivingData())
+	{
+		return AtResultType::Error;
+	}
 	SendAt_P(AtCommand::Generic, F("AT+CIICR"));
 	return PopCommandResult(60000);
 }
@@ -173,6 +231,10 @@ Disables/enables echo on serial port
 */
 AtResultType SimcomGsm::SetEcho(bool echoEnabled)
 {
+	if (_parser.IsReceivingData())
+	{
+		return AtResultType::Error;
+	}
 	if (echoEnabled)
 	{
 		SendAt_P(AtCommand::Generic, F("ATE1"));
@@ -189,18 +251,30 @@ AtResultType SimcomGsm::SetEcho(bool echoEnabled)
 
 AtResultType SimcomGsm::SetTransparentMode(bool transparentMode)
 {
+	if (_parser.IsReceivingData())
+	{
+		return AtResultType::Error;
+	}
 	SendAt_P(AtCommand::Generic, F("AT+CIPMODE=%d"), transparentMode ? 1:0);
 	return PopCommandResult();
 }
 
 AtResultType SimcomGsm::SetApn(const char *apnName, const char *username,const char *password )
 {
+	if (_parser.IsReceivingData())
+	{
+		return AtResultType::Error;
+	}
 	SendAt_P(AtCommand::Generic, F("AT+CSTT=\"%s\",\"%s\",\"%s\""), apnName, username, password);
 	return PopCommandResult();
 }
 
 AtResultType SimcomGsm::At()
 {
+	if (_parser.IsReceivingData())
+	{
+		return AtResultType::Error;
+	}
 	SendAt_P(AtCommand::Generic, F("AT"));
 	return PopCommandResult(30);
 }
@@ -212,11 +286,19 @@ void SimcomGsm::OnDataReceived(DataReceivedCallback onDataReceived)
 
 AtResultType SimcomGsm::SetBaudRate(uint32_t baud)
 {
+	if (_parser.IsReceivingData())
+	{
+		return AtResultType::Error;
+	}
 	SendAt_P(AtCommand::Generic, F("AT+IPR=%d"), baud);
 	return PopCommandResult();
 }
 bool SimcomGsm::EnsureModemConnected(long requestedBaudRate)
 {
+	if (_parser.IsReceivingData())
+	{
+		return true;
+	}
 	auto atResult = At();
 
 	int n = 8;
@@ -248,6 +330,10 @@ bool SimcomGsm::EnsureModemConnected(long requestedBaudRate)
 }
 AtResultType SimcomGsm::GetImei(FixedString20 &imei)
 {
+	if (_parser.IsReceivingData())
+	{
+		return AtResultType::Error;
+	}
 	_parserContext.Imei = &imei;
 	SendAt_P(AtCommand::Gsn, F("AT+GSN"));
 	return PopCommandResult();
@@ -310,6 +396,10 @@ AtResultType SimcomGsm::ExecuteFunction(FunctionBase &function)
 
 AtResultType SimcomGsm::SendSms(char *number, char *message)
 {
+	if (_parser.IsReceivingData())
+	{
+		return AtResultType::Error;
+	}
 	SendAt_P(AtCommand::Generic, F("AT+CMGS=\"%s\""), number);
 	
 	uint64_t start = millis();
@@ -356,12 +446,20 @@ int SimcomGsm::FindCurrentBaudRate()
 
 AtResultType SimcomGsm::Cipshut()
 {
+	if (_parser.IsReceivingData())
+	{
+		return AtResultType::Error;
+	}
 	SendAt_P(AtCommand::Cipshut, F("AT+CIPSHUT"));
 	return PopCommandResult();
 }
 
 AtResultType SimcomGsm::Call(char *number)
 {
+	if (_parser.IsReceivingData())
+	{
+		return AtResultType::Error;
+	}
 	SendAt_P(AtCommand::Generic, F("ATD%s;"), number);
 	return PopCommandResult();
 }
@@ -376,12 +474,21 @@ AtResultType SimcomGsm::GetIncomingCall(IncomingCallInfo & callInfo)
 
 AtResultType SimcomGsm::Shutdown()
 {
+	if (_parser.IsReceivingData())
+	{
+		return AtResultType::Error;
+	}
 	SendAt_P(AtCommand::Generic, F("AT+CPOWD=0"));
 	return PopCommandResult();
 }
 
+
 AtResultType SimcomGsm::BeginConnect(ProtocolType protocol, uint8_t mux, const char *address, int port)
 {
+	if (_parser.IsReceivingData())
+	{
+		return AtResultType::Error;
+	}
 	SendAt_P(AtCommand::Generic, 
 		F("AT+CIPSTART=%d,\"%s\",\"%s\",\"%d\""),
 		mux, ProtocolToStr(protocol), address, port);	
@@ -390,12 +497,20 @@ AtResultType SimcomGsm::BeginConnect(ProtocolType protocol, uint8_t mux, const c
 
 AtResultType SimcomGsm::CloseConnection(uint8_t mux)
 {
+	if (_parser.IsReceivingData())
+	{
+		return AtResultType::Error;
+	}
 	SendAt_P(AtCommand::Cipclose, F("AT+CIPCLOSE=%d"), mux);
 	return PopCommandResult();
 }
 
 AtResultType SimcomGsm::GetConnectionInfo(uint8_t mux, ConnectionInfo &connectionInfo)
 {
+	if (_parser.IsReceivingData())
+	{
+		return AtResultType::Error;
+	}
 	_parserContext.CurrentConnectionInfo = &connectionInfo;
 	SendAt_P(AtCommand::CipstatusSingleConnection, F("AT+CIPSTATUS=%d"), mux);
 	return PopCommandResult();

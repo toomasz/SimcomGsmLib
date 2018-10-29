@@ -6,6 +6,13 @@
 
 typedef void(*UpdateBaudRateCallback)(int baudRate);
 
+enum class SimState : uint8_t
+{
+	Ok,
+	NotInserted,
+	Locked
+};
+
 struct BatteryStatus
 {
 	double Voltage;
@@ -73,6 +80,7 @@ enum class RegistrationMode: uint8_t
 enum class AtCommand : uint8_t
 {
 	Generic,
+	Cpin,
 	Cipstatus,
 	CipstatusSingleConnection,
 	Csq,

@@ -49,6 +49,7 @@ public:
 		AtResultType At();
 		AtResultType GenericAt(const __FlashStringHelper* command,...);
 		AtResultType Shutdown();
+		AtResultType GetSimStatus(SimState &simStatus);
 		AtResultType GetRegistrationStatus(GsmRegistrationState& networkStatus);
 		AtResultType GetOperatorName(FixedStringBase &operatorName, bool returnImsi = false);
 		AtResultType SetRegistrationMode(RegistrationMode mode, const char * operatorName);

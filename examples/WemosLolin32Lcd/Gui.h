@@ -2,6 +2,7 @@
 
 #include <SSD1306.h>
 #include <SimcomGsmLib.h>
+#include <FixedString.h>
 
 class Gui
 {
@@ -179,9 +180,12 @@ public:
 			_lcd.setColor(OLEDDISPLAY_COLOR::WHITE);
 			_lcd.setFont(ArialMT_Plain_16);
 			lcd_label(10, 14, F("Calling: "));
+			_lcd.setFont(ArialMT_Plain_10);
 			lcd_label(10, 32, F("%s"), callInfo.CallerNumber.c_str());
 		}
 	}
+
+
 
 	void DisplayIp(GsmIp& ip)
 	{
@@ -211,5 +215,32 @@ public:
 		const int rectSize= 10;
 		_lcd.fillCircle(128 - 50, 8, 8);
 	}
+
+	void DisplaySimError(SimState simStatus)
+	{
+		FixedString50 error;
+		if (simStatus == SimState::Locked)
+		{
+			error = F("Sim car is locked by PIN");
+		}
+		else if (simStatus == SimState::NotInserted)
+		{
+			error = F("Sim card not inserted");
+		}
+		else
+		{
+			error = F("Other sim card problem");
+		}
+		Clear();
+		_lcd.setColor(OLEDDISPLAY_COLOR::WHITE);
+		_lcd.drawRect(5, 10, 128 - 10, 45);
+		_lcd.setColor(OLEDDISPLAY_COLOR::BLACK);
+		_lcd.fillRect(6, 11, 128 - 10 - 2, 45 - 2);
+		_lcd.setColor(OLEDDISPLAY_COLOR::WHITE);
+		_lcd.setFont(ArialMT_Plain_10);
+		_lcd.drawStringMaxWidth(10, 14, 128-10-2, error.c_str());
+		_lcd.display();
+	}
+
 };
 

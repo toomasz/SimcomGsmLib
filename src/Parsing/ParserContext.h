@@ -23,6 +23,7 @@ struct ParserContext
 	bool Cipmux;
 	ConnectionInfo* CurrentConnectionInfo;
 	GsmRegistrationState RegistrationStatus;
+	SimState SimStatus;
 };
 
 #endif

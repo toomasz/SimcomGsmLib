@@ -156,22 +156,30 @@ bool SimcomResponseParser::ParseUnsolicited(FixedStringBase& line)
 ParserState SimcomResponseParser::ParseLine()
 {
 	DelimParser parser(_response);
-			
-	if (IsOkLine())
+
+	if (_currentCommand == AtCommand::Cpin)
 	{
-		if (_state == ParserState::PartialSuccess)
+		if (IsErrorLine())
 		{
+			_parserContext.SimStatus = SimState::NotInserted;
 			return ParserState::Success;
 		}
-		if (_state == ParserState::PartialError)
+		if (_response == F("+CPIN: READY"))
 		{
-			return ParserState::Error;
+			_parserContext.SimStatus = SimState::Ok;
+			return ParserState::PartialSuccess;
+		}
+		if (_response == F("+CPIN: SIM PIN"))
+		{
+			_parserContext.SimStatus = SimState::Locked;
+			return ParserState::PartialSuccess;
+		}
+		if (_response == F("+CPIN: SIM PUK"))
+		{
+			_parserContext.SimStatus = SimState::Locked;
+			return ParserState::PartialSuccess;
 		}
 	}
-	if (IsErrorLine())
-	{
-		return ParserState::Error;
-	}	
 
 	if(_currentCommand == AtCommand::Generic)
 	{
@@ -436,6 +444,23 @@ ParserState SimcomResponseParser::ParseLine()
 			return ParserState::PartialSuccess;
 		}	
 	}
+
+	if (IsOkLine())
+	{
+		if (_state == ParserState::PartialSuccess)
+		{
+			return ParserState::Success;
+		}
+		if (_state == ParserState::PartialError)
+		{
+			return ParserState::Error;
+		}
+	}
+	if (IsErrorLine())
+	{
+		return ParserState::Error;
+	}
+
 	return ParserState::None;
 }
 
