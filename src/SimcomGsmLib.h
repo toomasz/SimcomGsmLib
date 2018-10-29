@@ -66,6 +66,8 @@ public:
 		// TCP/UDP
 		AtResultType GetIpState(SimcomIpState &ipStatus);
 		AtResultType GetIpAddress(GsmIp &ipAddress);
+		AtResultType GetRxMode(bool & isRxManual);
+		AtResultType SetRxMode(bool isRxManual);
 		AtResultType GetCipmux(bool &cipmux);
 		AtResultType SetTransparentMode(bool transparentMode);
 		AtResultType SetApn(const char *apnName, const char *username, const char *password);

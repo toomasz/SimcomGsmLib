@@ -156,6 +156,32 @@ AtResultType SimcomGsm::GetIpAddress(GsmIp& ipAddress)
 	return PopCommandResult();
 }
 
+AtResultType SimcomGsm::GetRxMode(bool& isRxManual)
+{
+	if (_parser.IsReceivingData())
+	{
+		return AtResultType::Error;
+	}
+	SendAt_P(AtCommand::CipRxGet, F("AT+CIPRXGET?"));
+	auto result = PopCommandResult();
+	if (result == AtResultType::Success)
+	{
+		isRxManual = _parserContext.IsRxManual;
+	}
+	return result;
+}
+
+AtResultType SimcomGsm::SetRxMode(bool isRxManual)
+{
+	if (_parser.IsReceivingData())
+	{
+		return AtResultType::Error;
+	}
+	SendAt_P(AtCommand::Generic, F("AT+CIPRXGET=%d"), isRxManual ? 1 : 0);
+
+	return PopCommandResult();
+}
+
 AtResultType SimcomGsm::GetCipmux(bool& cipmux)
 {
 	if (_parser.IsReceivingData())
@@ -179,12 +205,7 @@ AtResultType SimcomGsm::SetCipmux(bool cipmux)
 	}
 	SendAt_P(AtCommand::Generic, F("AT+CIPMUX=%d"), cipmux ? 1 : 0);
 	
-	auto result = PopCommandResult();
-	if (result == AtResultType::Success)
-	{
-		cipmux = _parserContext.Cipmux;
-	}
-	return result;
+	return PopCommandResult();	
 }
 AtResultType SimcomGsm::AttachGprs()
 {

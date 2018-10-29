@@ -421,6 +421,19 @@ ParserState SimcomResponseParser::ParseLine()
 			return ParserState::PartialSuccess;			
 		}		
 	}
+	if (_currentCommand == AtCommand::CipRxGet)
+	{
+		if (parser.StartsWith(F("+CIPRXGET:")))
+		{
+			uint16_t isEnabled;
+			if (!parser.NextNum(isEnabled))
+			{
+				return ParserState::PartialError;
+			}
+			_parserContext.IsRxManual = isEnabled == 1;
+			return ParserState::PartialSuccess;
+		}
+	}
 	if(_currentCommand == AtCommand::Creg)
 	{
 		// example valid line : +CREG: 2,1,"07E6","D68F"

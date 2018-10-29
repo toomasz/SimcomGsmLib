@@ -135,6 +135,22 @@ void loop()
 		}
 	}
 
+	bool hasManualRxGet;
+	if (gsm.GetRxMode(hasManualRxGet) == AtResultType::Success)
+	{
+		if (!hasManualRxGet)
+		{
+			Serial.println("Manual RxGet disabled, attempting to enable");
+			if (gsm.SetRxMode(true) == AtResultType::Error)
+			{
+				Serial.println("Failed to set rx get");
+				gsm.Cipshut();
+				gsm.SetCipmux(true);
+			}
+		}
+	}
+
+
 	if (!hasIpAddress)
 	{
 		gsm.Cipshut();

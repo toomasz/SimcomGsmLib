@@ -9,6 +9,7 @@ AT+CGATT=1
 
 
 AT+CIPMUX?
+AT+CIPRXGET=1
 AT+CIPMUX=1
 AT+CSTT="virgin-internet","",""
 AT+CIICR

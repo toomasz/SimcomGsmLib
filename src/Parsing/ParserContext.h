@@ -9,6 +9,7 @@ struct ParserContext
 	{
 		Cipmux = false;
 		IsOperatorNameReturnedInImsiFormat = false;
+		IsRxManual = false;
 	}
 	int16_t* CsqSignalQuality;
 	GsmIp* IpAddress;
@@ -24,6 +25,7 @@ struct ParserContext
 	ConnectionInfo* CurrentConnectionInfo;
 	GsmRegistrationState RegistrationStatus;
 	SimState SimStatus;
+	bool IsRxManual;
 };
 
 #endif
