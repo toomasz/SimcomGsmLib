@@ -69,12 +69,14 @@ public:
 		AtResultType GetRxMode(bool & isRxManual);
 		AtResultType SetRxMode(bool isRxManual);
 		AtResultType GetCipmux(bool &cipmux);
+		AtResultType SetCipmux(bool cipmux);
+
 		AtResultType SetTransparentMode(bool transparentMode);
 		AtResultType SetApn(const char *apnName, const char *username, const char *password);
-		AtResultType SetCipmux(bool cipmux);
 		AtResultType AttachGprs();
 
 		AtResultType BeginConnect(ProtocolType protocol, uint8_t mux, const char *address, int port);		
+		AtResultType Read(int mux, FixedStringBase& outputBuffer);
 		AtResultType CloseConnection(uint8_t mux);
 		AtResultType GetConnectionInfo(uint8_t mux, ConnectionInfo &connectionInfo);
 		AtResultType Cipshut();	

@@ -20,12 +20,15 @@ struct ParserContext
 	BatteryStatus* BatteryInfo;
 	IncomingCallInfo* CallInfo;
 	SimcomIpState* IpState;
+
 	bool IsOperatorNameReturnedInImsiFormat;
 	bool Cipmux;
 	ConnectionInfo* CurrentConnectionInfo;
 	GsmRegistrationState RegistrationStatus;
 	SimState SimStatus;
 	bool IsRxManual;
+	FixedStringBase* CipRxGetBuffer;
+	uint16_t CiprxGetLeftBytesToRead;
 };
 
 #endif

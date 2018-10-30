@@ -33,7 +33,7 @@ void OnDataReceived(uint8_t mux, FixedStringBase &data)
 		return;
 	}
 	receivedBytes += data.length();
-	Serial.printf(" #####  Data received: %s\n", data.c_str());
+//	Serial.printf(" #####  Data received: %s\n", data.c_str());
 	for (int i = 0; i < data.length(); i++)
 	{
 		connectionValidator.ValidateIncomingByte(data[i], i, receivedBytes);
@@ -61,7 +61,7 @@ void loop()
 		return;
 	}
 
-	if (!gsm.EnsureModemConnected(115200))
+	if (!gsm.EnsureModemConnected(460800))
 	{
 		display.drawString(0, 2, "No shield");
 		display.display();
@@ -204,6 +204,11 @@ void loop()
 
 	if (hasIpAddress)
 	{
+		ReadDataFromConnection();
+	}
+
+	if (hasIpAddress)
+	{
 		FixedString50 receivedBytesStr;
 		receivedBytesStr.appendFormat("received: %d b", receivedBytes);
 		display.setColor(OLEDDISPLAY_COLOR::WHITE);
@@ -213,10 +218,23 @@ void loop()
 	}
 
 	gui.DisplayIncomingCall(callInfo);
-
 	
 	
 	display.display();
 
 	gsm.wait(1000);
+}
+
+void ReadDataFromConnection()
+{
+	FixedString200 buffer;
+	while (gsm.Read(0, buffer) == AtResultType::Success)
+	{
+		if (buffer.length() == 0)
+		{
+			return;
+		}
+		OnDataReceived(0, buffer);
+		buffer.clear();
+	}
 }

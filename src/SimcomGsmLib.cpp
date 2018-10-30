@@ -516,6 +516,13 @@ AtResultType SimcomGsm::BeginConnect(ProtocolType protocol, uint8_t mux, const c
 	return PopCommandResult(60000);
 }
 
+AtResultType SimcomGsm::Read(int mux, FixedStringBase& outputBuffer)
+{
+	_parserContext.CipRxGetBuffer = &outputBuffer;
+	SendAt_P(AtCommand::CipRxGetRead,F("AT+CIPRXGET=2,%d,%d"), mux, outputBuffer.capacity());
+	return PopCommandResult();
+}
+
 AtResultType SimcomGsm::CloseConnection(uint8_t mux)
 {
 	if (_parser.IsReceivingData())

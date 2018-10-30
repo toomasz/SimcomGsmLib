@@ -36,6 +36,12 @@ AtResultType SimcomResponseParser::GetAtResultType()
 /* processes character read from serial port of gsm module */
 void SimcomResponseParser::FeedChar(char c)
 {	
+	if (_parserContext.CiprxGetLeftBytesToRead > 0)
+	{
+		_parserContext.CipRxGetBuffer->append(c);
+		_parserContext.CiprxGetLeftBytesToRead--;
+		return;
+	}
 	if (_bytesToReadFromReceive > 0)
 	{
 		_rxDataBuffer.append(c);
@@ -272,6 +278,25 @@ ParserState SimcomResponseParser::ParseLine()
 				}
 			}
 			return ParserState::PartialError;
+		}
+	}
+
+	if (_currentCommand == AtCommand::CipRxGetRead)
+	{
+		if (parser.StartsWith(F("+CIPRXGET: ")))
+		{
+			uint8_t mode;
+			uint8_t mux;
+			uint16_t dataSize;
+			uint16_t dataLeft;
+			if (parser.NextNum(mode) &&
+				parser.NextNum(mux) &&
+				parser.NextNum(dataSize) && 
+				parser.NextNum(dataLeft))
+			{
+				_parserContext.CiprxGetLeftBytesToRead = dataSize;
+				return ParserState::PartialSuccess;				 
+			}
 		}
 	}
 

@@ -95,7 +95,8 @@ enum class AtCommand : uint8_t
 	Cbc,
 	Clcc,
 	Cipmux,
-	CipRxGet
+	CipRxGet,
+	CipRxGetRead
 };
 
 enum class SimcomIpState : uint8_t
