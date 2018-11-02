@@ -147,3 +147,20 @@ bool ParsingHelpers::ParseIpStatus(const char *str, SimcomIpState &status)
 	}
 	return false;
 }
+
+bool ParsingHelpers::CheckIfLineContainsGarbage(FixedStringBase & line)
+{
+	if (line.length() < 3)
+	{
+		return false;
+	}
+	int garbageCharacterCount = 0;
+	for (int i = 0; i < line.length(); i++)
+	{
+		if (line[i] > 127)
+		{
+			garbageCharacterCount++;
+		}
+	}
+	return garbageCharacterCount > 2;
+}

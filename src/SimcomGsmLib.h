@@ -52,6 +52,8 @@ public:
 		AtResultType GetSimStatus(SimState &simStatus);
 		AtResultType GetRegistrationStatus(GsmRegistrationState& networkStatus);
 		AtResultType GetOperatorName(FixedStringBase &operatorName, bool returnImsi = false);
+		AtResultType FlightModeOn();
+		AtResultType FlightModeOff();
 		AtResultType SetRegistrationMode(RegistrationMode mode, const char * operatorName);
 		AtResultType GetImei(FixedString20 &imei);
 		AtResultType GetBatteryStatus(BatteryStatus &batteryStatus);
@@ -85,6 +87,7 @@ public:
 
 		unsigned long lastDataWrite;	
 		void wait(int millis);
+		bool GarbageOnSerialDetected();
 };
 
 

@@ -13,9 +13,12 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "WemosLolin32Lcd", "examples
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "BasicInfoSample", "examples\BasicInfoSample\BasicInfoSample.vcxproj", "{FF4D4F2E-DAD0-4312-9544-8580DDFB7EC4}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "AsyncSample", "examples\AsyncSample\AsyncSample.vcxproj", "{8BC4DD29-8CE9-4A5C-B750-4BB2AE4FAA34}"
+EndProject
 Global
 	GlobalSection(SharedMSBuildProjectFiles) = preSolution
 		SimcomGsmLib.vcxitems*{0fc0c7fe-bd9c-4d1a-a770-2418e669451a}*SharedItemsImports = 9
+		SimcomGsmLib.vcxitems*{8bc4dd29-8ce9-4a5c-b750-4bb2ae4faa34}*SharedItemsImports = 4
 		SimcomGsmLib.vcxitems*{c5f80730-f44f-4478-bdae-6634efc2ca88}*SharedItemsImports = 4
 		SimcomGsmLib.vcxitems*{e9f73fda-32f5-40bf-9af5-b7afa27726f7}*SharedItemsImports = 4
 		SimcomGsmLib.vcxitems*{ff4d4f2e-dad0-4312-9544-8580ddfb7ec4}*SharedItemsImports = 4
@@ -37,6 +40,10 @@ Global
 		{FF4D4F2E-DAD0-4312-9544-8580DDFB7EC4}.Debug|x86.Build.0 = Debug|Win32
 		{FF4D4F2E-DAD0-4312-9544-8580DDFB7EC4}.Release|x86.ActiveCfg = Release|Win32
 		{FF4D4F2E-DAD0-4312-9544-8580DDFB7EC4}.Release|x86.Build.0 = Release|Win32
+		{8BC4DD29-8CE9-4A5C-B750-4BB2AE4FAA34}.Debug|x86.ActiveCfg = Debug|Win32
+		{8BC4DD29-8CE9-4A5C-B750-4BB2AE4FAA34}.Debug|x86.Build.0 = Debug|Win32
+		{8BC4DD29-8CE9-4A5C-B750-4BB2AE4FAA34}.Release|x86.ActiveCfg = Release|Win32
+		{8BC4DD29-8CE9-4A5C-B750-4BB2AE4FAA34}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -45,6 +52,7 @@ Global
 		{C5F80730-F44F-4478-BDAE-6634EFC2CA88} = {971E9F6E-A6C9-40EF-9590-3CFD7B6AAB0F}
 		{E9F73FDA-32F5-40BF-9AF5-B7AFA27726F7} = {971E9F6E-A6C9-40EF-9590-3CFD7B6AAB0F}
 		{FF4D4F2E-DAD0-4312-9544-8580DDFB7EC4} = {971E9F6E-A6C9-40EF-9590-3CFD7B6AAB0F}
+		{8BC4DD29-8CE9-4A5C-B750-4BB2AE4FAA34} = {971E9F6E-A6C9-40EF-9590-3CFD7B6AAB0F}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {2A2CB69B-0930-46BF-B908-349B381298C5}

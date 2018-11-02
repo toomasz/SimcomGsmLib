@@ -13,7 +13,7 @@ public:
 	static bool ParseProtocolType(FixedString20& protocolStr, ProtocolType& protocol);
 	static bool ParseConnectionState(FixedString20& connectionStateStr, ConnectionState& connectionState);
 	static bool ParseIpStatus(const char *str, SimcomIpState &status);
-
+	static bool CheckIfLineContainsGarbage(FixedStringBase &line);
 };
 
 #endif

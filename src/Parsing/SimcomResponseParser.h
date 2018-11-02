@@ -22,7 +22,6 @@ class SimcomResponseParser
 	GsmLogger &_logger;
 	FixedString150 _response;
 	ParserContext& _parserContext;
-	uint16_t _bytesToReadFromReceive;
 	FixedString150 _rxDataBuffer;
 	DataReceivedCallback _dataReceivedCallback;
 	bool IsErrorLine();
@@ -30,7 +29,7 @@ class SimcomResponseParser
 	bool ParseUnsolicited(FixedStringBase & line);
 	ParserState ParseLine();
 	int StateTransition(char c);
-	
+	bool _garbageOnSerialDetected;
 public:
 	SimcomResponseParser(CircularDataBuffer& dataBuffer, ParserContext &parserContext, GsmLogger &logger);
 	AtResultType GetAtResultType();
@@ -39,10 +38,8 @@ public:
 	void SetCommandType(AtCommand commandType);
 	void FeedChar(char c);	
 	void OnDataReceived(DataReceivedCallback onDataReceived);
-	bool IsReceivingData()
-	{
-		return _bytesToReadFromReceive > 0;
-	}
+	bool GarbageOnSerialDetected();
+	void ResetUartGarbageDetected();
 };
 
 

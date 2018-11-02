@@ -8,7 +8,7 @@ _dataBuffer(dataBuffer),
 _parserContext(parserContext),
 _logger(logger),
 _dataReceivedCallback(nullptr),
-_bytesToReadFromReceive(false)
+_garbageOnSerialDetected(false)
 {
 	_currentCommand = AtCommand::Generic;
 	lineParserState = PARSER_INITIAL;
@@ -41,21 +41,7 @@ void SimcomResponseParser::FeedChar(char c)
 		_parserContext.CipRxGetBuffer->append(c);
 		_parserContext.CiprxGetLeftBytesToRead--;
 		return;
-	}
-	if (_bytesToReadFromReceive > 0)
-	{
-		_rxDataBuffer.append(c);
-		_bytesToReadFromReceive--;
-		if (_bytesToReadFromReceive == 0 || _rxDataBuffer.freeBytes() == 0)
-		{
-			if (_dataReceivedCallback != nullptr)
-			{
-				_dataReceivedCallback(0, _rxDataBuffer);
-			}
-			_rxDataBuffer.clear();
-		}
-		return;
-	}
+	}	
 	int prevState = lineParserState;
 
 	lineParserState = StateTransition(c);
@@ -99,7 +85,15 @@ void SimcomResponseParser::FeedChar(char c)
 		// if command not parsed yet
 		else if (parseResult == ParserState::None)
 		{
-			_logger.Log(F("Unknown response: %s\n"), _response.c_str());
+			if (ParsingHelpers::CheckIfLineContainsGarbage(_response))
+			{
+				_garbageOnSerialDetected = true;
+				_logger.Log(F("Garbage detected: '%s', len = %d\n"), _response.c_str(), _response.length());
+			}
+			else
+			{
+				_logger.Log(F("Unknown response: %s\n"), _response.c_str());
+			}
 			// do nothing, do not change _state to none
 		}
 		
@@ -152,9 +146,7 @@ bool SimcomResponseParser::ParseUnsolicited(FixedStringBase& line)
 		{
 			return false;
 		}
-		_bytesToReadFromReceive = dataLength;
-		return true;
-		
+		return true;		
 	}
 	return false;
 }
@@ -568,4 +560,14 @@ int SimcomResponseParser::StateTransition(char c)
 
 	}
 
+}
+
+bool SimcomResponseParser::GarbageOnSerialDetected()
+{
+	return _garbageOnSerialDetected;
+}
+
+void SimcomResponseParser::ResetUartGarbageDetected()
+{
+	_garbageOnSerialDetected = false;
 }

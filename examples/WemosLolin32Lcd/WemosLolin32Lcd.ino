@@ -10,15 +10,17 @@
 
 void UpdateBaudRate(int baudRate)
 {
-	Serial1.end();	
-	Serial1.setRxBufferSize(2000);
-	Serial1.begin(baudRate, SERIAL_8N1, 19, 18, false);
+	Serial2.end();	
+	Serial2.setRxBufferSize(2000);
+	Serial2.begin(baudRate, SERIAL_8N1, 14, 12, false);
 }
-SimcomGsm gsm(Serial1, UpdateBaudRate);
-SSD1306 display(0x3c, 5, 4);
+SimcomGsm gsm(Serial2, UpdateBaudRate);
+
+SSD1306 display(188, 4, 15); // 60 or 188
+
 Gui gui(display);
 ConnectionDataValidator connectionValidator;
-
+bool justConnectedToModem = true;
 void OnLog(const char* gsmLog)
 {
 	Serial.print("[GSM]");
@@ -42,9 +44,26 @@ void OnDataReceived(uint8_t mux, FixedStringBase &data)
 
 void setup()
 {
+	pinMode(16, OUTPUT);
+	pinMode(2, OUTPUT);
+
+	digitalWrite(16, LOW);    // set GPIO16 low to reset OLED
+	delay(500);
+	digitalWrite(16, HIGH);
+
 	gsm.Logger().LogAtCommands = true;
 	gsm.Logger().OnLog(OnLog);
 	Serial.begin(500000);
+	Wire.begin(4, 15);
+	for (int i = 0; i < 255; i++)
+	{
+		Wire.beginTransmission(i);
+		if (Wire.endTransmission() == 0)
+		{
+			Serial.printf("Found I2C device at: %d\n", i);
+		}
+	}
+
 	gui.init();
 	gsm.OnDataReceived(OnDataReceived);
 }
@@ -52,22 +71,36 @@ void setup()
 void loop()
 {
 	gui.Clear();
+	
 
 	if (connectionValidator.HasError())
 	{
-		display.drawString(0, 2, connectionValidator.GetError().c_str());
-		display.display();
+		auto error = connectionValidator.GetError();
+		gui.DisplayError(error);
 		delay(500);
 		return;
 	}
 
+
 	if (!gsm.EnsureModemConnected(460800))
 	{
-		display.drawString(0, 2, "No shield");
-		display.display();
+		FixedString20 error = "No shield";
+		gui.DisplayError(error);
 		delay(200);
 		return;
 	}
+
+	if (justConnectedToModem)
+	{
+		justConnectedToModem = false;
+
+		FixedString20 info = "Restart modem";
+		gui.DisplayError(info);
+		gsm.FlightModeOn();
+		gsm.FlightModeOff();
+		gui.Clear();
+	}
+
 	SimState simStatus;
 	if (gsm.GetSimStatus(simStatus) == AtResultType::Success)
 	{
@@ -199,7 +232,13 @@ void loop()
 
 	gui.drawBattery(batteryInfo.Percent, batteryInfo.Voltage);
 	gui.drawGsmInfo(signalQuality, gsmRegStatus, operatorName);
-	gui.DisplayIp(ipAddress);
+
+	
+
+	if (hasIpAddress)
+	{
+		gui.DisplayIp(ipAddress);
+	}
 	gui.DisplayBlinkIndicator();
 
 	if (hasIpAddress)
@@ -217,7 +256,15 @@ void loop()
 		display.drawString(0, 64 - 12, receivedBytesStr.c_str());
 	}
 
+	if (gsm.GarbageOnSerialDetected())
+	{
+		FixedString20 error("UART garbage !!!");
+		gui.DrawFramePopup(error, 40, 5);
+		Serial.println("Draw garbage detected pupup");
+	}
+
 	gui.DisplayIncomingCall(callInfo);
+
 	
 	
 	display.display();

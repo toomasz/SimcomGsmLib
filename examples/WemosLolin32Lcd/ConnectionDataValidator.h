@@ -13,10 +13,15 @@ class ConnectionDataValidator
 		hasDataError = true;
 		dataError = error;
 	}
+	
 public:
+	ConnectionDataValidator()
+	{
+		prevChar = 255;
+	}
 	void SetJustConnected()
 	{
-		justConnected = true;
+		prevChar = 255;
 	}
 	FixedString100 GetError()
 	{
@@ -28,17 +33,11 @@ public:
 	}
 	
 	void ValidateIncomingByte(char c, int position, int receivedBytes)
-	{
-		if (justConnected)
-		{
-			prevChar = c;
-			justConnected = false;
-			return;
-		}
-		if (c - 1 != prevChar && (c != '0' || prevChar != ':'))
+	{		
+		if (c - 1 != prevChar && (c != 0 || prevChar != 255))
 		{
 			FixedString100 error;
-			error.appendFormat("Invalid sequence: [%c, %c]\npos=%d\nreceived: %d b", prevChar, c, position, receivedBytes);
+			error.appendFormat("Invalid sequence: [%d, %d]\npos=%d\nreceived: %d b", prevChar, c, position, receivedBytes);
 			Serial.println(error.c_str());
 
 			SetDataError(error);

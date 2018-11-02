@@ -231,6 +231,11 @@ public:
 		{
 			error = F("Other sim card problem");
 		}
+		DisplayError(error);
+	}
+
+	void DisplayError(FixedStringBase& error)
+	{
 		Clear();
 		_lcd.setColor(OLEDDISPLAY_COLOR::WHITE);
 		_lcd.drawRect(5, 10, 128 - 10, 45);
@@ -238,8 +243,19 @@ public:
 		_lcd.fillRect(6, 11, 128 - 10 - 2, 45 - 2);
 		_lcd.setColor(OLEDDISPLAY_COLOR::WHITE);
 		_lcd.setFont(ArialMT_Plain_10);
-		_lcd.drawStringMaxWidth(10, 14, 128-10-2, error.c_str());
+		_lcd.drawStringMaxWidth(10, 14, 128 - 10 - 2, error.c_str());
 		_lcd.display();
+	}
+
+	void DrawFramePopup(FixedStringBase &message, int paddingTop = 15, int paddingBottom = 15, int paddingSide = 10)
+	{
+		_lcd.setColor(OLEDDISPLAY_COLOR::WHITE);
+		_lcd.drawRect(paddingSide, paddingTop, 128 - paddingSide*2, 64 - paddingTop-paddingBottom);
+		_lcd.setColor(OLEDDISPLAY_COLOR::BLACK);
+		_lcd.fillRect(paddingSide +1, paddingTop +1 , (128 - paddingSide * 2) - 2, 64- paddingTop - paddingBottom - 2);
+		_lcd.setColor(OLEDDISPLAY_COLOR::WHITE);
+		_lcd.setFont(ArialMT_Plain_10);
+		_lcd.drawString(paddingSide + 4, paddingTop + 4 , message.c_str());
 	}
 
 };
