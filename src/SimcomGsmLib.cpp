@@ -3,7 +3,8 @@
 
 SimcomGsm::SimcomGsm(Stream& serial, UpdateBaudRateCallback updateBaudRateCallback) :
 _serial(serial),
-_parser(_dataBuffer, _parserContext, _logger)
+_parser(_dataBuffer, _parserContext, _logger),
+IsAsync(false)
 {
 	lastDataWrite = 0;
 	_updateBaudRateCallback = updateBaudRateCallback;
@@ -31,7 +32,7 @@ AtResultType SimcomGsm::GetRegistrationStatus(GsmRegistrationState& registration
 	}
 	return result;
 }
-AtResultType SimcomGsm::GenericAt(const __FlashStringHelper* command, ...)
+AtResultType SimcomGsm::GenericAt(int timeout, const __FlashStringHelper* command, ...)
 {	
 	_parser.SetCommandType(AtCommand::Generic);
 	va_list argptr;
@@ -41,7 +42,7 @@ AtResultType SimcomGsm::GenericAt(const __FlashStringHelper* command, ...)
 	buffer.appendFormat(command, argptr);
 	_logger.LogAt(F(" => %s"), buffer.c_str());
 	_serial.println(buffer.c_str());
-	auto result = PopCommandResult();
+	auto result = PopCommandResult(timeout);
 
 	va_end(argptr);	
 	return result;
@@ -77,17 +78,17 @@ AtResultType SimcomGsm::GetOperatorName(FixedStringBase &operatorName, bool retu
 	}
 
 	auto operatorFormat = returnImsi ? 2 : 0;	
-	GenericAt(F("AT+COPS=3,%d"), operatorFormat);	
+	GenericAt(AT_DEFAULT_TIMEOUT, F("AT+COPS=3,%d"), operatorFormat);
 	SendAt_P(AtCommand::Cops, F("AT+COPS?"));
 	return PopCommandResult();
 }
 AtResultType SimcomGsm::FlightModeOn()
 {
-	return GenericAt(F("AT+CFUN=0"));
+	return GenericAt(10000, F("AT+CFUN=0"));
 }
 AtResultType SimcomGsm::FlightModeOff()
 {
-	return GenericAt(F("AT+CFUN=1"));
+	return GenericAt(10000, F("AT+CFUN=1"));
 }
 AtResultType SimcomGsm::SetRegistrationMode(RegistrationMode mode, const char *operatorName)
 {	
@@ -213,7 +214,7 @@ AtResultType SimcomGsm::SetEcho(bool echoEnabled)
 	}
 
 	auto r = PopCommandResult();
-	delay(100); // without 100ms wait, next command failed, idk wky
+	//delay(100); // without 100ms wait, next command failed, idk wky
 	return r;
 }
 
@@ -249,7 +250,7 @@ bool SimcomGsm::EnsureModemConnected(long requestedBaudRate)
 {	
 	auto atResult = At();
 
-	int n = 8;
+	int n = 4;
 	while (atResult != AtResultType::Success && n--> 0)
 	{
 		delay(50);

@@ -6,19 +6,19 @@
 
 class Gui
 {
-	SSD1306& _lcd;
+	SSD1306 _lcd;
 public:
-	Gui(SSD1306 &lcd):
-	_lcd(lcd)
+	Gui(int address, int sdaPin, int sclPin):
+	_lcd(address, sdaPin, sclPin)
 	{
 
 	}
 	void init()
 	{
-		pinMode(23, OUTPUT);
-		digitalWrite(23, LOW);    // set GPIO16 low to reset OLED
+		pinMode(16, OUTPUT);
+		digitalWrite(16, LOW); 
 		delay(50);
-		digitalWrite(23, HIGH);
+		digitalWrite(16, HIGH);
 
 		if (!_lcd.init())
 		{
@@ -28,7 +28,6 @@ public:
 		{
 			Serial.println("Lcd initialized successfully");
 		}
-		_lcd.resetDisplay();
 		_lcd.setFont(ArialMT_Plain_16);
 		_lcd.clear();
 	}
@@ -263,6 +262,9 @@ public:
 		_lcd.setFont(ArialMT_Plain_10);
 		_lcd.drawString(paddingSide + 4, paddingTop + 4 , message.c_str());
 	}
-
+	void Draw()
+	{
+		_lcd.display();
+	}
 };
 

@@ -10,9 +10,8 @@
 
 void UpdateBaudRate(int baudRate)
 {
-	Serial2.end();	
-	Serial2.setRxBufferSize(2000);
-	Serial2.begin(baudRate, SERIAL_8N1, 14, 12, false);
+	Serial2.flush();
+	Serial2.begin(baudRate, SERIAL_8N1, 16, 12, false);
 }
 SimcomGsm gsm(Serial2, UpdateBaudRate);
 
@@ -44,25 +43,11 @@ void OnDataReceived(uint8_t mux, FixedStringBase &data)
 
 void setup()
 {
-	pinMode(16, OUTPUT);
-	pinMode(2, OUTPUT);
-
-	digitalWrite(16, LOW);    // set GPIO16 low to reset OLED
-	delay(500);
-	digitalWrite(16, HIGH);
-
+	
 	gsm.Logger().LogAtCommands = true;
 	gsm.Logger().OnLog(OnLog);
+
 	Serial.begin(500000);
-	Wire.begin(4, 15);
-	for (int i = 0; i < 255; i++)
-	{
-		Wire.beginTransmission(i);
-		if (Wire.endTransmission() == 0)
-		{
-			Serial.printf("Found I2C device at: %d\n", i);
-		}
-	}
 
 	gui.init();
 	gsm.OnDataReceived(OnDataReceived);
@@ -93,12 +78,7 @@ void loop()
 	if (justConnectedToModem)
 	{
 		justConnectedToModem = false;
-
-		FixedString20 info = "Restart modem";
-		gui.DisplayError(info);
-		gsm.FlightModeOn();
-		gsm.FlightModeOff();
-		gui.Clear();
+		gsm.Cipshut();
 	}
 
 	SimState simStatus;

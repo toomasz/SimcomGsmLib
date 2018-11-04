@@ -37,6 +37,7 @@ public:
 		{
 			return _logger;
 		}
+		bool IsAsync;
 		SimcomGsm(Stream& serial, UpdateBaudRateCallback updateBaudRateCallback);
 		bool EnsureModemConnected(long baudRate);
 
@@ -47,7 +48,8 @@ public:
 		AtResultType SetBaudRate(uint32_t baud);
 
 		AtResultType At();
-		AtResultType GenericAt(const __FlashStringHelper* command,...);
+		AtResultType GenericAt(int timeout, const __FlashStringHelper* command,...);
+
 		AtResultType Shutdown();
 		AtResultType GetSimStatus(SimState &simStatus);
 		AtResultType GetRegistrationStatus(GsmRegistrationState& networkStatus);
