@@ -8,7 +8,6 @@
 #include "Parsing/SequenceDetector.h"
 #include "Parsing/SimcomResponseParser.h"
 #include "Parsing/ParserContext.h"
-#include "S900Socket.h"
 #include "CircularDataBuffer.h"
 #include "GsmLogger.h"
 #include "SimcomGsmTypes.h"
