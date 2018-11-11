@@ -41,6 +41,7 @@ AtResultType SimcomGsm::GenericAt(int timeout, const __FlashStringHelper* comman
 	FixedString200 buffer;
 	buffer.appendFormat(command, argptr);
 	_logger.LogAt(F(" => %s"), buffer.c_str());
+	_currentCommand = buffer;
 	_serial.println(buffer.c_str());
 	auto result = PopCommandResult(timeout);
 
@@ -56,6 +57,7 @@ void SimcomGsm::SendAt_P(AtCommand commnd, const __FlashStringHelper* command, .
 
 	FixedString200 buffer;
 	buffer.appendFormat(command, argptr);
+	_currentCommand = buffer;
 	_logger.LogAt(F(" => %s"), buffer.c_str());
 	_serial.println(buffer.c_str());
 
@@ -160,7 +162,7 @@ AtResultType SimcomGsm::GetCipmux(bool& cipmux)
 AtResultType SimcomGsm::SetCipmux(bool cipmux)
 {	
 	SendAt_P(AtCommand::Generic, F("AT+CIPMUX=%d"), cipmux ? 1 : 0);
-	
+	_parserContext.Cipmux = cipmux;
 	return PopCommandResult();	
 }
 AtResultType SimcomGsm::AttachGprs()
@@ -181,7 +183,6 @@ AtResultType SimcomGsm::PopCommandResult(int timeout)
 		if(_serial.available())
 		{
 			char c = _serial.read();
-			//Serial.printf("c: %c\n", c);
 			_parser.FeedChar(c);
 		}
 	}
@@ -191,11 +192,11 @@ AtResultType SimcomGsm::PopCommandResult(int timeout)
 	_logger.LogAt(F(" --- %d ms ---"), elapsedMs);
 	if (commandResult == AtResultType::Timeout)
 	{
-		_logger.Log(F("                      --- !!!TIMEOUT!!! ---      "), elapsedMs);
+		_logger.Log(F("                      --- !!! '%s' - TIMEOUT!!! ---      "), _currentCommand.c_str(), elapsedMs);
 	}
 	if (commandResult == AtResultType::Error)
 	{
-		_logger.Log(F("                      --- !!!ERROR!!! ---      "), elapsedMs);
+		_logger.Log(F("                      --- !!! '%s' - ERROR!!! ---      "), _currentCommand.c_str(), elapsedMs);
 	}
 	return commandResult;
 }
@@ -233,7 +234,7 @@ AtResultType SimcomGsm::SetApn(const char *apnName, const char *username,const c
 AtResultType SimcomGsm::At()
 {	
 	SendAt_P(AtCommand::Generic, F("AT"));
-	return PopCommandResult(30);
+	return PopCommandResult(60);
 }
 
 void SimcomGsm::OnDataReceived(DataReceivedCallback onDataReceived)
@@ -375,7 +376,6 @@ int SimcomGsm::FindCurrentBaudRate()
 	int baudRate = 0;
 	do
 	{
-		yield();
 		baudRate = _defaultBaudRates[i];
 		_logger.Log(F("Trying baud rate: %d"), baudRate);
 		_updateBaudRateCallback(baudRate);

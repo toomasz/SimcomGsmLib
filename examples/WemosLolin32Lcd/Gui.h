@@ -28,6 +28,7 @@ public:
 		{
 			Serial.println("Lcd initialized successfully");
 		}
+		Wire.setClock(100000);
 		_lcd.resetDisplay();
 		_lcd.setFont(ArialMT_Plain_16);
 		_lcd.clear();

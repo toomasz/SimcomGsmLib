@@ -28,7 +28,7 @@ private:
 		ParserContext _parserContext;
 		// buffer for incoming data, used because fucking +++ needs 1000ms wait before issuing
 		CircularDataBuffer _dataBuffer;
-
+		FixedString50 _currentCommand;
 		void SendAt_P(AtCommand commandType, const __FlashStringHelper *command, ...);
 		AtResultType PopCommandResult(int timeout);
 		AtResultType PopCommandResult();		

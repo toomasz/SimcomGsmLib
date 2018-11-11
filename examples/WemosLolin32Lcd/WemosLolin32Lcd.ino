@@ -11,6 +11,8 @@
 void UpdateBaudRate(int baudRate)
 {
 	Serial2.flush();
+	Serial2.clearWriteError();
+	Serial2.end();
 	Serial2.begin(baudRate, SERIAL_8N1, 16, 12, false);
 }
 SimcomGsm gsm(Serial2, UpdateBaudRate);
@@ -34,7 +36,7 @@ void OnDataReceived(uint8_t mux, FixedStringBase &data)
 		return;
 	}
 	receivedBytes += data.length();
-//	Serial.printf(" #####  Data received: %s\n", data.c_str());
+	Serial.printf("Received %d bytes\n", data.length());
 	for (int i = 0; i < data.length(); i++)
 	{
 		connectionValidator.ValidateIncomingByte(data[i], i, receivedBytes);
@@ -42,9 +44,8 @@ void OnDataReceived(uint8_t mux, FixedStringBase &data)
 }
 
 void setup()
-{
-	
-	gsm.Logger().LogAtCommands = true;
+{	
+	gsm.Logger().LogAtCommands = false;
 	gsm.Logger().OnLog(OnLog);
 
 	Serial.begin(500000);
@@ -66,12 +67,12 @@ void loop()
 		return;
 	}
 
-
-	if (!gsm.EnsureModemConnected(460800))
+	
+	if (!gsm.EnsureModemConnected(115200))
 	{
 		FixedString20 error = "No shield";
 		gui.DisplayError(error);
-		delay(200);
+		delay(1000);
 		return;
 	}
 
@@ -132,37 +133,6 @@ void loop()
 		return;
 	}
 
-	bool hasCipmux;
-	if (gsm.GetCipmux(hasCipmux) == AtResultType::Success)
-	{
-		if (!hasCipmux)
-		{
-			Serial.println("Cipmux disabled, attempting to enable");
-			if (gsm.SetCipmux(true) == AtResultType::Error)
-			{
-				Serial.println("Failed to set cipmux");
-				gsm.Cipshut();
-				gsm.SetCipmux(true);
-				
-			}
-		}
-	}
-
-	bool hasManualRxGet;
-	if (gsm.GetRxMode(hasManualRxGet) == AtResultType::Success)
-	{
-		if (!hasManualRxGet)
-		{
-			Serial.println("Manual RxGet disabled, attempting to enable");
-			if (gsm.SetRxMode(true) == AtResultType::Error)
-			{
-				Serial.println("Failed to set rx get");
-				gsm.Cipshut();
-				gsm.SetCipmux(true);
-			}
-		}
-	}
-
 
 	if (!hasIpAddress)
 	{
@@ -175,6 +145,9 @@ void loop()
 		{
 			gui.Clear();
 			display.setFont(ArialMT_Plain_10);
+
+			gsm.SetCipmux(true);
+			gsm.SetRxMode(true);
 			gsm.SetApn("virgin-internet", "", "");
 			display.drawString(0, 0, "Connecting to gprs..");
 			display.display();
@@ -189,13 +162,7 @@ void loop()
 	if (hasIpAddress)
 	{
 		if (gsm.GetConnectionInfo(0, info) == AtResultType::Success)
-		{
-			Serial.printf("Conn info: bearer=%d, ctx=%d,proto=%s endpoint = [%s:%d] state = [%s]\n",
-				info.Mux, info.Bearer,
-				ProtocolToStr(info.Protocol), info.RemoteAddress.ToString().c_str(),
-
-				info.Port, ConnectionStateToStr(info.State));
-
+		{	
 			if (info.State == ConnectionState::Closed || info.State == ConnectionState::Initial)
 			{
 				Serial.printf("Trying to connect...\n");
