@@ -196,6 +196,7 @@ public:
 
 	void DisplayIp(GsmIp& ip)
 	{
+		_lcd.setColor(OLEDDISPLAY_COLOR::WHITE);
 		lcd_label(26, 13, 10, F("ip: %s"), ip.ToString().c_str());
 	}
 

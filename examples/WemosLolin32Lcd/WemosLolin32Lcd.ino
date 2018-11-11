@@ -7,6 +7,7 @@
 #include "Gui.h"
 #include "ConnectionDataValidator.h"
 #include <Wire.h>
+#include <GsmTcpip.h>
 
 void UpdateBaudRate(int baudRate)
 {
@@ -16,10 +17,12 @@ void UpdateBaudRate(int baudRate)
 	Serial2.begin(baudRate, SERIAL_8N1, 16, 12, false);
 }
 SimcomGsm gsm(Serial2, UpdateBaudRate);
+GsmTcpip tcp(gsm);
 
-SSD1306 display(188, 4, 15); // 60 or 188
+SSD1306 display(188, 4, 15);
 
 Gui gui(display);
+
 ConnectionDataValidator connectionValidator;
 bool justConnectedToModem = true;
 void OnLog(const char* gsmLog)
@@ -51,7 +54,6 @@ void setup()
 	Serial.begin(500000);
 
 	gui.init();
-	gsm.OnDataReceived(OnDataReceived);
 }
 
 void loop()
@@ -67,8 +69,9 @@ void loop()
 		return;
 	}
 
-	
-	if (!gsm.EnsureModemConnected(115200))
+	tcp.Loop();
+
+	if (tcp.GetState() == GsmState::NoShield)
 	{
 		FixedString20 error = "No shield";
 		gui.DisplayError(error);
@@ -76,90 +79,23 @@ void loop()
 		return;
 	}
 
-	if (justConnectedToModem)
+	if (tcp.GetState() == GsmState::SimError)
 	{
-		justConnectedToModem = false;
-		gsm.Cipshut();
-	}
-
-	SimState simStatus;
-	if (gsm.GetSimStatus(simStatus) == AtResultType::Success)
-	{
-		if (simStatus != SimState::Ok)
-		{
-			gui.DisplaySimError(simStatus);
-			delay(1000);
-			return;
-		}
-	}
-
-	int16_t signalQuality;
-	BatteryStatus batteryInfo;
-	FixedString20 operatorName;
-	IncomingCallInfo callInfo;
-	GsmRegistrationState gsmRegStatus;
-	GsmIp ipAddress;
-	SimcomIpState ipStatus;
-
-	if (gsm.GetSignalQuality(signalQuality) == AtResultType::Timeout)
-	{
+		gui.DisplaySimError(tcp.simStatus);
+		delay(1000);
 		return;
 	}
-	if (gsm.GetBatteryStatus(batteryInfo) == AtResultType::Timeout)
+	if (tcp.GetState() == GsmState::ConnectingToGprs)
 	{
-		return;
+		gui.Clear();
+		display.setFont(ArialMT_Plain_10);
+		display.drawString(0, 0, "Connecting to gprs..");
+		display.display();
 	}
-	if (OperatorNameHelper::GetRealOperatorName(gsm, operatorName) == AtResultType::Timeout)
-	{
-		return;
-	}
-	if (gsm.GetIncomingCall(callInfo) == AtResultType::Timeout)
-	{
-		return;
-	}
-	if (gsm.GetIpState(ipStatus) == AtResultType::Timeout)
-	{
-		return;
-	}
-
-	auto getIpResult = gsm.GetIpAddress(ipAddress);
-	if (getIpResult == AtResultType::Timeout)
-	{
-		return;
-	}
-	bool hasIpAddress = getIpResult == AtResultType::Success;	
-	if (gsm.GetRegistrationStatus(gsmRegStatus) == AtResultType::Timeout)
-	{
-		return;
-	}
-
-
-	if (!hasIpAddress)
-	{
-		gsm.Cipshut();
-	}
-
-	if (gsmRegStatus == GsmRegistrationState::Roaming || gsmRegStatus == GsmRegistrationState::HomeNetwork)
-	{
-		if (!hasIpAddress)
-		{
-			gui.Clear();
-			display.setFont(ArialMT_Plain_10);
-
-			gsm.SetCipmux(true);
-			gsm.SetRxMode(true);
-			gsm.SetApn("virgin-internet", "", "");
-			display.drawString(0, 0, "Connecting to gprs..");
-			display.display();
-			delay(400);
-			gsm.AttachGprs();
-		}
-	}
-	
 
 	ConnectionInfo info;
 
-	if (hasIpAddress)
+	if (tcp.GetState() == GsmState::ConnectedToGprs)
 	{
 		if (gsm.GetConnectionInfo(0, info) == AtResultType::Success)
 		{	
@@ -177,24 +113,15 @@ void loop()
 		}
 	}
 
-	gui.drawBattery(batteryInfo.Percent, batteryInfo.Voltage);
-	gui.drawGsmInfo(signalQuality, gsmRegStatus, operatorName);
-
-	
-
-	if (hasIpAddress)
-	{
-		gui.DisplayIp(ipAddress);
-	}
+	gui.drawBattery(tcp.batteryInfo.Percent, tcp.batteryInfo.Voltage);
+	gui.drawGsmInfo(tcp.signalQuality, tcp.gsmRegStatus, tcp.operatorName);
 	gui.DisplayBlinkIndicator();
 
-	if (hasIpAddress)
+	if (tcp.GetState() == GsmState::ConnectedToGprs)
 	{
-		ReadDataFromConnection();
-	}
+		gui.DisplayIp(tcp.ipAddress);
 
-	if (hasIpAddress)
-	{
+		ReadDataFromConnection();	
 		FixedString50 receivedBytesStr;
 		receivedBytesStr.appendFormat("received: %d b", receivedBytes);
 		display.setColor(OLEDDISPLAY_COLOR::WHITE);
@@ -210,9 +137,7 @@ void loop()
 		Serial.println("Draw garbage detected pupup");
 	}
 
-	gui.DisplayIncomingCall(callInfo);
-
-	
+	gui.DisplayIncomingCall(tcp.callInfo);
 	
 	display.display();
 

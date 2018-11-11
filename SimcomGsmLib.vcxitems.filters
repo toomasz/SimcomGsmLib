@@ -4,20 +4,19 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)src\CircularDataBuffer.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)src\GsmLogger.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)src\MappingHelpers.cpp" />
-    <ClCompile Include="$(MSBuildThisFileDirectory)src\S900Socket.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)src\SimcomGsmLib.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)src\Parsing\DelimParser.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)src\Parsing\SequenceDetector.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)src\Parsing\SimcomResponseParser.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)src\Parsing\ParsingHelpers.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)src\OperatorNameHelper.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)src\GsmTcpip.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="$(MSBuildThisFileDirectory)src\CircularDataBuffer.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)src\GsmDebugHelpers.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)src\GsmLogger.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)src\MappingHelpers.h" />
-    <ClInclude Include="$(MSBuildThisFileDirectory)src\S900Socket.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)src\SimcomGsmLib.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)src\Parsing\DelimParser.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)src\Parsing\SequenceDetector.h" />
@@ -27,6 +26,7 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)src\Parsing\ParserContext.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)src\GsmLibConstants.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)src\OperatorNameHelper.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)src\GsmTcpip.h" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Functions">
