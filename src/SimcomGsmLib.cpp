@@ -305,47 +305,6 @@ bool SimcomGsm::GarbageOnSerialDetected()
 	return _parser.GarbageOnSerialDetected();
 }
 
-AtResultType SimcomGsm::ExecuteFunction(FunctionBase &function)
-{
-//	_parser.SetCommandType(&function);
-	_serial.println(function.getCommand());
-	
-	auto initialResult = PopCommandResult(function.functionTimeout);
-	
-	if (initialResult == AtResultType::Success)
-	{
-		return AtResultType::Success;
-	}
-	if(function.GetInitSequence() == NULL)
-		return initialResult;
-		
-	char *p= (char*)function.GetInitSequence();
-	while(pgm_read_byte(p) != 0)
-	{
-			
-	//	ds.print(F("Exec: "));
-			
-		//printf("Exec: %s\n", p);
-		wait(100);
-		SendAt_P(AtCommand::Generic, (__FlashStringHelper*)p);
-		auto r = PopCommandResult();
-		if(r != AtResultType::Success)
-		{
-				
-			return r;
-		}
-
-		while(pgm_read_byte(p) != 0)			
-			p++;
-			
-		p++;
-	}
-	delay(500);
-//	_parser.SetCommandType(&function);
-	_serial.println(function.getCommand());
-	return PopCommandResult(function.functionTimeout);
-}
-
 AtResultType SimcomGsm::SendSms(char *number, char *message)
 {	
 	SendAt_P(AtCommand::Generic, F("AT+CMGS=\"%s\""), number);

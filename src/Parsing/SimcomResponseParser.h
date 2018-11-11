@@ -3,12 +3,12 @@
 
 #include <Arduino.h>
 #include "GsmLibConstants.h"
-#include "Functions/FunctionBase.h"
 #include "CircularDataBuffer.h"
 #include "ParserContext.h"
 #include "DelimParser.h"
 #include "SequenceDetector.h"
 #include "GsmLogger.h"
+#include <FixedString.h>
 
 typedef void(*DataReceivedCallback)(uint8_t mux, FixedStringBase& data);
 
@@ -34,7 +34,6 @@ public:
 	SimcomResponseParser(CircularDataBuffer& dataBuffer, ParserContext &parserContext, GsmLogger &logger);
 	AtResultType GetAtResultType();
 	volatile bool commandReady;
-	FunctionBase *function;
 	void SetCommandType(AtCommand commandType);
 	void FeedChar(char c);	
 	void OnDataReceived(DataReceivedCallback onDataReceived);

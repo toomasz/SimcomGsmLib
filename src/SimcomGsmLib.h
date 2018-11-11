@@ -5,7 +5,6 @@
 #include <Arduino.h>
 #include <stdio.h>
 #include <stdarg.h>
-#include "Functions/FunctionBase.h"
 #include "Parsing/SequenceDetector.h"
 #include "Parsing/SimcomResponseParser.h"
 #include "Parsing/ParserContext.h"
@@ -83,9 +82,7 @@ public:
 		AtResultType Read(int mux, FixedStringBase& outputBuffer);
 		AtResultType CloseConnection(uint8_t mux);
 		AtResultType GetConnectionInfo(uint8_t mux, ConnectionInfo &connectionInfo);
-		AtResultType Cipshut();	
-		
-		AtResultType ExecuteFunction(FunctionBase &function);
+		AtResultType Cipshut();
 
 		unsigned long lastDataWrite;	
 		void wait(int millis);

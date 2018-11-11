@@ -13,7 +13,6 @@ _garbageOnSerialDetected(false)
 	_currentCommand = AtCommand::Generic;
 	lineParserState = PARSER_INITIAL;
 	_state = ParserState::Timeout;
-	function = 0;
 }
 
 AtResultType SimcomResponseParser::GetAtResultType()
