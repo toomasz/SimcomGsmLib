@@ -22,10 +22,14 @@ class GsmTcpip
 	bool _justConnectedToModem;
 	void ChangeState(GsmState newState)
 	{
+		if (_state != newState)
+		{
+			
+		}
 		_state = newState;
 	}
 	GsmState _state;
-
+	bool GetVariablesFromModem();
 public:
 	GsmState GetState()
 	{

@@ -9,6 +9,36 @@ GsmTcpip::GsmTcpip(SimcomGsm &gsm):
 {
 }
 
+bool GsmTcpip::GetVariablesFromModem()
+{
+	if (_gsm.GetRegistrationStatus(gsmRegStatus) == AtResultType::Timeout)
+	{
+		return false;
+	}
+
+	if (_gsm.GetSignalQuality(signalQuality) == AtResultType::Timeout)
+	{
+		return false;
+	}
+	if (_gsm.GetBatteryStatus(batteryInfo) == AtResultType::Timeout)
+	{
+		return false;
+	}
+	if (OperatorNameHelper::GetRealOperatorName(_gsm, operatorName) == AtResultType::Timeout)
+	{
+		return false;
+	}
+	if (_gsm.GetIncomingCall(callInfo) == AtResultType::Timeout)
+	{
+		return false;
+	}
+	if (_gsm.GetIpState(ipStatus) == AtResultType::Timeout)
+	{
+		return false;
+	}
+	return true;
+}
+
 void GsmTcpip::Loop()
 {	
 	if (_state == GsmState::Initializing)
@@ -28,6 +58,22 @@ void GsmTcpip::Loop()
 		ChangeState(GsmState::SearchingForNetwork);
 		return;
 	}
+	if (_state == GsmState::ConnectingToGprs)
+	{
+		_gsm.SetCipmux(true);
+		_gsm.SetRxMode(true);
+		_gsm.SetApn("virgin-internet", "", "");
+		auto attachResult = _gsm.AttachGprs();
+		if (attachResult == AtResultType::Timeout)
+		{
+			return;
+		}
+		if (attachResult == AtResultType::Success)
+		{
+			ChangeState(GsmState::ConnectedToGprs);
+		}
+		return;
+	}
 
 	if (_justConnectedToModem)
 	{
@@ -45,60 +91,41 @@ void GsmTcpip::Loop()
 		}
 	}
 
-	if (_gsm.GetRegistrationStatus(gsmRegStatus) == AtResultType::Timeout)
+	if (!GetVariablesFromModem())
 	{
 		ChangeState(GsmState::NoShield);
 		return;
 	}
 
-	if (_gsm.GetSignalQuality(signalQuality) == AtResultType::Timeout)
+	switch (gsmRegStatus)
 	{
-		ChangeState(GsmState::NoShield);
-		return;
-	}
-	if (_gsm.GetBatteryStatus(batteryInfo) == AtResultType::Timeout)
-	{
-		ChangeState(GsmState::NoShield);
-		return;
-	}
-	if (OperatorNameHelper::GetRealOperatorName(_gsm, operatorName) == AtResultType::Timeout)
-	{
-		ChangeState(GsmState::NoShield);
-		return;
-	}
-	if (_gsm.GetIncomingCall(callInfo) == AtResultType::Timeout)
-	{
-		ChangeState(GsmState::NoShield);
-		return;
-	}
-	if (_gsm.GetIpState(ipStatus) == AtResultType::Timeout)
-	{
-		ChangeState(GsmState::NoShield);
-		return;
-	}
-
-
-
-	if (gsmRegStatus == GsmRegistrationState::HomeNetwork || gsmRegStatus == GsmRegistrationState::Roaming)
-	{
-		if (ipStatus == SimcomIpState::IpProcessing)
+		case GsmRegistrationState::HomeNetwork:
+		case GsmRegistrationState::Roaming:
 		{
-			ChangeState(GsmState::ConnectedToGprs);
+			if (ipStatus == SimcomIpState::IpProcessing || ipStatus == SimcomIpState::IpStatus)
+			{
+				ChangeState(GsmState::ConnectedToGprs);
+			}
+			break;
 		}
+		case GsmRegistrationState::SearchingForNetwork:
+		{
+			ChangeState(GsmState::SearchingForNetwork);
+			break;
+		}
+		case GsmRegistrationState::RegistrationDenied:
+		{
+			ChangeState(GsmState::RegistrationDenied);
+			break;
+		}
+		case GsmRegistrationState::RegistrationUnknown:
+		{
+			ChangeState(GsmState::RegistrationUnknown);
+			break;
+		}
+	default:
+		break;
 	}
-	else if (gsmRegStatus == GsmRegistrationState::SearchingForNetwork)
-	{
-		ChangeState(GsmState::SearchingForNetwork);
-	}
-	else if (gsmRegStatus == GsmRegistrationState::RegistrationDenied)
-	{
-		ChangeState(GsmState::RegistrationDenied);
-	}
-	else if (gsmRegStatus == GsmRegistrationState::RegistrationUnknown)
-	{
-		ChangeState(GsmState::RegistrationUnknown);
-	}
-
 
 	auto getIpResult = _gsm.GetIpAddress(ipAddress);
 	if (getIpResult == AtResultType::Timeout)
@@ -119,24 +146,8 @@ void GsmTcpip::Loop()
 		if (!hasIpAddress)
 		{
 			ChangeState(GsmState::ConnectingToGprs);
-			//gui.Clear();
-			//display.setFont(ArialMT_Plain_10);
-
-			_gsm.SetCipmux(true);
-			_gsm.SetRxMode(true);
-			_gsm.SetApn("virgin-internet", "", "");
-			//display.drawString(0, 0, "Connecting to gprs..");
-			//display.display();
-			//delay(400);
-			auto attachResult = _gsm.AttachGprs();
-			if (attachResult == AtResultType::Timeout)
-			{
-				return;
-			}
-			if (attachResult == AtResultType::Success)
-			{
-				ChangeState(GsmState::ConnectedToGprs);
-			}
+			return;
 		}
-	}	
+	}
+
 }

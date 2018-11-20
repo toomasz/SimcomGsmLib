@@ -2,3 +2,5 @@
 
 int SimcomGsmpEsp32::_txPin = 0;
 int SimcomGsmpEsp32::_rxPin = 0;
+
+HardwareSerial* SimcomGsmpEsp32::_serial = nullptr;

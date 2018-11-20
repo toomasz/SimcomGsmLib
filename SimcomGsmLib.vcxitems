@@ -25,6 +25,7 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)src\Parsing\DelimParser.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)src\GsmDebugHelpers.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)src\GsmLogger.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)src\SimcomGsmLibEsp32.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)src\SimcomGsmTypes.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)src\MappingHelpers.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)src\Parsing\SimcomResponseParser.h" />
@@ -44,6 +45,7 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)src\Parsing\SimcomResponseParser.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)src\Parsing\SequenceDetector.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)src\SimcomGsmLib.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)src\SimcomGsmLibEsp32.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="$(MSBuildThisFileDirectory).gitattributes" />

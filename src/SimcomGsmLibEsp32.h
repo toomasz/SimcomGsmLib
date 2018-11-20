@@ -10,17 +10,19 @@ class SimcomGsmpEsp32 : public SimcomGsm
 {
 	static int _txPin;
 	static int _rxPin;
+	static HardwareSerial* _serial;
 	static void UpdateBaudRate(int baudRate)
 	{
-		Serial2.flush();
-		Serial2.end();
-		Serial2.begin(baudRate, SERIAL_8N1, _txPin, _rxPin, false);
+		_serial->flush();
+		_serial->end();
+		_serial->begin(baudRate, SERIAL_8N1, _txPin, _rxPin, false);
 	}
 
 public:
 	SimcomGsmpEsp32(HardwareSerial& serial, int txPin, int rxPin)
 		:SimcomGsm(serial, UpdateBaudRate)
 	{
+		_serial = &serial;
 		_txPin = txPin;
 		_rxPin = rxPin;
 	}
