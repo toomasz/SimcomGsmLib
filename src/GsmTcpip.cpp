@@ -5,12 +5,17 @@
 GsmTcpip::GsmTcpip(SimcomGsm &gsm): 
 	_gsm(gsm), 
 	_justConnectedToModem(false), 
-	_state(GsmState::NoShield)
+	_state(GsmState::Initializing)
 {
 }
 
 void GsmTcpip::Loop()
 {	
+	if (_state == GsmState::Initializing)
+	{
+		ChangeState(GsmState::NoShield);
+		return;
+	}
 	if (_state == GsmState::NoShield)
 	{
 		if (!_gsm.EnsureModemConnected(115200))
@@ -21,6 +26,7 @@ void GsmTcpip::Loop()
 		Serial.println("Modem found");
 		_justConnectedToModem = true;
 		ChangeState(GsmState::SearchingForNetwork);
+		return;
 	}
 
 	if (_justConnectedToModem)
@@ -133,9 +139,4 @@ void GsmTcpip::Loop()
 			}
 		}
 	}	
-}
-
-
-GsmTcpip::~GsmTcpip()
-{
 }

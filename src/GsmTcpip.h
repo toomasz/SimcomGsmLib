@@ -6,6 +6,7 @@
 
 enum class GsmState
 {
+	Initializing,
 	NoShield,
 	SimError,
 	SearchingForNetwork,
@@ -41,6 +42,5 @@ public:
 
 	GsmTcpip(SimcomGsm &gsm);
 	void Loop();
-	~GsmTcpip();
 };
 

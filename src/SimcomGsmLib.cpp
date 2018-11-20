@@ -234,7 +234,7 @@ AtResultType SimcomGsm::SetApn(const char *apnName, const char *username,const c
 AtResultType SimcomGsm::At()
 {	
 	SendAt_P(AtCommand::Generic, F("AT"));
-	return PopCommandResult(60);
+	return PopCommandResult(90);
 }
 
 void SimcomGsm::OnDataReceived(DataReceivedCallback onDataReceived)
@@ -257,27 +257,35 @@ bool SimcomGsm::EnsureModemConnected(long requestedBaudRate)
 		delay(50);
 		atResult = At();		
 	}
-
-	if (_currentBaudRate == 0 || atResult == AtResultType::Timeout)
+	if (atResult == AtResultType::Success || atResult == AtResultType::Error)
 	{
-		_currentBaudRate = FindCurrentBaudRate();
-		if (_currentBaudRate != 0)
-		{
-			_logger.Log(F("Found baud rate = %d"), _currentBaudRate);
-			if (SetBaudRate(requestedBaudRate) == AtResultType::Success)
-			{
-				_currentBaudRate = requestedBaudRate;
-				_logger.Log(F("set baud rate to = %d"), _currentBaudRate);
-				At();
-				_parser.ResetUartGarbageDetected();
-				SetEcho(false);
-				return true;
-			}
-			_logger.Log(F("Failed to update baud rate = %d"), _currentBaudRate);
-			return true;
-		}
+		return true;
 	}
-	return atResult == AtResultType::Success;
+	_currentBaudRate = FindCurrentBaudRate();
+	if (_currentBaudRate == 0)
+	{
+		return false;
+	}
+
+	_logger.Log(F("Found baud rate = %d"), _currentBaudRate);
+	
+	if (SetBaudRate(requestedBaudRate) != AtResultType::Success)
+	{
+		_logger.Log(F("Failed to update baud rate to %d"), requestedBaudRate);
+		return false;
+	}
+	_currentBaudRate = requestedBaudRate;
+	_logger.Log(F("Updated baud rate to = %d"), _currentBaudRate);
+
+	At();
+
+	if (SetEcho(false) != AtResultType::Success)
+	{
+		_logger.Log(F("Failed to set echo"));
+		return false;	
+	}
+	_parser.ResetUartGarbageDetected();
+	return true;	
 }
 AtResultType SimcomGsm::GetImei(FixedString20 &imei)
 {	

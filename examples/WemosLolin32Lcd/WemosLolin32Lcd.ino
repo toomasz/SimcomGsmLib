@@ -9,14 +9,10 @@
 #include <Wire.h>
 #include <GsmTcpip.h>
 
-void UpdateBaudRate(int baudRate)
-{
-	Serial2.flush();
-	Serial2.clearWriteError();
-	Serial2.end();
-	Serial2.begin(baudRate, SERIAL_8N1, 16, 12, false);
-}
-SimcomGsm gsm(Serial2, UpdateBaudRate);
+#include <SimcomGsmLibEsp32.h>
+
+SimcomGsmpEsp32 gsm(Serial2, 16, 12);
+
 GsmTcpip tcp(gsm);
 
 SSD1306 display(188, 4, 15);
@@ -48,7 +44,7 @@ void OnDataReceived(uint8_t mux, FixedStringBase &data)
 
 void setup()
 {	
-	gsm.Logger().LogAtCommands = false;
+	gsm.Logger().LogAtCommands = true;
 	gsm.Logger().OnLog(OnLog);
 
 	Serial.begin(500000);
