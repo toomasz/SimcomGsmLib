@@ -11,6 +11,7 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)src\Parsing\ParsingHelpers.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)src\OperatorNameHelper.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)src\GsmTcpip.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)src\SimcomGsmLibEsp32.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="$(MSBuildThisFileDirectory)src\CircularDataBuffer.h" />
@@ -27,6 +28,7 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)src\GsmLibConstants.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)src\OperatorNameHelper.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)src\GsmTcpip.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)src\SimcomGsmLibEsp32.h" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Functions">

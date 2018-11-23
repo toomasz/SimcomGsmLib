@@ -39,7 +39,7 @@ AtResultType SimcomGsm::GenericAt(int timeout, const __FlashStringHelper* comman
 	va_start(argptr, command);
 
 	FixedString200 buffer;
-	buffer.appendFormat(command, argptr);
+	buffer.appendFormatV(command, argptr);
 	_logger.LogAt(F(" => %s"), buffer.c_str());
 	_currentCommand = buffer;
 	_serial.println(buffer.c_str());
@@ -56,7 +56,7 @@ void SimcomGsm::SendAt_P(AtCommand commnd, const __FlashStringHelper* command, .
 	va_start(argptr, command);
 
 	FixedString200 buffer;
-	buffer.appendFormat(command, argptr);
+	buffer.appendFormatV(command, argptr);
 	_currentCommand = buffer;
 	_logger.LogAt(F(" => %s"), buffer.c_str());
 	_serial.println(buffer.c_str());
@@ -215,7 +215,7 @@ AtResultType SimcomGsm::SetEcho(bool echoEnabled)
 	}
 
 	auto r = PopCommandResult();
-	//delay(100); // without 100ms wait, next command failed, idk wky
+	delay(100); // without 100ms wait, next command failed, idk wky
 	return r;
 }
 
@@ -234,7 +234,7 @@ AtResultType SimcomGsm::SetApn(const char *apnName, const char *username,const c
 AtResultType SimcomGsm::At()
 {	
 	SendAt_P(AtCommand::Generic, F("AT"));
-	return PopCommandResult(90);
+	return PopCommandResult(30);
 }
 
 void SimcomGsm::OnDataReceived(DataReceivedCallback onDataReceived)
@@ -251,15 +251,18 @@ bool SimcomGsm::EnsureModemConnected(long requestedBaudRate)
 {	
 	auto atResult = At();
 
-	int n = 4;
-	while (atResult != AtResultType::Success && n--> 0)
+	int n = 1;
+	if (_currentBaudRate != 0)
 	{
-		delay(50);
-		atResult = At();		
-	}
-	if (atResult == AtResultType::Success || atResult == AtResultType::Error)
-	{
-		return true;
+		while (atResult != AtResultType::Success && n-- > 0)
+		{
+			delay(20);
+			atResult = At();
+		}
+		if (atResult == AtResultType::Success || atResult == AtResultType::Error)
+		{
+			return true;
+		}
 	}
 	_currentBaudRate = FindCurrentBaudRate();
 	if (_currentBaudRate == 0)

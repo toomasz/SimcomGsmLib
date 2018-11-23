@@ -87,7 +87,14 @@ void SimcomResponseParser::FeedChar(char c)
 			if (ParsingHelpers::CheckIfLineContainsGarbage(_response))
 			{
 				_garbageOnSerialDetected = true;
-				_logger.Log(F("Garbage detected: '%s', len = %d\n"), _response.c_str(), _response.length());
+
+				FixedString200 garbageStr;
+				for (int i = 0; i < garbageStr.length(); i++)
+				{
+					garbageStr.appendFormat(" %2x", garbageStr[i]);
+				}
+				_logger.Log(F("Garbage detected: '"), garbageStr.c_str(), garbageStr.length());
+
 			}
 			else
 			{

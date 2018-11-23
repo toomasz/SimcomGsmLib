@@ -2,12 +2,14 @@
 
 #include "SimcomGsmLib.h"
 #include <FixedString.h>
+#include <WString.h>
 
 
 enum class GsmState
 {
-	Initializing,
+	Initial,
 	NoShield,
+	Initializing,
 	SimError,
 	SearchingForNetwork,
 	RegistrationDenied,
@@ -15,6 +17,8 @@ enum class GsmState
 	ConnectingToGprs,
 	ConnectedToGprs,
 };
+
+
 
 class GsmTcpip
 {
@@ -24,7 +28,7 @@ class GsmTcpip
 	{
 		if (_state != newState)
 		{
-			
+			_gsm.Logger().Log(F("State changed %s -> %s"), StateToStr(_state), StateToStr(newState));
 		}
 		_state = newState;
 	}
@@ -35,6 +39,7 @@ public:
 	{
 		return _state;
 	}
+	const __FlashStringHelper* StateToStr(GsmState state);
 	int16_t signalQuality;
 	BatteryStatus batteryInfo;
 	FixedString20 operatorName;

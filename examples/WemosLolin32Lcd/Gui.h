@@ -4,6 +4,12 @@
 #include <SimcomGsmLib.h>
 #include <FixedString.h>
 
+enum class Font
+{
+	F10,
+	F16
+};
+
 class Gui
 {
 	SSD1306& _lcd;
@@ -129,31 +135,23 @@ public:
 		return "";
 	}
 
-	void lcd_label(int y, int heigth, int fontSize, const __FlashStringHelper* format, ...)
+	void lcd_label(Font fontSize, int x, int y, const __FlashStringHelper* format, ...)
 	{
 		va_list argptr;
 		va_start(argptr, format);
 
-		if (fontSize == 16)
+		if (fontSize == Font::F16)
 		{
 			_lcd.setFont(ArialMT_Plain_16);
 		}
-		if (fontSize == 10)
+		if (fontSize == Font::F10)
 		{
 			_lcd.setFont(ArialMT_Plain_10);
 		}
 
 		char buffer[200];
 		vsnprintf_P(buffer, 200, (PGM_P)format, argptr);
-		_lcd.drawString(0, y, buffer);
-		va_end(argptr);
-	}
-	void lcd_label(int x, int y, const __FlashStringHelper* format, ...)
-	{
-		va_list argptr;
-		va_start(argptr, format);
-		char buffer[200];
-		vsnprintf_P(buffer, 200, (PGM_P)format, argptr);
+		_lcd.setColor(OLEDDISPLAY_COLOR::WHITE);
 		_lcd.drawString(x, y, buffer);
 		va_end(argptr);
 	}
@@ -184,11 +182,9 @@ public:
 			_lcd.drawRect(5, 10, 128 - 10, 45);
 			_lcd.setColor(OLEDDISPLAY_COLOR::BLACK);
 			_lcd.fillRect(6, 11, 128 - 10 - 2, 45 - 2);
-			_lcd.setColor(OLEDDISPLAY_COLOR::WHITE);
-			_lcd.setFont(ArialMT_Plain_16);
-			lcd_label(10, 14, F("Calling: "));
-			_lcd.setFont(ArialMT_Plain_10);
-			lcd_label(10, 32, F("%s"), callInfo.CallerNumber.c_str());
+
+			lcd_label(Font::F16, 10, 14, F("Calling: "));
+			lcd_label(Font::F10, 10, 32, F("%s"), callInfo.CallerNumber.c_str());
 		}
 	}
 
@@ -196,8 +192,7 @@ public:
 
 	void DisplayIp(GsmIp& ip)
 	{
-		_lcd.setColor(OLEDDISPLAY_COLOR::WHITE);
-		lcd_label(26, 13, 10, F("ip: %s"), ip.ToString().c_str());
+		lcd_label(Font::F10, 0,26, F("ip: %s"), ip.ToString().c_str());
 	}
 
 	void Clear()

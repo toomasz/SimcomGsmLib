@@ -5,7 +5,7 @@
 GsmTcpip::GsmTcpip(SimcomGsm &gsm): 
 	_gsm(gsm), 
 	_justConnectedToModem(false), 
-	_state(GsmState::Initializing)
+	_state(GsmState::Initial)
 {
 }
 
@@ -41,7 +41,7 @@ bool GsmTcpip::GetVariablesFromModem()
 
 void GsmTcpip::Loop()
 {	
-	if (_state == GsmState::Initializing)
+	if (_state == GsmState::Initial)
 	{
 		ChangeState(GsmState::NoShield);
 		return;
@@ -50,14 +50,40 @@ void GsmTcpip::Loop()
 	{
 		if (!_gsm.EnsureModemConnected(115200))
 		{
-			delay(1000);
+			delay(500);
 			return;
 		}
-		Serial.println("Modem found");
-		_justConnectedToModem = true;
+		ChangeState(GsmState::Initializing);
+		return;
+	}
+
+	if (_state == GsmState::Initializing)
+	{
+		bool cipmux;
+		_gsm.GetCipmux(cipmux);
+		_gsm.Cipshut();
 		ChangeState(GsmState::SearchingForNetwork);
 		return;
 	}
+
+	if (_state == GsmState::SearchingForNetwork)
+	{		
+		auto regStatusResult = _gsm.GetRegistrationStatus(gsmRegStatus);
+		if (regStatusResult == AtResultType::Timeout)
+		{
+			ChangeState(GsmState::NoShield);
+			return;
+		}
+		if (regStatusResult == AtResultType::Success)
+		{
+			if (gsmRegStatus == GsmRegistrationState::HomeNetwork || gsmRegStatus == GsmRegistrationState::Roaming)
+			{
+				ChangeState(GsmState::ConnectingToGprs);
+				return;
+			}
+		}
+	}
+
 	if (_state == GsmState::ConnectingToGprs)
 	{
 		_gsm.SetCipmux(true);
@@ -66,19 +92,25 @@ void GsmTcpip::Loop()
 		auto attachResult = _gsm.AttachGprs();
 		if (attachResult == AtResultType::Timeout)
 		{
+			ChangeState(GsmState::NoShield);
 			return;
 		}
-		if (attachResult == AtResultType::Success)
+		if (attachResult != AtResultType::Success)
 		{
-			ChangeState(GsmState::ConnectedToGprs);
+			return;
 		}
+		auto ipAddressResult = _gsm.GetIpAddress(ipAddress);
+		if (ipAddressResult == AtResultType::Timeout)
+		{
+			ChangeState(GsmState::NoShield);
+			return;
+		}
+		if (ipAddressResult != AtResultType::Success)
+		{
+			return;
+		}
+		ChangeState(GsmState::ConnectedToGprs);
 		return;
-	}
-
-	if (_justConnectedToModem)
-	{
-		_justConnectedToModem = false;
-		_gsm.Cipshut();
 	}
 
 	if (_gsm.GetSimStatus(simStatus) == AtResultType::Success)
@@ -98,16 +130,7 @@ void GsmTcpip::Loop()
 	}
 
 	switch (gsmRegStatus)
-	{
-		case GsmRegistrationState::HomeNetwork:
-		case GsmRegistrationState::Roaming:
-		{
-			if (ipStatus == SimcomIpState::IpProcessing || ipStatus == SimcomIpState::IpStatus)
-			{
-				ChangeState(GsmState::ConnectedToGprs);
-			}
-			break;
-		}
+	{		
 		case GsmRegistrationState::SearchingForNetwork:
 		{
 			ChangeState(GsmState::SearchingForNetwork);
@@ -126,28 +149,22 @@ void GsmTcpip::Loop()
 	default:
 		break;
 	}
+}
 
-	auto getIpResult = _gsm.GetIpAddress(ipAddress);
-	if (getIpResult == AtResultType::Timeout)
+
+const __FlashStringHelper* GsmTcpip::StateToStr(GsmState state)
+{
+	switch (state)
 	{
-		ChangeState(GsmState::NoShield);
-		return;
+	case GsmState::Initial: return F("Initial");
+	case GsmState::NoShield: return F("NoShield");
+	case GsmState::Initializing: return F("Initializing");
+	case GsmState::SimError: return F("SimError");
+	case GsmState::SearchingForNetwork: return F("SearchingForNetwork");
+	case GsmState::RegistrationDenied: return F("RegistrationDenied");
+	case GsmState::RegistrationUnknown: return F("RegistrationUnknown");
+	case GsmState::ConnectingToGprs: return F("ConnectingToGprs");
+	case GsmState::ConnectedToGprs: return F("ConnectedToGprs");
+	default: return F("Unknown");
 	}
-	bool hasIpAddress = getIpResult == AtResultType::Success;
-
-	if (!hasIpAddress)
-	{
-		_gsm.Cipshut();
-	}
-
-	if (gsmRegStatus == GsmRegistrationState::Roaming || 
-		gsmRegStatus == GsmRegistrationState::HomeNetwork)
-	{
-		if (!hasIpAddress)
-		{
-			ChangeState(GsmState::ConnectingToGprs);
-			return;
-		}
-	}
-
 }

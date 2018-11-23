@@ -11,7 +11,7 @@
 
 #include <SimcomGsmLibEsp32.h>
 
-SimcomGsmpEsp32 gsm(Serial2, 16, 12);
+SimcomGsmpEsp32 gsm(Serial1, 16, 12);
 
 GsmTcpip tcp(gsm);
 
@@ -67,7 +67,9 @@ void loop()
 
 	tcp.Loop();
 
-	if (tcp.GetState() == GsmState::NoShield)
+	auto state = tcp.GetState();
+
+	if (state == GsmState::NoShield)
 	{
 		FixedString20 error = "No shield";
 		gui.DisplayError(error);
@@ -75,26 +77,31 @@ void loop()
 		return;
 	}
 
-	if (tcp.GetState() == GsmState::SimError)
+	if (state == GsmState::SimError)
 	{
 		gui.DisplaySimError(tcp.simStatus);
 		delay(1000);
 		return;
 	}
-	if (tcp.GetState() == GsmState::ConnectingToGprs)
-	{
-		gui.Clear();
-		display.setFont(ArialMT_Plain_10);
-		display.drawString(0, 0, "Connecting to gprs..");
-		display.display();
-	}
 
 	ConnectionInfo info;
+	gui.drawBattery(tcp.batteryInfo.Percent, tcp.batteryInfo.Voltage);
+	gui.drawGsmInfo(tcp.signalQuality, tcp.gsmRegStatus, tcp.operatorName);
+	gui.DisplayBlinkIndicator();
+	
+	if (state == GsmState::ConnectingToGprs)
+	{
+		gui.lcd_label(Font::F10, 0, 32, F("Connecting to gprs.."));
+	}
+	if (state == GsmState::Initializing)
+	{
+		gui.lcd_label(Font::F10, 0, 32, F("Initializing modem..."));
 
-	if (tcp.GetState() == GsmState::ConnectedToGprs)
+	}
+	if (state == GsmState::ConnectedToGprs)
 	{
 		if (gsm.GetConnectionInfo(0, info) == AtResultType::Success)
-		{	
+		{
 			if (info.State == ConnectionState::Closed || info.State == ConnectionState::Initial)
 			{
 				Serial.printf("Trying to connect...\n");
@@ -107,14 +114,7 @@ void loop()
 		{
 			Serial.println("Connection info failed");
 		}
-	}
 
-	gui.drawBattery(tcp.batteryInfo.Percent, tcp.batteryInfo.Voltage);
-	gui.drawGsmInfo(tcp.signalQuality, tcp.gsmRegStatus, tcp.operatorName);
-	gui.DisplayBlinkIndicator();
-
-	if (tcp.GetState() == GsmState::ConnectedToGprs)
-	{
 		gui.DisplayIp(tcp.ipAddress);
 
 		ReadDataFromConnection();	

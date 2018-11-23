@@ -4,18 +4,23 @@
 #include <HardwareSerial.h>
 #include "SimcomGsmLib.h"
 
-
-
 class SimcomGsmpEsp32 : public SimcomGsm
 {
 	static int _txPin;
 	static int _rxPin;
 	static HardwareSerial* _serial;
+	static bool _isSerialInitialized;
 	static void UpdateBaudRate(int baudRate)
 	{
-		_serial->flush();
-		_serial->end();
+		if (_isSerialInitialized)
+		{
+			_serial->flush();
+			_serial->clearWriteError();
+			_serial->end();
+			delay(10);
+		}
 		_serial->begin(baudRate, SERIAL_8N1, _txPin, _rxPin, false);
+		_isSerialInitialized = true;
 	}
 
 public:

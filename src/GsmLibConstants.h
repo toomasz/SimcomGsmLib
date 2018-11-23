@@ -5,7 +5,7 @@ const int AT_DEFAULT_TIMEOUT = 1500;
 
 const int _defaultBaudRates[] =
 {
-//	460800,
+	460800,
 	115200,
 	19200,
 	38400,
