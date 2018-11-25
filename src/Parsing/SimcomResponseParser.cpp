@@ -60,7 +60,7 @@ void SimcomResponseParser::FeedChar(char c)
 			return;
 		}
 
-		_logger.LogAt(F("  <= %s"), (char*)_response.c_str());
+		_logger.LogAt(F("    <= %s"), (char*)_response.c_str());
 
 		auto isUnsolicited = ParseUnsolicited(_response);
 
@@ -86,20 +86,18 @@ void SimcomResponseParser::FeedChar(char c)
 		{
 			if (ParsingHelpers::CheckIfLineContainsGarbage(_response))
 			{
-				_garbageOnSerialDetected = true;
-
-				FixedString200 garbageStr;
-				for (int i = 0; i < _response.length(); i++)
-				{
-					garbageStr.appendFormat(" %2x", _response[i]);
-				}
-				_logger.Log(F("Garbage detected: '"), garbageStr.c_str(), garbageStr.length());
+				_garbageOnSerialDetected = true;				
+				_logger.Log(F(" Garbage detected(%d b): "),_response.length());
 
 			}
 			else
 			{
-				_logger.Log(F("Unknown response(%d b): %s\n"), _response.length(), _response.c_str());
+				_logger.Log(F( "Unknown response (%d b): "), _response.length());
 			}
+
+			FixedString200 printableLine;
+			BinaryToString(_response, printableLine);
+			_logger.Log(F(" '%s'"), printableLine.c_str());
 			// do nothing, do not change _state to none
 		}
 		

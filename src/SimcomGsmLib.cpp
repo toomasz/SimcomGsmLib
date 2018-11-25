@@ -207,7 +207,7 @@ AtResultType SimcomGsm::PopCommandResult(int timeout)
 
 	auto commandResult = _parser.GetAtResultType();
 	auto elapsedMs = millis() - start;	
-	_logger.LogAt(F(" --- %d ms ---"), elapsedMs);
+	_logger.LogAt(F("    -- %d ms --"), elapsedMs);
 	if (commandResult == AtResultType::Timeout)
 	{
 		_logger.Log(F("                      --- !!! '%s' - TIMEOUT!!! ---      "), _currentCommand.c_str(), elapsedMs);

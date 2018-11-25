@@ -60,3 +60,28 @@ const __FlashStringHelper* ConnectionStateToStr(ConnectionState state)
 	default: return F("Unknown");
 	}
 }
+
+void BinaryToString(FixedStringBase&source, FixedStringBase& target)
+{
+	for (int i = 0; i < source.length(); i++)
+	{
+		const char c = source[i];
+
+		if (isprint(c))
+		{
+			target.append(c);
+		}
+		else if (c == '\r')
+		{
+			target.append("\\r");
+		}
+		else if (c == '\n')
+		{
+			target.append("\\n");
+		}
+		else
+		{
+			target.appendFormat("\\%2x", c);
+		}
+	}
+}
