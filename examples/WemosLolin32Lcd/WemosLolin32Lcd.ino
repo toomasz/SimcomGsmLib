@@ -73,7 +73,6 @@ void loop()
 	{
 		FixedString20 error = "No shield";
 		gui.DisplayError(error);
-		delay(500);
 		return;
 	}
 
@@ -84,7 +83,6 @@ void loop()
 		return;
 	}
 
-	ConnectionInfo info;
 	gui.drawBattery(tcp.batteryInfo.Percent, tcp.batteryInfo.Voltage);
 	gui.drawGsmInfo(tcp.signalQuality, tcp.gsmRegStatus, tcp.operatorName);
 	gui.DisplayBlinkIndicator();
@@ -98,32 +96,59 @@ void loop()
 		gui.lcd_label(Font::F10, 0, 32, F("Initializing modem..."));
 
 	}
+
+
 	if (state == GsmState::ConnectedToGprs)
 	{
-		if (gsm.GetConnectionInfo(0, info) == AtResultType::Success)
+		ConnectionInfo connection;
+
+		auto connectionInfoResult = gsm.GetConnectionInfo(0, connection);
+		if(connectionInfoResult == AtResultType::Success)
 		{
-			if (info.State == ConnectionState::Closed || info.State == ConnectionState::Initial)
+			static bool justConnected = false;
+			if (connection.State == ConnectionState::Closed || connection.State == ConnectionState::Initial)
 			{
 				Serial.printf("Trying to connect...\n");
 				receivedBytes = 0;
 				connectionValidator.SetJustConnected();
 				gsm.BeginConnect(ProtocolType::Tcp, 0, "conti.ml", 12668);
+				justConnected = true;
 			}
+
+			if(connection.State == ConnectionState::Connected)
+			{
+				static uint8_t n = 0;
+
+				if (justConnected)
+				{
+					n = 0;
+					justConnected = false;
+					FixedString10 dataToSend = "1";
+					if(gsm.Send(0, dataToSend) != AtResultType::Success)
+					{
+						Serial.println("Failed to send data");
+					}
+				}
+
+				FixedString20 data;
+				for(int i=0; i < data.capacity(); i++)
+				{				
+					data.append(n);
+					n ++;
+				}
+				gsm.Send(0, data);
+
+				ReadDataFromConnection();
+			}
+			gui.lcd_label(Font::F10, 0, 64 - 22, F("%s"), ConnectionStateToStr(connection.State));
+			gui.lcd_label(Font::F10, 0, 64 - 12, F("received: %d b"), receivedBytes);
 		}
 		else
 		{
-			Serial.println("Connection info failed");
+			Serial.println("Failed to get conn info");
 		}
 
-		gui.DisplayIp(tcp.ipAddress);
-
-		ReadDataFromConnection();	
-		FixedString50 receivedBytesStr;
-		receivedBytesStr.appendFormat("received: %d b", receivedBytes);
-		display.setColor(OLEDDISPLAY_COLOR::WHITE);
-
-		display.drawString(0, 64 - 22, ConnectionStateToStr(info.State));
-		display.drawString(0, 64 - 12, receivedBytesStr.c_str());
+		gui.DisplayIp(tcp.ipAddress);	
 	}
 
 	if (gsm.GarbageOnSerialDetected())

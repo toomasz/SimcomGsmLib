@@ -179,7 +179,7 @@ AtResultType SimcomGsm::GetCipQuickSend(bool& cipqsend)
 
 AtResultType SimcomGsm::SetSipQuickSend(bool cipqsend)
 {
-	SendAt_P(AtCommand::CipQsendQuery, F("AT+CIPQSEND=%d"), cipqsend ? 1: 0);
+	SendAt_P(AtCommand::Generic, F("AT+CIPQSEND=%d"), cipqsend ? 1: 0);
 	return PopCommandResult();
 }
 
@@ -323,7 +323,6 @@ void SimcomGsm::wait(int ms)
 		if (_serial.available())
 		{
 			auto c = _serial.read();
-			//Serial.printf("c: %c\n", c);
 			_parser.FeedChar(c);
 		}
 	}
@@ -352,6 +351,7 @@ AtResultType SimcomGsm::SendUssdWaitResponse(char *ussd, FixedString150& respons
 	_parserContext.UssdResponse = &response;
 	SendAt_P(AtCommand::Cusd, F("AT+CUSD=1,\"%s\""), ussd);
 	auto result = PopCommandResult(10000);
+	return result;
 }
 
 int SimcomGsm::FindCurrentBaudRate()
@@ -395,7 +395,7 @@ AtResultType SimcomGsm::GetIncomingCall(IncomingCallInfo & callInfo)
 {
 	_parserContext.CallInfo = &callInfo;
 	SendAt_P(AtCommand::Clcc, F("AT+CLCC"));
-	auto result = PopCommandResult();
+	const auto result = PopCommandResult();
 	return result;
 }
 
@@ -419,6 +419,46 @@ AtResultType SimcomGsm::Read(int mux, FixedStringBase& outputBuffer)
 	_parserContext.CipRxGetBuffer = &outputBuffer;
 	SendAt_P(AtCommand::CipRxGetRead,F("AT+CIPRXGET=2,%d,%d"), mux, outputBuffer.capacity());
 	return PopCommandResult();
+}
+
+AtResultType SimcomGsm::Send(int mux, FixedStringBase& data)
+{
+	SendAt_P(AtCommand::CipSend, F("AT+CIPSEND=%d,%d"), mux, data.length());
+
+	const auto promptResult = WaitForPrompt('>', 1000);
+	if(promptResult  != AtResultType::Success)
+	{
+		return promptResult;
+	}
+	
+
+	_serial.write(data.c_str(), data.length());
+	return PopCommandResult();
+}
+
+AtResultType SimcomGsm::WaitForPrompt(char prompt, int timeout)
+{
+	const uint64_t start = millis();
+	// wait for >
+	while (millis() - start < timeout)
+	{
+		if (_serial.available())
+		{
+			const auto receivedChar = _serial.read();
+			if (receivedChar == '\r' || receivedChar == '\n')
+			{
+				continue;
+			}
+			if (receivedChar == prompt)
+			{
+				return AtResultType::Success;
+			}
+			_logger.Log(F("Received wrong prompt: %c, expected = %c"), receivedChar, prompt);
+			return AtResultType::Error;
+		}
+	}
+	_logger.Log(F("Timed out waiting for prompt: %c"), prompt);
+	return AtResultType::Timeout;
 }
 
 AtResultType SimcomGsm::CloseConnection(uint8_t mux)

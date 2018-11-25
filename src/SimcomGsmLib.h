@@ -81,6 +81,8 @@ public:
 
 		AtResultType BeginConnect(ProtocolType protocol, uint8_t mux, const char *address, int port);		
 		AtResultType Read(int mux, FixedStringBase& outputBuffer);
+		AtResultType WaitForPrompt(char prompt, int timeout);
+		AtResultType Send(int mux, FixedStringBase& data);
 		AtResultType CloseConnection(uint8_t mux);
 		AtResultType GetConnectionInfo(uint8_t mux, ConnectionInfo &connectionInfo);
 		AtResultType Cipshut();

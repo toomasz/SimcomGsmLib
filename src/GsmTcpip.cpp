@@ -110,6 +110,17 @@ void GsmTcpip::Loop()
 	if (_state == GsmState::ConnectingToGprs)
 	{
 		_gsm.Cipshut();
+
+		if(_gsm.SetSipQuickSend(true) == AtResultType::Success)
+		{
+			Serial.println("Successfully set CIPQSEND to 1\n");
+		}
+
+		bool cipQsend;
+		if(_gsm.GetCipQuickSend(cipQsend) == AtResultType::Success)
+		{			
+			Serial.printf("CIPQSEND = %d\n", cipQsend);		}
+
 		_gsm.SetCipmux(true);
 		_gsm.SetRxMode(true);
 		_gsm.SetApn("virgin-internet", "", "");

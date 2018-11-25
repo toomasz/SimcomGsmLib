@@ -89,16 +89,16 @@ void SimcomResponseParser::FeedChar(char c)
 				_garbageOnSerialDetected = true;
 
 				FixedString200 garbageStr;
-				for (int i = 0; i < garbageStr.length(); i++)
+				for (int i = 0; i < _response.length(); i++)
 				{
-					garbageStr.appendFormat(" %2x", garbageStr[i]);
+					garbageStr.appendFormat(" %2x", _response[i]);
 				}
 				_logger.Log(F("Garbage detected: '"), garbageStr.c_str(), garbageStr.length());
 
 			}
 			else
 			{
-				_logger.Log(F("Unknown response: %s\n"), _response.c_str());
+				_logger.Log(F("Unknown response(%d b): %s\n"), _response.length(), _response.c_str());
 			}
 			// do nothing, do not change _state to none
 		}
@@ -468,6 +468,13 @@ ParserState SimcomResponseParser::ParseLine()
 			}
 			_parserContext.IsRxManual = isEnabled == 1;
 			return ParserState::PartialSuccess;
+		}
+	}
+	if(_currentCommand == AtCommand::CipSend)
+	{
+		if(parser.StartsWith(F("DATA ACCEPT:")))
+		{
+			return ParserState::Success;
 		}
 	}
 	if(_currentCommand == AtCommand::Creg)
