@@ -72,6 +72,8 @@ public:
 		AtResultType SetRxMode(bool isRxManual);
 		AtResultType GetCipmux(bool &cipmux);
 		AtResultType SetCipmux(bool cipmux);
+		AtResultType GetCipQuickSend(bool &cipqsend);
+		AtResultType SetSipQuickSend(bool cipqsend);
 
 		AtResultType SetTransparentMode(bool transparentMode);
 		AtResultType SetApn(const char *apnName, const char *username, const char *password);

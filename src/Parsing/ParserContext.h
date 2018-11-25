@@ -29,6 +29,7 @@ struct ParserContext
 	bool IsRxManual;
 	FixedStringBase* CipRxGetBuffer;
 	uint16_t CiprxGetLeftBytesToRead;
+	bool CipQSend;
 };
 
 #endif

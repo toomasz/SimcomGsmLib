@@ -444,6 +444,19 @@ ParserState SimcomResponseParser::ParseLine()
 			return ParserState::PartialSuccess;			
 		}		
 	}
+	if(_currentCommand == AtCommand::CipQsendQuery)
+	{
+		if(parser.StartsWith(F("+CIPQSEND: ")))
+		{
+			uint16_t isEnabled;
+			if (!parser.NextNum(isEnabled))
+			{
+				return ParserState::PartialError;
+			}
+			_parserContext.CipQSend = isEnabled == 1;
+			return ParserState::PartialSuccess;
+		}
+	}
 	if (_currentCommand == AtCommand::CipRxGet)
 	{
 		if (parser.StartsWith(F("+CIPRXGET:")))

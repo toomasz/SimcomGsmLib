@@ -73,7 +73,7 @@ void loop()
 	{
 		FixedString20 error = "No shield";
 		gui.DisplayError(error);
-		delay(1000);
+		delay(500);
 		return;
 	}
 
@@ -137,7 +137,7 @@ void loop()
 	
 	display.display();
 
-	gsm.wait(1000);
+	gsm.wait(500);
 }
 
 void ReadDataFromConnection()

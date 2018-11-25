@@ -165,6 +165,24 @@ AtResultType SimcomGsm::SetCipmux(bool cipmux)
 	_parserContext.Cipmux = cipmux;
 	return PopCommandResult();	
 }
+
+AtResultType SimcomGsm::GetCipQuickSend(bool& cipqsend)
+{
+	SendAt_P(AtCommand::CipQsendQuery, F("AT+CIPQSEND?"));
+	auto result = PopCommandResult();
+	if (result == AtResultType::Success)
+	{
+		cipqsend = _parserContext.CipQSend;
+	}
+	return result;
+}
+
+AtResultType SimcomGsm::SetSipQuickSend(bool cipqsend)
+{
+	SendAt_P(AtCommand::CipQsendQuery, F("AT+CIPQSEND=%d"), cipqsend ? 1: 0);
+	return PopCommandResult();
+}
+
 AtResultType SimcomGsm::AttachGprs()
 {	
 	SendAt_P(AtCommand::Generic, F("AT+CIICR"));

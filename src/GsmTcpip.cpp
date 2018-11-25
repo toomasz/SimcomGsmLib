@@ -40,7 +40,7 @@ bool GsmTcpip::GetVariablesFromModem()
 }
 
 void GsmTcpip::Loop()
-{	
+{
 	if (_state == GsmState::Initial)
 	{
 		ChangeState(GsmState::NoShield);
@@ -48,7 +48,7 @@ void GsmTcpip::Loop()
 	}
 	if (_state == GsmState::NoShield)
 	{
-		if (!_gsm.EnsureModemConnected(115200))
+		if (!_gsm.EnsureModemConnected(460800))
 		{
 			delay(500);
 			return;
@@ -56,7 +56,7 @@ void GsmTcpip::Loop()
 		ChangeState(GsmState::Initializing);
 		return;
 	}
-
+	
 	if (_state == GsmState::Initializing)
 	{
 		bool cipmux;
@@ -66,6 +66,29 @@ void GsmTcpip::Loop()
 		return;
 	}
 
+	if (_state == GsmState::SimError)
+	{
+		auto simResult = _gsm.GetSimStatus(simStatus);
+		if (simResult == AtResultType::Timeout)
+		{
+			ChangeState(GsmState::NoShield);
+			return;
+		}
+		if (simStatus == SimState::Ok)
+		{
+			ChangeState(GsmState::Initializing);
+			return;
+		}
+		_gsm.FlightModeOn();
+		_gsm.FlightModeOff();
+		return;
+	}
+
+	if (!GetVariablesFromModem())
+	{
+		ChangeState(GsmState::NoShield);
+		return;
+	}
 	if (_state == GsmState::SearchingForNetwork)
 	{		
 		auto regStatusResult = _gsm.GetRegistrationStatus(gsmRegStatus);
@@ -86,6 +109,7 @@ void GsmTcpip::Loop()
 
 	if (_state == GsmState::ConnectingToGprs)
 	{
+		_gsm.Cipshut();
 		_gsm.SetCipmux(true);
 		_gsm.SetRxMode(true);
 		_gsm.SetApn("virgin-internet", "", "");
@@ -112,6 +136,14 @@ void GsmTcpip::Loop()
 		ChangeState(GsmState::ConnectedToGprs);
 		return;
 	}
+	if(_state == GsmState::ConnectingToGprs)
+	{
+		if(ipStatus == SimcomIpState::PdpDeact)
+		{
+			ChangeState(GsmState::ConnectingToGprs);
+			return;
+		}
+	}
 
 	if (_gsm.GetSimStatus(simStatus) == AtResultType::Success)
 	{
@@ -121,12 +153,6 @@ void GsmTcpip::Loop()
 			delay(500);
 			return;
 		}
-	}
-
-	if (!GetVariablesFromModem())
-	{
-		ChangeState(GsmState::NoShield);
-		return;
 	}
 
 	switch (gsmRegStatus)
