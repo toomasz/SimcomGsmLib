@@ -150,7 +150,7 @@ public:
 		HasIncomingCall = false;
 	}
 	bool HasIncomingCall;
-	FixedString<20> CallerNumber;
+	FixedString20 CallerNumber;
 };
 
 

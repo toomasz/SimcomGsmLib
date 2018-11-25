@@ -1,5 +1,5 @@
 #include "SimcomGsmLib.h"
-#include "MappingHelpers.h"
+#include "GsmLibHelpers.h"
 
 SimcomGsm::SimcomGsm(Stream& serial, UpdateBaudRateCallback updateBaudRateCallback) :
 _serial(serial),

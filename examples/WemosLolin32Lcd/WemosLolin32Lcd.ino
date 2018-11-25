@@ -1,8 +1,7 @@
 #include <WiFi.h>
 #include <SimcomGsmLib.h>
-#include <GsmDebugHelpers.h>
+#include <GsmLibHelpers.h>
 #include <OperatorNameHelper.h>
-#include <MappingHelpers.h>
 #include <SSD1306.h>
 #include "Gui.h"
 #include "ConnectionDataValidator.h"

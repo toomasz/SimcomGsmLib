@@ -20,6 +20,7 @@ bool DelimParser::StartsWith(const __FlashStringHelper* commandStart)
 	_tokenStart = _position;
 
 	_currentState = LineParserState::Initial;
+	return true;
 }
 void DelimParser::SetSeparator(char separator)
 {

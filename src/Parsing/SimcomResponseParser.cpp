@@ -1,6 +1,6 @@
 #include "SimcomResponseParser.h"
 
-#include "MappingHelpers.h"
+#include "GsmLibHelpers.h"
 #include "ParsingHelpers.h"
 
 SimcomResponseParser::SimcomResponseParser(CircularDataBuffer& dataBuffer, ParserContext& parserContext, GsmLogger& logger):
