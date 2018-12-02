@@ -8,7 +8,6 @@
 #include "Parsing/SequenceDetector.h"
 #include "Parsing/SimcomResponseParser.h"
 #include "Parsing/ParserContext.h"
-#include "CircularDataBuffer.h"
 #include "GsmLogger.h"
 #include "SimcomGsmTypes.h"
 #include <pgmspace.h>
@@ -25,7 +24,6 @@ private:
 		UpdateBaudRateCallback _updateBaudRateCallback;
 		ParserContext _parserContext;
 		// buffer for incoming data, used because fucking +++ needs 1000ms wait before issuing
-		CircularDataBuffer _dataBuffer;
 		FixedString50 _currentCommand;
 		void SendAt_P(AtCommand commandType, const __FlashStringHelper *command, ...);
 		AtResultType PopCommandResult(int timeout);
@@ -37,10 +35,12 @@ public:
 		}
 		bool IsAsync;
 		SimcomGsm(Stream& serial, UpdateBaudRateCallback updateBaudRateCallback);
-		bool EnsureModemConnected(long baudRate);
 
+		// Serial methods
+		bool EnsureModemConnected(long requestedBaudRate);
 		int FindCurrentBaudRate();
 		void OnDataReceived(DataReceivedCallback onDataReceived);
+		bool GarbageOnSerialDetected();
 
 		// Standard modem functions
 		AtResultType SetBaudRate(uint32_t baud);
@@ -50,7 +50,7 @@ public:
 
 		AtResultType Shutdown();
 		AtResultType GetSimStatus(SimState &simStatus);
-		AtResultType GetRegistrationStatus(GsmRegistrationState& networkStatus);
+		AtResultType GetRegistrationStatus(GsmRegistrationState& registrationStatus);
 		AtResultType GetOperatorName(FixedStringBase &operatorName, bool returnImsi = false);
 		AtResultType FlightModeOn();
 		AtResultType FlightModeOff();
@@ -63,10 +63,10 @@ public:
 		AtResultType Call(char *number);
 		AtResultType GetIncomingCall(IncomingCallInfo &callInfo);
 		
-
+		// USSD
 		AtResultType SendUssdWaitResponse(char *ussd, FixedString150& response);
 		// TCP/UDP
-		AtResultType GetIpState(SimcomIpState &ipStatus);
+		AtResultType GetIpState(SimcomIpState &ipState);
 		AtResultType GetIpAddress(GsmIp &ipAddress);
 		AtResultType GetRxMode(bool & isRxManual);
 		AtResultType SetRxMode(bool isRxManual);
@@ -86,8 +86,7 @@ public:
 		AtResultType AttachGprs();
 		AtResultType Cipshut();
 
-		void wait(int millis);
-		bool GarbageOnSerialDetected();
+		void wait(uint64_t millis);
 };
 
 

@@ -3,7 +3,7 @@
 
 SimcomGsm::SimcomGsm(Stream& serial, UpdateBaudRateCallback updateBaudRateCallback) :
 _serial(serial),
-_parser(_dataBuffer, _parserContext, _logger, serial),
+_parser(_parserContext, _logger, serial),
 IsAsync(false)
 {
 	_updateBaudRateCallback = updateBaudRateCallback;
@@ -12,7 +12,7 @@ IsAsync(false)
 AtResultType SimcomGsm::GetSimStatus(SimState &simStatus)
 {
 	SendAt_P(AtCommand::Cpin, F("AT+CPIN?"));
-	auto result = PopCommandResult();
+	const auto result = PopCommandResult();
 	if (result == AtResultType::Success)
 	{
 		simStatus = _parserContext.SimStatus;
@@ -24,7 +24,7 @@ AtResultType SimcomGsm::GetRegistrationStatus(GsmRegistrationState& registration
 {	
 	SendAt_P(AtCommand::Creg ,F("AT+CREG?"));
 
-	auto result = PopCommandResult();
+	const auto result = PopCommandResult();
 	if (result == AtResultType::Success)
 	{
 		registrationStatus = _parserContext.RegistrationStatus;
@@ -42,14 +42,14 @@ AtResultType SimcomGsm::GenericAt(int timeout, const __FlashStringHelper* comman
 	_logger.LogAt(F(" => %s"), buffer.c_str());
 	_currentCommand = buffer;
 	_serial.println(buffer.c_str());
-	auto result = PopCommandResult(timeout);
 
+	const auto result = PopCommandResult(timeout);
 	va_end(argptr);	
 	return result;
 }
-void SimcomGsm::SendAt_P(AtCommand commnd, const __FlashStringHelper* command, ...)
+void SimcomGsm::SendAt_P(AtCommand commandType, const __FlashStringHelper* command, ...)
 {
-	_parser.SetCommandType(commnd);
+	_parser.SetCommandType(commandType);
 
 	va_list argptr;
 	va_start(argptr, command);
@@ -67,7 +67,7 @@ AtResultType SimcomGsm::GetOperatorName(FixedStringBase &operatorName, bool retu
 	SendAt_P(AtCommand::Cops, F("AT+COPS?"));
 	_parserContext.OperatorName = &operatorName;
 
-	auto result = PopCommandResult();
+	const auto result = PopCommandResult();
 	if (result != AtResultType::Success)
 	{
 		return result;
@@ -78,7 +78,7 @@ AtResultType SimcomGsm::GetOperatorName(FixedStringBase &operatorName, bool retu
 		return result;
 	}
 
-	auto operatorFormat = returnImsi ? 2 : 0;	
+	const auto operatorFormat = returnImsi ? 2 : 0;	
 	GenericAt(AT_DEFAULT_TIMEOUT, F("AT+COPS=3,%d"), operatorFormat);
 	SendAt_P(AtCommand::Cops, F("AT+COPS?"));
 	return PopCommandResult();
@@ -92,20 +92,18 @@ AtResultType SimcomGsm::FlightModeOff()
 	return GenericAt(10000, F("AT+CFUN=1"));
 }
 AtResultType SimcomGsm::SetRegistrationMode(RegistrationMode mode, const char *operatorName)
-{	
-	auto operatorFormat = _parserContext.IsOperatorNameReturnedInImsiFormat ? 2 : 0;
+{
+	const auto operatorFormat = _parserContext.IsOperatorNameReturnedInImsiFormat ? 2 : 0;
 	// don't need to use AtCommand::Cops here, AT+COPS write variant returns OK/ERROR
 	SendAt_P(AtCommand::Generic, F("AT+COPS=%d,%d,\"%s\""), mode, operatorFormat, operatorName);
-	auto result = PopCommandResult(120000);
-	return result;
+	return PopCommandResult(120000);
 }
 
 AtResultType SimcomGsm::GetSignalQuality(int16_t& signalQuality)
 {	
 	_parserContext.CsqSignalQuality = &signalQuality;
 	SendAt_P(AtCommand::Csq, F("AT+CSQ"));
-	auto result = PopCommandResult();
-	return result;
+	return PopCommandResult();
 }
 
 AtResultType SimcomGsm::GetBatteryStatus(BatteryStatus &batteryStatus)
@@ -132,7 +130,7 @@ AtResultType SimcomGsm::GetIpAddress(GsmIp& ipAddress)
 AtResultType SimcomGsm::GetRxMode(bool& isRxManual)
 {	
 	SendAt_P(AtCommand::CipRxGet, F("AT+CIPRXGET?"));
-	auto result = PopCommandResult();
+	const auto result = PopCommandResult();
 	if (result == AtResultType::Success)
 	{
 		isRxManual = _parserContext.IsRxManual;
@@ -143,14 +141,13 @@ AtResultType SimcomGsm::GetRxMode(bool& isRxManual)
 AtResultType SimcomGsm::SetRxMode(bool isRxManual)
 {	
 	SendAt_P(AtCommand::Generic, F("AT+CIPRXGET=%d"), isRxManual ? 1 : 0);
-
 	return PopCommandResult();
 }
 
 AtResultType SimcomGsm::GetCipmux(bool& cipmux)
 {	
 	SendAt_P(AtCommand::Cipmux, F("AT+CIPMUX?"));
-	auto result = PopCommandResult();
+	const auto result = PopCommandResult();
 	if (result == AtResultType::Success)
 	{
 		cipmux = _parserContext.Cipmux;
@@ -168,7 +165,7 @@ AtResultType SimcomGsm::SetCipmux(bool cipmux)
 AtResultType SimcomGsm::GetCipQuickSend(bool& cipqsend)
 {
 	SendAt_P(AtCommand::CipQsendQuery, F("AT+CIPQSEND?"));
-	auto result = PopCommandResult();
+	const auto result = PopCommandResult();
 	if (result == AtResultType::Success)
 	{
 		cipqsend = _parserContext.CipQSend;
@@ -194,7 +191,7 @@ AtResultType SimcomGsm::PopCommandResult()
 }
 AtResultType SimcomGsm::PopCommandResult(int timeout)
 {
-	unsigned long start = millis();
+	const unsigned long start = millis();
 	while(_parser.commandReady == false && (millis()-start) < (unsigned long)timeout)
 	{
 		if(_serial.available())
@@ -204,8 +201,8 @@ AtResultType SimcomGsm::PopCommandResult(int timeout)
 		}
 	}
 
-	auto commandResult = _parser.GetAtResultType();
-	auto elapsedMs = millis() - start;	
+	const auto commandResult = _parser.GetAtResultType();
+	const auto elapsedMs = millis() - start;	
 	_logger.LogAt(F("    -- %d ms --"), elapsedMs);
 	if (commandResult == AtResultType::Timeout)
 	{
@@ -314,10 +311,10 @@ AtResultType SimcomGsm::GetImei(FixedString20 &imei)
 	return PopCommandResult();
 }
 
-void SimcomGsm::wait(int ms)
+void SimcomGsm::wait(uint64_t ms)
 {
-	unsigned long start = millis();
-	while ((millis() - start) <= (unsigned long)ms)
+	const unsigned long start = millis();
+	while ((millis() - start) <= ms)
 	{
 		if (_serial.available())
 		{
@@ -335,8 +332,8 @@ bool SimcomGsm::GarbageOnSerialDetected()
 AtResultType SimcomGsm::SendSms(char *number, char *message)
 {	
 	SendAt_P(AtCommand::Generic, F("AT+CMGS=\"%s\""), number);
-	
-	uint64_t start = millis();
+
+	const uint64_t start = millis();
 	// wait for >
 	while (_serial.read() != '>')
 		if (millis() - start > 200)
@@ -349,8 +346,7 @@ AtResultType SimcomGsm::SendUssdWaitResponse(char *ussd, FixedString150& respons
 {
 	_parserContext.UssdResponse = &response;
 	SendAt_P(AtCommand::Cusd, F("AT+CUSD=1,\"%s\""), ussd);
-	auto result = PopCommandResult(10000);
-	return result;
+	return PopCommandResult(10000);
 }
 
 int SimcomGsm::FindCurrentBaudRate()

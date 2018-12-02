@@ -3,7 +3,6 @@
 
 #include <Arduino.h>
 #include "GsmLibConstants.h"
-#include "CircularDataBuffer.h"
 #include "ParserContext.h"
 #include "DelimParser.h"
 #include "SequenceDetector.h"
@@ -18,7 +17,6 @@ class SimcomResponseParser
 	uint8_t lineParserState;
 	AtCommand _currentCommand;
 	ParserState _state;
-	CircularDataBuffer& _dataBuffer;
 	GsmLogger &_logger;
 	FixedString150 _response;
 	ParserContext& _parserContext;
@@ -33,7 +31,7 @@ class SimcomResponseParser
 	Stream& _serial;
 	SequenceDetector _promptSequenceDetector;
 public:
-	SimcomResponseParser(CircularDataBuffer& dataBuffer, ParserContext &parserContext, GsmLogger &logger,Stream& serial);
+	SimcomResponseParser(ParserContext &parserContext, GsmLogger &logger,Stream& serial);
 	AtResultType GetAtResultType();
 	volatile bool commandReady;
 	void SetCommandType(AtCommand commandType);

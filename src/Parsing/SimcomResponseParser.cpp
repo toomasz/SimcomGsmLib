@@ -3,9 +3,7 @@
 #include "GsmLibHelpers.h"
 #include "ParsingHelpers.h"
 
-SimcomResponseParser::SimcomResponseParser(CircularDataBuffer& dataBuffer, 
-	ParserContext& parserContext, GsmLogger& logger, Stream& serial):
-_dataBuffer(dataBuffer),
+SimcomResponseParser::SimcomResponseParser(ParserContext& parserContext, GsmLogger& logger, Stream& serial):
 _logger(logger),
 _parserContext(parserContext),
 _dataReceivedCallback(nullptr),
