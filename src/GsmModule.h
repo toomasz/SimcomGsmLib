@@ -20,7 +20,7 @@ enum class GsmState
 
 
 
-class GsmTcpip
+class GsmModule
 {
 	SimcomAtCommands& _gsm;
 	bool _justConnectedToModem;
@@ -49,7 +49,7 @@ public:
 	SimcomIpState ipStatus;
 	SimState simStatus;
 
-	GsmTcpip(SimcomAtCommands &gsm);
+	GsmModule(SimcomAtCommands &gsm);
 	void Loop();
 };
 

@@ -6,13 +6,13 @@
 #include "Gui.h"
 #include "ConnectionDataValidator.h"
 #include <Wire.h>
-#include <GsmTcpip.h>
+#include <GsmModule.h>
 
 #include <SimcomAtCommandsEsp32.h>
 
-SimcomAtCommandsEsp32 gsm(Serial1, 16, 12);
+SimcomAtCommandsEsp32 gsmAt(Serial1, 16, 12);
 
-GsmTcpip tcp(gsm);
+GsmModule gsm(gsmAt);
 
 SSD1306 display(188, 4, 15);
 
@@ -43,8 +43,8 @@ void OnDataReceived(uint8_t mux, FixedStringBase &data)
 
 void setup()
 {	
-	gsm.Logger().LogAtCommands = true;
-	gsm.Logger().OnLog(OnLog);
+	gsmAt.Logger().LogAtCommands = true;
+	gsmAt.Logger().OnLog(OnLog);
 
 	Serial.begin(500000);
 
@@ -64,9 +64,9 @@ void loop()
 		return;
 	}
 
-	tcp.Loop();
+	gsm.Loop();
 
-	auto state = tcp.GetState();
+	auto state = gsm.GetState();
 
 	if (state == GsmState::NoShield)
 	{
@@ -77,12 +77,12 @@ void loop()
 
 	if (state == GsmState::SimError)
 	{
-		gui.DisplaySimError(tcp.simStatus);
+		gui.DisplaySimError(gsm.simStatus);
 		return;
 	}
 
-	gui.drawBattery(tcp.batteryInfo.Percent, tcp.batteryInfo.Voltage);
-	gui.drawGsmInfo(tcp.signalQuality, tcp.gsmRegStatus, tcp.operatorName);
+	gui.drawBattery(gsm.batteryInfo.Percent, gsm.batteryInfo.Voltage);
+	gui.drawGsmInfo(gsm.signalQuality, gsm.gsmRegStatus, gsm.operatorName);
 	gui.DisplayBlinkIndicator();
 	
 	if (state == GsmState::ConnectingToGprs)
@@ -99,7 +99,7 @@ void loop()
 	{
 		ConnectionInfo connection;
 
-		auto connectionInfoResult = gsm.GetConnectionInfo(0, connection);
+		auto connectionInfoResult = gsmAt.GetConnectionInfo(0, connection);
 		if(connectionInfoResult == AtResultType::Success)
 		{
 			static bool justConnected = false;
@@ -108,7 +108,7 @@ void loop()
 				Serial.printf("Trying to connect...\n");
 				receivedBytes = 0;
 				connectionValidator.SetJustConnected();
-				gsm.BeginConnect(ProtocolType::Tcp, 0, "conti.ml", 12668);
+				gsmAt.BeginConnect(ProtocolType::Tcp, 0, "conti.ml", 12668);
 				justConnected = true;
 			}
 
@@ -122,7 +122,7 @@ void loop()
 					justConnected = false;
 					FixedString10 dataToSend = "1";
 					uint16_t sentBytes = 0;
-					if(gsm.Send(0, dataToSend, sentBytes) != AtResultType::Success)
+					if(gsmAt.Send(0, dataToSend, sentBytes) != AtResultType::Success)
 					{
 						Serial.println("Failed to send data");
 					}
@@ -135,7 +135,7 @@ void loop()
 					n++;
 				}
 				uint16_t sentBytes = 0;
-				if(gsm.Send(0, data, sentBytes) == AtResultType::Success)
+				if(gsmAt.Send(0, data, sentBytes) == AtResultType::Success)
 				{
 					Serial.printf("Success sent %d bytes\n", sentBytes);
 				}
@@ -155,26 +155,26 @@ void loop()
 			Serial.println("Failed to get conn info");
 		}
 
-		gui.DisplayIp(tcp.ipAddress);	
+		gui.DisplayIp(gsm.ipAddress);
 	}
 
-	if (gsm.GarbageOnSerialDetected())
+	if (gsmAt.GarbageOnSerialDetected())
 	{
 		FixedString20 error("UART garbage !!!");
 		gui.DrawFramePopup(error, 40, 5);
 	}
 
-	gui.DisplayIncomingCall(tcp.callInfo);
+	gui.DisplayIncomingCall(gsm.callInfo);
 	
 	display.display();
 
-	gsm.wait(1000);
+	gsmAt.wait(1000);
 }
 
 void ReadDataFromConnection()
 {
 	FixedString200 buffer;
-	while (gsm.Read(0, buffer) == AtResultType::Success)
+	while (gsmAt.Read(0, buffer) == AtResultType::Success)
 	{
 		if (buffer.length() == 0)
 		{

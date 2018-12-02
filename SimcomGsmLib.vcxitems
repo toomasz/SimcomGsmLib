@@ -18,7 +18,7 @@
   </ItemGroup>
   <ItemGroup>
     <!-- <ClInclude Include="$(MSBuildThisFileDirectory)Sim900NetLib.h" /> -->
-    <ClInclude Include="$(MSBuildThisFileDirectory)src\GsmTcpip.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)src\GsmModule.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)src\OperatorNameHelper.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)src\Parsing\ParsingHelpers.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)src\Parsing\DelimParser.h" />
@@ -34,7 +34,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="$(MSBuildThisFileDirectory)src\GsmLibHelpers.cpp" />
-    <ClCompile Include="$(MSBuildThisFileDirectory)src\GsmTcpip.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)src\GsmModule.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)src\OperatorNameHelper.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)src\Parsing\ParsingHelpers.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)src\Parsing\DelimParser.cpp" />

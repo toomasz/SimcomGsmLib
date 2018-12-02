@@ -1,15 +1,15 @@
-#include "GsmTcpip.h"
 #include "OperatorNameHelper.h"
+#include "GsmModule.h"
 
 
-GsmTcpip::GsmTcpip(SimcomAtCommands &gsm): 
+GsmModule::GsmModule(SimcomAtCommands &gsm):
 	_gsm(gsm), 
 	_justConnectedToModem(false), 
 	_state(GsmState::Initial)
 {
 }
 
-bool GsmTcpip::GetVariablesFromModem()
+bool GsmModule::GetVariablesFromModem()
 {
 	if (_gsm.GetRegistrationStatus(gsmRegStatus) == AtResultType::Timeout)
 	{
@@ -39,7 +39,7 @@ bool GsmTcpip::GetVariablesFromModem()
 	return true;
 }
 
-void GsmTcpip::Loop()
+void GsmModule::Loop()
 {
 	if (_state == GsmState::Initial)
 	{
@@ -212,7 +212,7 @@ void GsmTcpip::Loop()
 }
 
 
-const __FlashStringHelper* GsmTcpip::StateToStr(GsmState state)
+const __FlashStringHelper* GsmModule::StateToStr(GsmState state)
 {
 	switch (state)
 	{
