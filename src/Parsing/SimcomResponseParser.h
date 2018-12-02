@@ -30,8 +30,10 @@ class SimcomResponseParser
 	ParserState ParseLine();
 	int StateTransition(char c);
 	bool _garbageOnSerialDetected;
+	Stream& _serial;
+	SequenceDetector _promptSequenceDetector;
 public:
-	SimcomResponseParser(CircularDataBuffer& dataBuffer, ParserContext &parserContext, GsmLogger &logger);
+	SimcomResponseParser(CircularDataBuffer& dataBuffer, ParserContext &parserContext, GsmLogger &logger,Stream& serial);
 	AtResultType GetAtResultType();
 	volatile bool commandReady;
 	void SetCommandType(AtCommand commandType);

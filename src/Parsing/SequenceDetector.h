@@ -3,15 +3,15 @@
 #define SEQUENCEDETECTOR_H_
 
 #include <inttypes.h>
-#include <Arduino.h>
+#include <WString.h>
 
 class SequenceDetector
 {
 public:
-	const char *sequence;
+	const char* _sequence;
 	uint8_t state;
 	uint8_t length;
-	SequenceDetector(const char  *sequence);
+	SequenceDetector(const char * sequence);
 	bool NextChar(char c);
 };
 #endif

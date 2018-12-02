@@ -19,8 +19,7 @@ struct ParserContext
 	FixedString20* Imei;
 	BatteryStatus* BatteryInfo;
 	IncomingCallInfo* CallInfo;
-	SimcomIpState* IpState;
-
+	SimcomIpState* IpState;	
 	bool IsOperatorNameReturnedInImsiFormat;
 	bool Cipmux;
 	ConnectionInfo* CurrentConnectionInfo;
@@ -30,6 +29,10 @@ struct ParserContext
 	FixedStringBase* CipRxGetBuffer;
 	uint16_t CiprxGetLeftBytesToRead;
 	bool CipQSend;
+
+	CipsendStateType CipsendState;
+	FixedStringBase* CipsendBuffer;
+	uint16_t *CipsendSentBytes;
 };
 
 #endif

@@ -1,22 +1,26 @@
 #include "SequenceDetector.h"
 
 
-SequenceDetector::SequenceDetector(const char *sequence):sequence(sequence)
+SequenceDetector::SequenceDetector(const char* sequence):_sequence(sequence)
 {
 	state = 0;
-	length = strlen_P(sequence);
+	length = strlen(sequence);
 }
 /* returns true of sequence is detected */
 bool SequenceDetector::NextChar(char c)
 {
-	char cByte = pgm_read_byte(&sequence[state]);
+	const char cByte = _sequence[state];
 	if (cByte == c)
+	{
 		state++;
+	}
 	else
 	{
 		state = 0;
-		if (c == pgm_read_byte(&sequence[state]))
+		if (c == _sequence[state])
+		{
 			state++;
+		}
 	}
 	if (state == length)
 	{

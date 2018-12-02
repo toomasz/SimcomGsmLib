@@ -1,5 +1,5 @@
 #include <SimcomGsmLib.h>
-#include <MappingHelpers.h>
+#include <GsmLibHelpers.h>
 
 SimcomGsm gsm(Serial2, UpdateBaudRate);
 
@@ -15,8 +15,9 @@ void OnLog(const char* gsmLog)
 }
 void setup()
 {
-	gsm.SetLogCallback(OnLog);
+	gsm.Logger().OnLog(OnLog);
 	Serial.begin(500000);
+
 }
 
 void loop()

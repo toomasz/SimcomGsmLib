@@ -142,6 +142,12 @@ enum class GsmRegistrationState : uint8_t
 	Roaming
 };
 
+enum class CipsendStateType: uint8_t
+{
+	WaitingForPrompt,
+	WaitingForDataAccept,
+};
+
 class IncomingCallInfo
 {
 public:

@@ -56,7 +56,7 @@ void GsmTcpip::Loop()
 		ChangeState(GsmState::Initializing);
 		return;
 	}
-	
+
 	if (_state == GsmState::Initializing)
 	{
 		bool cipmux;
@@ -90,7 +90,7 @@ void GsmTcpip::Loop()
 		return;
 	}
 	if (_state == GsmState::SearchingForNetwork)
-	{		
+	{
 		auto regStatusResult = _gsm.GetRegistrationStatus(gsmRegStatus);
 		if (regStatusResult == AtResultType::Timeout)
 		{
@@ -111,15 +111,16 @@ void GsmTcpip::Loop()
 	{
 		_gsm.Cipshut();
 
-		if(_gsm.SetSipQuickSend(true) == AtResultType::Success)
+		if (_gsm.SetSipQuickSend(true) == AtResultType::Success)
 		{
 			Serial.println("Successfully set CIPQSEND to 1\n");
 		}
 
 		bool cipQsend;
-		if(_gsm.GetCipQuickSend(cipQsend) == AtResultType::Success)
-		{			
-			Serial.printf("CIPQSEND = %d\n", cipQsend);		}
+		if (_gsm.GetCipQuickSend(cipQsend) == AtResultType::Success)
+		{
+			Serial.printf("CIPQSEND = %d\n", cipQsend);
+		}
 
 		_gsm.SetCipmux(true);
 		_gsm.SetRxMode(true);
@@ -147,9 +148,9 @@ void GsmTcpip::Loop()
 		ChangeState(GsmState::ConnectedToGprs);
 		return;
 	}
-	if(_state == GsmState::ConnectingToGprs)
+	if (_state == GsmState::ConnectingToGprs)
 	{
-		if(ipStatus == SimcomIpState::PdpDeact)
+		if (ipStatus == SimcomIpState::PdpDeact)
 		{
 			ChangeState(GsmState::ConnectingToGprs);
 			return;
@@ -163,6 +164,28 @@ void GsmTcpip::Loop()
 			ChangeState(GsmState::SimError);
 			delay(500);
 			return;
+		}
+	}
+
+	if (_state == GsmState::RegistrationDenied ||
+		_state == GsmState::RegistrationUnknown)
+	{
+		switch (gsmRegStatus)
+		{
+			case GsmRegistrationState::SearchingForNetwork:
+			{
+				ChangeState(GsmState::SearchingForNetwork);
+				break;
+			}
+			case GsmRegistrationState::HomeNetwork:
+			case GsmRegistrationState::Roaming:
+			{
+				ChangeState(GsmState::ConnectingToGprs);
+				break;
+			}
+
+			default:
+				break;
 		}
 	}
 

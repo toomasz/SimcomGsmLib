@@ -3,12 +3,16 @@
 #include "GsmLibHelpers.h"
 #include "ParsingHelpers.h"
 
-SimcomResponseParser::SimcomResponseParser(CircularDataBuffer& dataBuffer, ParserContext& parserContext, GsmLogger& logger):
+SimcomResponseParser::SimcomResponseParser(CircularDataBuffer& dataBuffer, 
+	ParserContext& parserContext, GsmLogger& logger, Stream& serial):
 _dataBuffer(dataBuffer),
-_parserContext(parserContext),
 _logger(logger),
+_parserContext(parserContext),
 _dataReceivedCallback(nullptr),
-_garbageOnSerialDetected(false)
+_garbageOnSerialDetected(false),
+_serial(serial),
+_promptSequenceDetector("> "),
+commandReady(false)
 {
 	_currentCommand = AtCommand::Generic;
 	lineParserState = PARSER_INITIAL;
@@ -35,6 +39,18 @@ AtResultType SimcomResponseParser::GetAtResultType()
 /* processes character read from serial port of gsm module */
 void SimcomResponseParser::FeedChar(char c)
 {	
+	if(_currentCommand == AtCommand::CipSend && 
+		_parserContext.CipsendState == CipsendStateType::WaitingForPrompt)
+	{		
+		if(_promptSequenceDetector.NextChar(c))
+		{
+			_logger.Log(F("Received prompt"));
+			_parserContext.CipsendState = CipsendStateType::WaitingForDataAccept;
+			_response.clear();
+			_serial.write(_parserContext.CipsendBuffer->c_str(), _parserContext.CipsendBuffer->length());
+			return;
+		}		
+	}
 	if (_parserContext.CiprxGetLeftBytesToRead > 0)
 	{
 		_parserContext.CipRxGetBuffer->append(c);
@@ -136,6 +152,10 @@ bool SimcomResponseParser::IsOkLine()
 
 bool SimcomResponseParser::ParseUnsolicited(FixedStringBase& line)
 {
+	if(line.equals(F("+CIPRXGET: 1,0")))
+	{
+		return true;
+	}
 	DelimParser parser(line);
 	if (parser.StartsWith(F("+RECEIVE,")))
 	{
@@ -146,11 +166,7 @@ bool SimcomResponseParser::ParseUnsolicited(FixedStringBase& line)
 			return false;
 		}
 		parser.SetSeparator(':');
-		if (!parser.NextNum(dataLength))
-		{
-			return false;
-		}
-		return true;		
+		return parser.NextNum(dataLength);		
 	}
 	return false;
 }
@@ -470,9 +486,40 @@ ParserState SimcomResponseParser::ParseLine()
 	}
 	if(_currentCommand == AtCommand::CipSend)
 	{
-		if(parser.StartsWith(F("DATA ACCEPT:")))
+		if (_parserContext.CipsendState == CipsendStateType::WaitingForDataAccept)
 		{
-			return ParserState::Success;
+			if (parser.StartsWith(F("DATA ACCEPT:")))
+			{
+				uint16_t sentBytes;
+				if (!parser.Skip(1))
+				{
+					return ParserState::Error;
+				}
+
+				if (!parser.NextNum(sentBytes))
+				{
+					return ParserState::Error;
+				}
+				if (sentBytes > _parserContext.CipsendBuffer->length())
+				{
+					return ParserState::Error;
+				}
+				*_parserContext.CipsendSentBytes = sentBytes;
+				return ParserState::Success;				
+			}
+			if (_response.endsWith(F("SEND FAIL")))
+			{
+				_logger.Log(F("CIPSEND failed, SEND FAIL detected"));
+				return ParserState::Error;
+			}
+		}
+		if (_parserContext.CipsendState == CipsendStateType::WaitingForPrompt)
+		{
+			if(IsErrorLine())
+			{
+				_logger.Log(F("CIPSEND failed, error line detected"));
+				return ParserState::Error;
+			}			
 		}
 	}
 	if(_currentCommand == AtCommand::Creg)

@@ -78,7 +78,6 @@ void loop()
 	if (state == GsmState::SimError)
 	{
 		gui.DisplaySimError(tcp.simStatus);
-		delay(1000);
 		return;
 	}
 
@@ -93,7 +92,6 @@ void loop()
 	if (state == GsmState::Initializing)
 	{
 		gui.lcd_label(Font::F10, 0, 32, F("Initializing modem..."));
-
 	}
 
 
@@ -123,7 +121,8 @@ void loop()
 					n = 0;
 					justConnected = false;
 					FixedString10 dataToSend = "1";
-					if(gsm.Send(0, dataToSend) != AtResultType::Success)
+					uint16_t sentBytes = 0;
+					if(gsm.Send(0, dataToSend, sentBytes) != AtResultType::Success)
 					{
 						Serial.println("Failed to send data");
 					}
@@ -133,9 +132,18 @@ void loop()
 				for(int i=0; i < data.capacity(); i++)
 				{				
 					data.append(n);
-					n ++;
+					n++;
 				}
-				gsm.Send(0, data);
+				uint16_t sentBytes = 0;
+				if(gsm.Send(0, data, sentBytes) == AtResultType::Success)
+				{
+					Serial.printf("Success sent %d bytes\n", sentBytes);
+				}
+
+				if(data.length() > sentBytes)
+				{
+					n -= data.length() - sentBytes;
+				}
 
 				ReadDataFromConnection();
 			}
@@ -154,14 +162,13 @@ void loop()
 	{
 		FixedString20 error("UART garbage !!!");
 		gui.DrawFramePopup(error, 40, 5);
-		Serial.println("Draw garbage detected pupup");
 	}
 
 	gui.DisplayIncomingCall(tcp.callInfo);
 	
 	display.display();
 
-	gsm.wait(500);
+	gsm.wait(1000);
 }
 
 void ReadDataFromConnection()

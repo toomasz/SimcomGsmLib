@@ -74,20 +74,18 @@ public:
 		AtResultType SetCipmux(bool cipmux);
 		AtResultType GetCipQuickSend(bool &cipqsend);
 		AtResultType SetSipQuickSend(bool cipqsend);
-
 		AtResultType SetTransparentMode(bool transparentMode);
-		AtResultType SetApn(const char *apnName, const char *username, const char *password);
-		AtResultType AttachGprs();
-
-		AtResultType BeginConnect(ProtocolType protocol, uint8_t mux, const char *address, int port);		
+		AtResultType BeginConnect(ProtocolType protocol, uint8_t mux, const char *address, int port);
 		AtResultType Read(int mux, FixedStringBase& outputBuffer);
-		AtResultType WaitForPrompt(char prompt, int timeout);
-		AtResultType Send(int mux, FixedStringBase& data);
+		AtResultType Send(int mux, FixedStringBase& data, uint16_t &sentBytes);
 		AtResultType CloseConnection(uint8_t mux);
 		AtResultType GetConnectionInfo(uint8_t mux, ConnectionInfo &connectionInfo);
+
+		// GPRS
+		AtResultType SetApn(const char *apnName, const char *username, const char *password);
+		AtResultType AttachGprs();
 		AtResultType Cipshut();
 
-		unsigned long lastDataWrite;	
 		void wait(int millis);
 		bool GarbageOnSerialDetected();
 };

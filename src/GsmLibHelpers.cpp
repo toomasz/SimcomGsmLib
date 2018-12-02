@@ -67,11 +67,11 @@ void BinaryToString(FixedStringBase&source, FixedStringBase& target)
 	{
 		const char c = source[i];
 
-		if (isprint(c))
+		if(isprint(c))
 		{
 			target.append(c);
 		}
-		else if (c == '\r')
+		else if(c == '\r')
 		{
 			target.append("\\r");
 		}

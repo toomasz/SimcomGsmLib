@@ -3,10 +3,9 @@
 
 SimcomGsm::SimcomGsm(Stream& serial, UpdateBaudRateCallback updateBaudRateCallback) :
 _serial(serial),
-_parser(_dataBuffer, _parserContext, _logger),
+_parser(_dataBuffer, _parserContext, _logger, serial),
 IsAsync(false)
 {
-	lastDataWrite = 0;
 	_updateBaudRateCallback = updateBaudRateCallback;
 	_currentBaudRate = 0;
 }
@@ -421,44 +420,14 @@ AtResultType SimcomGsm::Read(int mux, FixedStringBase& outputBuffer)
 	return PopCommandResult();
 }
 
-AtResultType SimcomGsm::Send(int mux, FixedStringBase& data)
+AtResultType SimcomGsm::Send(int mux, FixedStringBase& data, uint16_t &sentBytes)
 {
+	sentBytes = 0;
+	_parserContext.CipsendBuffer = &data;
+	_parserContext.CipsendState = CipsendStateType::WaitingForPrompt;
+	_parserContext.CipsendSentBytes = &sentBytes;
 	SendAt_P(AtCommand::CipSend, F("AT+CIPSEND=%d,%d"), mux, data.length());
-
-	const auto promptResult = WaitForPrompt('>', 1000);
-	if(promptResult  != AtResultType::Success)
-	{
-		return promptResult;
-	}
-	
-
-	_serial.write(data.c_str(), data.length());
 	return PopCommandResult();
-}
-
-AtResultType SimcomGsm::WaitForPrompt(char prompt, int timeout)
-{
-	const uint64_t start = millis();
-	// wait for >
-	while (millis() - start < timeout)
-	{
-		if (_serial.available())
-		{
-			const auto receivedChar = _serial.read();
-			if (receivedChar == '\r' || receivedChar == '\n')
-			{
-				continue;
-			}
-			if (receivedChar == prompt)
-			{
-				return AtResultType::Success;
-			}
-			_logger.Log(F("Received wrong prompt: %c, expected = %c"), receivedChar, prompt);
-			return AtResultType::Error;
-		}
-	}
-	_logger.Log(F("Timed out waiting for prompt: %c"), prompt);
-	return AtResultType::Timeout;
 }
 
 AtResultType SimcomGsm::CloseConnection(uint8_t mux)
