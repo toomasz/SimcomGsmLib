@@ -16,7 +16,7 @@ void OnLog(const char* gsmLog)
 	Serial.println(gsmLog);
 }
 
-SimcomGsm gsm(Serial2, UpdateBaudRate);
+SimcomAtCommands gsm(Serial2, UpdateBaudRate);
 
 void setup()
 {

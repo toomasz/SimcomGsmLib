@@ -2,7 +2,7 @@
 #include "OperatorNameHelper.h"
 
 
-GsmTcpip::GsmTcpip(SimcomGsm &gsm): 
+GsmTcpip::GsmTcpip(SimcomAtCommands &gsm): 
 	_gsm(gsm), 
 	_justConnectedToModem(false), 
 	_state(GsmState::Initial)

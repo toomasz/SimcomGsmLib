@@ -9,7 +9,7 @@ char* OperatorNameHelper::_gsmNetworks[][2] =
 	{ nullptr, nullptr }
 };
 
-AtResultType OperatorNameHelper::GetRealOperatorName(SimcomGsm& gsm, FixedString20&operatorName)
+AtResultType OperatorNameHelper::GetRealOperatorName(SimcomAtCommands& gsm, FixedString20&operatorName)
 {
 	FixedString20 netowrkNameImsi;
 	auto result = gsm.GetOperatorName(netowrkNameImsi, true);

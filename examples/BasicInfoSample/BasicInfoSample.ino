@@ -1,7 +1,7 @@
 #include <SimcomGsmLib.h>
 #include <GsmLibHelpers.h>
 
-SimcomGsm gsm(Serial2, UpdateBaudRate);
+SimcomAtCommands gsm(Serial2, UpdateBaudRate);
 
 void UpdateBaudRate(int baudRate)
 {

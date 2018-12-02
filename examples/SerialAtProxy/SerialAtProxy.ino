@@ -6,7 +6,7 @@ void UpdateBaudRate(int baudRate)
 	Serial2.begin(baudRate, SERIAL_8N1, 16, 12, false);
 }
 
-SimcomGsm gsm(Serial2, UpdateBaudRate);
+SimcomAtCommands gsm(Serial2, UpdateBaudRate);
 
 void setup()
 {

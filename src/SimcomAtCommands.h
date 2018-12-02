@@ -1,5 +1,5 @@
-#ifndef _SIMCOM_GSM_LIB_H
-#define _SIMCOM_GSM_LIB_H
+#ifndef _SIMCOM_AT_COMMANDS_H
+#define _SIMCOM_AT_COMMANDS_H
 
 #include <Stream.h>
 #include <Arduino.h>
@@ -14,7 +14,7 @@
 
 class S900Socket;
 
-class SimcomGsm
+class SimcomAtCommands
 {
 private:
 		Stream &_serial;
@@ -34,7 +34,7 @@ public:
 			return _logger;
 		}
 		bool IsAsync;
-		SimcomGsm(Stream& serial, UpdateBaudRateCallback updateBaudRateCallback);
+		SimcomAtCommands(Stream& serial, UpdateBaudRateCallback updateBaudRateCallback);
 
 		// Serial methods
 		bool EnsureModemConnected(long requestedBaudRate);

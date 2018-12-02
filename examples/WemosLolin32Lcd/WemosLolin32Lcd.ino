@@ -1,5 +1,5 @@
 #include <WiFi.h>
-#include <SimcomGsmLib.h>
+#include <SimcomAtCommands.h>
 #include <GsmLibHelpers.h>
 #include <OperatorNameHelper.h>
 #include <SSD1306.h>
@@ -8,9 +8,9 @@
 #include <Wire.h>
 #include <GsmTcpip.h>
 
-#include <SimcomGsmLibEsp32.h>
+#include <SimcomAtCommandsEsp32.h>
 
-SimcomGsmpEsp32 gsm(Serial1, 16, 12);
+SimcomAtCommandsEsp32 gsm(Serial1, 16, 12);
 
 GsmTcpip tcp(gsm);
 

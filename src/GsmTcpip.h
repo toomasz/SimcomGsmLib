@@ -1,6 +1,6 @@
 #pragma once
 
-#include "SimcomGsmLib.h"
+#include "SimcomAtCommands.h"
 #include <FixedString.h>
 #include <WString.h>
 
@@ -22,7 +22,7 @@ enum class GsmState
 
 class GsmTcpip
 {
-	SimcomGsm& _gsm;
+	SimcomAtCommands& _gsm;
 	bool _justConnectedToModem;
 	void ChangeState(GsmState newState)
 	{
@@ -49,7 +49,7 @@ public:
 	SimcomIpState ipStatus;
 	SimState simStatus;
 
-	GsmTcpip(SimcomGsm &gsm);
+	GsmTcpip(SimcomAtCommands &gsm);
 	void Loop();
 };
 

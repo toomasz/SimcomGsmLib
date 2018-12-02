@@ -2,9 +2,9 @@
 #define _SIMCOM_GSM_LIB_ESP32_H
 
 #include <HardwareSerial.h>
-#include "SimcomGsmLib.h"
+#include "SimcomAtCommands.h"
 
-class SimcomGsmpEsp32 : public SimcomGsm
+class SimcomAtCommandsEsp32 : public SimcomAtCommands
 {
 	static int _txPin;
 	static int _rxPin;
@@ -24,8 +24,8 @@ class SimcomGsmpEsp32 : public SimcomGsm
 	}
 
 public:
-	SimcomGsmpEsp32(HardwareSerial& serial, int txPin, int rxPin)
-		:SimcomGsm(serial, UpdateBaudRate)
+	SimcomAtCommandsEsp32(HardwareSerial& serial, int txPin, int rxPin)
+		:SimcomAtCommands(serial, UpdateBaudRate)
 	{
 		_serial = &serial;
 		_txPin = txPin;
