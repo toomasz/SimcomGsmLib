@@ -3,7 +3,7 @@
 
 SimcomAtCommands::SimcomAtCommands(Stream& serial, UpdateBaudRateCallback updateBaudRateCallback) :
 _serial(serial),
-_parser(_parserContext, _logger, serial),
+_parser(_parserContext, _logger, serial, _currentCommand),
 IsAsync(false)
 {
 	_updateBaudRateCallback = updateBaudRateCallback;
@@ -50,6 +50,21 @@ AtResultType SimcomAtCommands::GenericAt(int timeout, const __FlashStringHelper*
 void SimcomAtCommands::SendAt_P(AtCommand commandType, const __FlashStringHelper* command, ...)
 {
 	_parser.SetCommandType(commandType);
+
+	va_list argptr;
+	va_start(argptr, command);
+
+	FixedString200 buffer;
+	buffer.appendFormatV(command, argptr);
+	_currentCommand = buffer;
+	_logger.LogAt(F(" => %s"), buffer.c_str());
+	_serial.println(buffer.c_str());
+
+	va_end(argptr);
+}
+void SimcomAtCommands::SendAt_P(AtCommand commandType, bool expectEcho, const __FlashStringHelper* command, ...)
+{
+	_parser.SetCommandType(commandType, expectEcho);
 
 	va_list argptr;
 	va_start(argptr, command);
@@ -247,7 +262,7 @@ AtResultType SimcomAtCommands::SetApn(const char *apnName, const char *username,
 
 AtResultType SimcomAtCommands::At()
 {	
-	SendAt_P(AtCommand::Generic, F("AT"));
+	SendAt_P(AtCommand::Generic, false, F("AT"));
 	return PopCommandResult(30);
 }
 

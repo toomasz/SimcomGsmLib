@@ -23,9 +23,11 @@ private:
 		SimcomResponseParser _parser;
 		UpdateBaudRateCallback _updateBaudRateCallback;
 		ParserContext _parserContext;
-		// buffer for incoming data, used because fucking +++ needs 1000ms wait before issuing
 		FixedString50 _currentCommand;
+
 		void SendAt_P(AtCommand commandType, const __FlashStringHelper *command, ...);
+		void SendAt_P(AtCommand commandType, bool expectEcho, const __FlashStringHelper *command, ...);
+
 		AtResultType PopCommandResult(int timeout);
 		AtResultType PopCommandResult();		
 public:

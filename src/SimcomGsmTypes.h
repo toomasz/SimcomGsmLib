@@ -120,6 +120,7 @@ enum class ParserState : uint8_t
 {
 	None,
 	Timeout,
+	WaitingForEcho,
 	Success,
 	Error,
 	PartialSuccess,

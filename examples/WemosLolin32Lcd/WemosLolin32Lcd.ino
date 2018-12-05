@@ -41,7 +41,7 @@ void OnDataReceived(uint8_t mux, FixedStringBase &data)
 
 void setup()
 {	
-	gsmAt.Logger().LogAtCommands = true;
+	gsmAt.Logger().LogAtCommands = false;
 	gsmAt.Logger().OnLog(OnLog);
 
 	Serial.begin(500000);
@@ -98,7 +98,7 @@ void loop()
 					}
 				}
 
-				FixedString20 data;
+				FixedString50 data;
 				for(int i=0; i < data.capacity(); i++)
 				{				
 					data.append(n);
@@ -132,7 +132,7 @@ void loop()
 
 void ReadDataFromConnection()
 {
-	FixedString200 buffer;
+	FixedString20 buffer;
 	while (gsmAt.Read(0, buffer) == AtResultType::Success)
 	{
 		if (buffer.length() == 0)

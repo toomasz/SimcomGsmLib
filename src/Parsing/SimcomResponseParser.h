@@ -1,5 +1,5 @@
-#ifndef _PARSERSIM900_H_
-#define _PARSERSIM900_H_
+#ifndef _SIMCOM_RESPONSE_PARSER_H
+#define _SIMCOM_RESPONSE_PARSER_H
 
 #include <Arduino.h>
 #include "GsmLibConstants.h"
@@ -30,11 +30,12 @@ class SimcomResponseParser
 	bool _garbageOnSerialDetected;
 	Stream& _serial;
 	SequenceDetector _promptSequenceDetector;
+	FixedStringBase& _currentCommandStr;
 public:
-	SimcomResponseParser(ParserContext &parserContext, GsmLogger &logger,Stream& serial);
+	SimcomResponseParser(ParserContext &parserContext, GsmLogger &logger,Stream& serial, FixedStringBase &currentCommandStr);
 	AtResultType GetAtResultType();
 	volatile bool commandReady;
-	void SetCommandType(AtCommand commandType);
+	void SetCommandType(AtCommand commandType, bool expectEcho = true);
 	void FeedChar(char c);	
 	void OnDataReceived(DataReceivedCallback onDataReceived);
 	bool GarbageOnSerialDetected();

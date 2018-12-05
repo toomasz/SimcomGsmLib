@@ -3,14 +3,15 @@
 #include "GsmLibHelpers.h"
 #include "ParsingHelpers.h"
 
-SimcomResponseParser::SimcomResponseParser(ParserContext& parserContext, GsmLogger& logger, Stream& serial):
+SimcomResponseParser::SimcomResponseParser(ParserContext& parserContext, GsmLogger& logger, Stream& serial, FixedStringBase &currentCommandStr):
 _logger(logger),
 _parserContext(parserContext),
 _dataReceivedCallback(nullptr),
 _garbageOnSerialDetected(false),
 _serial(serial),
 _promptSequenceDetector("> "),
-commandReady(false)
+commandReady(false),
+_currentCommandStr(currentCommandStr)
 {
 	_currentCommand = AtCommand::Generic;
 	lineParserState = PARSER_INITIAL;
@@ -34,20 +35,35 @@ AtResultType SimcomResponseParser::GetAtResultType()
 			return AtResultType::Timeout;
 	}
 }
+
+
 /* processes character read from serial port of gsm module */
 void SimcomResponseParser::FeedChar(char c)
 {	
-	if(_currentCommand == AtCommand::CipSend && 
-		_parserContext.CipsendState == CipsendStateType::WaitingForPrompt)
-	{		
-		if(_promptSequenceDetector.NextChar(c))
+	if (_state != ParserState::WaitingForEcho)
+	{
+		if (_currentCommand == AtCommand::CipSend &&
+			_parserContext.CipsendState == CipsendStateType::WaitingForPrompt)
 		{
-			_logger.Log(F("Received prompt"));
-			_parserContext.CipsendState = CipsendStateType::WaitingForDataAccept;
-			_response.clear();
-			_serial.write(_parserContext.CipsendBuffer->c_str(), _parserContext.CipsendBuffer->length());
-			return;
-		}		
+			if (_promptSequenceDetector.NextChar(c))
+			{
+				_parserContext.CipsendState = CipsendStateType::WaitingForDataAccept;
+				_response.clear();
+				_serial.write(_parserContext.CipsendBuffer->c_str(), _parserContext.CipsendBuffer->length());
+
+				int readBytes = 0;
+				while (readBytes < _parserContext.CipsendBuffer->length())
+				{
+					if (_serial.available())
+					{
+						auto c = _serial.read();
+						readBytes++;
+					}
+				}
+
+				return;
+			}
+		}
 	}
 	if (_parserContext.CiprxGetLeftBytesToRead > 0)
 	{
@@ -171,7 +187,18 @@ bool SimcomResponseParser::ParseUnsolicited(FixedStringBase& line)
 
 ParserState SimcomResponseParser::ParseLine()
 {
+	if (_state == ParserState::WaitingForEcho)
+	{
+		if (_response.equals(_currentCommandStr))
+		{
+			_state = ParserState::Timeout;
+			return ParserState::Timeout;
+		}
+		return _state;
+	}
+
 	DelimParser parser(_response);
+
 
 	if (_currentCommand == AtCommand::Cpin)
 	{
@@ -563,11 +590,18 @@ ParserState SimcomResponseParser::ParseLine()
 	return ParserState::None;
 }
 
-void SimcomResponseParser::SetCommandType(AtCommand command)
+void SimcomResponseParser::SetCommandType(AtCommand command, bool expectEcho)
 {		
 	_currentCommand = command;
 	commandReady = false;	
-	_state = ParserState::Timeout;
+	if (expectEcho)
+	{
+		_state = ParserState::WaitingForEcho;
+	}
+	else
+	{
+		_state = ParserState::Timeout;
+	}
 }
 
 int SimcomResponseParser::StateTransition(char c)
