@@ -166,11 +166,27 @@ bool SimcomResponseParser::IsOkLine()
 
 bool SimcomResponseParser::ParseUnsolicited(FixedStringBase& line)
 {
+
+
 	if(line.equals(F("+CIPRXGET: 1,0")))
 	{
 		return true;
 	}
 	DelimParser parser(line);
+
+	uint8_t mux;
+	if (parser.NextNum(mux))
+	{
+		FixedString50 str;
+		if (mux <= 5)
+		{
+			if (parser.NextString(str))
+			{
+				_logger.Log(F("Mux: %d, event = %s"), mux, str.c_str());
+				return true;
+			}
+		}
+	}
 	if (parser.StartsWith(F("+RECEIVE,")))
 	{
 		uint8_t mux;
