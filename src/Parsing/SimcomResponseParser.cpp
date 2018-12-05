@@ -107,10 +107,7 @@ void SimcomResponseParser::FeedChar(char c)
 			commandReady = true;
 			_state = parseResult;
 		}
-		else if (parseResult == ParserState::PartialSuccess || parseResult == ParserState::PartialError)
-		{
-			_state = parseResult;
-		}
+		
 		// if command not parsed yet
 		else if (parseResult == ParserState::None)
 		{
@@ -129,6 +126,10 @@ void SimcomResponseParser::FeedChar(char c)
 			BinaryToString(_response, printableLine);
 			_logger.Log(F(" '%s'"), printableLine.c_str());
 			// do nothing, do not change _state to none
+		}
+		else
+		{
+			_state = parseResult;
 		}
 		
 		_response.clear();
@@ -207,10 +208,9 @@ ParserState SimcomResponseParser::ParseLine()
 	{
 		if (_response.equals(_currentCommandStr))
 		{
-			_state = ParserState::Timeout;
 			return ParserState::Timeout;
 		}
-		return _state;
+		return ParserState::None;
 	}
 
 	DelimParser parser(_response);
@@ -413,7 +413,8 @@ ParserState SimcomResponseParser::ParseLine()
 				return ParserState::PartialError;
 			}
 			_parserContext.CallInfo->CallerNumber = number;
-			_parserContext.CallInfo->HasIncomingCall = true;			
+			_parserContext.CallInfo->HasIncomingCall = true;	
+			return ParserState::PartialSuccess;
 		}
 		// CLCC can return no records so it's ok
 		if (IsOkLine())

@@ -41,7 +41,7 @@ void OnDataReceived(uint8_t mux, FixedStringBase &data)
 
 void setup()
 {	
-	gsmAt.Logger().LogAtCommands = false;
+	gsmAt.Logger().LogAtCommands = true;
 	gsmAt.Logger().OnLog(OnLog);
 
 	Serial.begin(500000);

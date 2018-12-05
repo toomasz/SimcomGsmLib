@@ -403,6 +403,8 @@ AtResultType SimcomAtCommands::Call(char *number)
 
 AtResultType SimcomAtCommands::GetIncomingCall(IncomingCallInfo & callInfo)
 {
+	callInfo.HasIncomingCall = false;
+	callInfo.CallerNumber.clear();
 	_parserContext.CallInfo = &callInfo;
 	SendAt_P(AtCommand::Clcc, F("AT+CLCC"));
 	const auto result = PopCommandResult();
