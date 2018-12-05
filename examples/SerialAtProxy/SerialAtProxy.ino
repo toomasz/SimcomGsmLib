@@ -1,4 +1,4 @@
-#include <SimcomGsmLib.h>
+#include <SimcomAtCommands.h>
 
 void UpdateBaudRate(int baudRate)
 {

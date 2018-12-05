@@ -11,11 +11,9 @@
 #include <SimcomAtCommandsEsp32.h>
 
 SimcomAtCommandsEsp32 gsmAt(Serial1, 16, 12);
-
 GsmModule gsm(gsmAt);
 
 SSD1306 display(188, 4, 15);
-
 Gui gui(display);
 
 ConnectionDataValidator connectionValidator;
@@ -54,7 +52,6 @@ void setup()
 void loop()
 {
 	gui.Clear();
-	
 
 	if (connectionValidator.HasError())
 	{
@@ -66,34 +63,8 @@ void loop()
 
 	gsm.Loop();
 
-	auto state = gsm.GetState();
-
-	if (state == GsmState::NoShield)
-	{
-		FixedString20 error = "No shield";
-		gui.DisplayError(error);
-		return;
-	}
-
-	if (state == GsmState::SimError)
-	{
-		gui.DisplaySimError(gsm.simStatus);
-		return;
-	}
-
-	gui.drawBattery(gsm.batteryInfo.Percent, gsm.batteryInfo.Voltage);
-	gui.drawGsmInfo(gsm.signalQuality, gsm.gsmRegStatus, gsm.operatorName);
-	gui.DisplayBlinkIndicator();
-	
-	if (state == GsmState::ConnectingToGprs)
-	{
-		gui.lcd_label(Font::F10, 0, 32, F("Connecting to gprs.."));
-	}
-	if (state == GsmState::Initializing)
-	{
-		gui.lcd_label(Font::F10, 0, 32, F("Initializing modem..."));
-	}
-
+	const auto state = gsm.GetState();
+	gui.DisplayGsmState(gsm);
 
 	if (state == GsmState::ConnectedToGprs)
 	{
@@ -105,7 +76,6 @@ void loop()
 			static bool justConnected = false;
 			if (connection.State == ConnectionState::Closed || connection.State == ConnectionState::Initial)
 			{
-				Serial.printf("Trying to connect...\n");
 				receivedBytes = 0;
 				connectionValidator.SetJustConnected();
 				gsmAt.BeginConnect(ProtocolType::Tcp, 0, "conti.ml", 12668);
@@ -154,21 +124,10 @@ void loop()
 		{
 			Serial.println("Failed to get conn info");
 		}
-
-		gui.DisplayIp(gsm.ipAddress);
-	}
-
-	if (gsmAt.GarbageOnSerialDetected())
-	{
-		FixedString20 error("UART garbage !!!");
-		gui.DrawFramePopup(error, 40, 5);
-	}
-
-	gui.DisplayIncomingCall(gsm.callInfo);
+	}	
 	
 	display.display();
-
-	gsmAt.wait(1000);
+	gsm.Wait(1000);
 }
 
 void ReadDataFromConnection()

@@ -3,6 +3,7 @@
 #include <SSD1306.h>
 #include <SimcomAtCommands.h>
 #include <FixedString.h>
+#include <GsmModule.h>
 
 enum class Font
 {
@@ -73,7 +74,49 @@ public:
 		_lcd.setColor(OLEDDISPLAY_COLOR::WHITE);
 		_lcd.fillRect(2, batteryPlusHeight + 2 + batteryLeftPixels, width - 2 * 2, fillHeightWhen100Percent - 2 - batteryLeftPixels);
 
-	};
+	}
+
+	void DisplayGsmState(GsmModule& gsm)
+	{
+		auto state = gsm.GetState();
+		if (state == GsmState::NoShield)
+		{
+			FixedString20 error = "No shield";
+			DisplayError(error);
+			return;
+		}
+
+		if (state == GsmState::SimError)
+		{
+			DisplaySimError(gsm.simStatus);
+			return;
+		}
+
+		drawBattery(gsm.batteryInfo.Percent, gsm.batteryInfo.Voltage);
+		drawGsmInfo(gsm.signalQuality, gsm.gsmRegStatus, gsm.operatorName);
+		DisplayBlinkIndicator();
+
+		if (state == GsmState::ConnectingToGprs)
+		{
+			lcd_label(Font::F10, 0, 32, F("Connecting to gprs.."));
+		}
+		if (state == GsmState::Initializing)
+		{
+			lcd_label(Font::F10, 0, 32, F("Initializing modem..."));
+		}
+		if (state == GsmState::ConnectedToGprs)
+		{
+			DisplayIp(gsm.ipAddress);
+		}
+
+		if (gsm.GarbageOnSerialDetected())
+		{
+			FixedString20 error("UART garbage !!!");
+			DrawFramePopup(error, 40, 5);
+		}
+
+		DisplayIncomingCall(gsm.callInfo);
+	}
 	void drawBattery(int percent, float voltage)
 	{
 		drawBatterySymbol(percent, voltage);

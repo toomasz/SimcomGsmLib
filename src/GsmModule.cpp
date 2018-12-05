@@ -228,3 +228,8 @@ const __FlashStringHelper* GsmModule::StateToStr(GsmState state)
 	default: return F("Unknown");
 	}
 }
+
+int GsmModule::GarbageOnSerialDetected()
+{
+	return _gsm.GarbageOnSerialDetected();
+}

@@ -123,7 +123,7 @@ AtResultType SimcomAtCommands::GetIpState(SimcomIpState &ipState)
 AtResultType SimcomAtCommands::GetIpAddress(GsmIp& ipAddress)
 {	
 	_parserContext.IpAddress = &ipAddress;
-	SendAt_P(AtCommand::Cifsr, F("AT+CIFSR;E0"));
+	SendAt_P(AtCommand::Cifsr, F("AT+CIFSR;E1"));
 	return PopCommandResult();
 }
 
@@ -296,7 +296,7 @@ bool SimcomAtCommands::EnsureModemConnected(long requestedBaudRate)
 
 	At();
 
-	if (SetEcho(false) != AtResultType::Success)
+	if (SetEcho(true) != AtResultType::Success)
 	{
 		_logger.Log(F("Failed to set echo"));
 		return false;	
@@ -403,6 +403,8 @@ AtResultType SimcomAtCommands::Shutdown()
 
 AtResultType SimcomAtCommands::BeginConnect(ProtocolType protocol, uint8_t mux, const char *address, int port)
 {	
+	_logger.Log(F("BeginConnect %s:%u"), address, port);
+
 	SendAt_P(AtCommand::Generic, 
 		F("AT+CIPSTART=%d,\"%s\",\"%s\",\"%d\""),
 		mux, ProtocolToStr(protocol), address, port);	

@@ -40,6 +40,7 @@ public:
 		return _state;
 	}
 	const __FlashStringHelper* StateToStr(GsmState state);
+	int GarbageOnSerialDetected();
 	int16_t signalQuality;
 	BatteryStatus batteryInfo;
 	FixedString20 operatorName;
@@ -51,5 +52,9 @@ public:
 
 	GsmModule(SimcomAtCommands &gsm);
 	void Loop();
+	void Wait(uint64_t delayInMs)
+	{
+		_gsm.wait(delayInMs);
+	}
 };
 
