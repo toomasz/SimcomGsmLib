@@ -4,10 +4,69 @@
 SimcomAtCommands::SimcomAtCommands(Stream& serial, UpdateBaudRateCallback updateBaudRateCallback) :
 _serial(serial),
 _parser(_parserContext, _logger, serial, _currentCommand),
-IsAsync(false)
+IsAsync(false),
+_lastIncomingByteTime(0)
 {
 	_updateBaudRateCallback = updateBaudRateCallback;
 	_currentBaudRate = 0;
+}
+
+AtResultType SimcomAtCommands::PopCommandResult(bool ensureDelay)
+{
+	return PopCommandResult(ensureDelay, AT_DEFAULT_TIMEOUT);
+}
+
+void SimcomAtCommands::ReadCharAndFeedParser()
+{
+	if (!_serial.available())
+	{
+		return;
+	}
+	auto c = _serial.read();
+	_parser.FeedChar(c);
+	_lastIncomingByteTime = millis();	
+}
+
+AtResultType SimcomAtCommands::PopCommandResult(bool ensureDelay, uint64_t timeout)
+{
+	if (ensureDelay)
+	{
+		auto before = millis();
+		while (millis() - _lastIncomingByteTime < 100)
+		{
+			ReadCharAndFeedParser();
+		}
+		auto waitTime = millis() - before;
+		_logger.Log(F("Waited %u ms"), waitTime);
+	}
+	_serial.println(_currentCommand.c_str());
+	_logger.LogAt(F(" => %s"), _currentCommand.c_str());
+
+	const unsigned long start = millis();
+	while (_parser.commandReady == false && (millis() - start) < timeout)
+	{
+		ReadCharAndFeedParser();		
+	}
+	const auto commandResult = _parser.GetAtResultType();
+	const auto elapsedMs = millis() - start;
+	_logger.LogAt(F("    -- %d ms --"), elapsedMs);
+	if (commandResult == AtResultType::Timeout)
+	{
+		_logger.Log(F("                      --- !!! '%s' - TIMEOUT!!! ---      "), _currentCommand.c_str(), elapsedMs);
+	}
+	if (commandResult == AtResultType::Error)
+	{
+		_logger.Log(F("                      --- !!! '%s' - ERROR!!! ---      "), _currentCommand.c_str(), elapsedMs);
+	}
+	return commandResult;
+}
+void SimcomAtCommands::wait(uint64_t ms)
+{
+	const unsigned long start = millis();
+	while ((millis() - start) <= ms)
+	{
+		ReadCharAndFeedParser();
+	}
 }
 AtResultType SimcomAtCommands::GetSimStatus(SimState &simStatus)
 {
@@ -31,19 +90,16 @@ AtResultType SimcomAtCommands::GetRegistrationStatus(GsmRegistrationState& regis
 	}
 	return result;
 }
-AtResultType SimcomAtCommands::GenericAt(int timeout, const __FlashStringHelper* command, ...)
+AtResultType SimcomAtCommands::GenericAt(uint64_t timeout, const __FlashStringHelper* command, ...)
 {	
 	_parser.SetCommandType(AtCommand::Generic);
 	va_list argptr;
 	va_start(argptr, command);
 
-	FixedString200 buffer;
-	buffer.appendFormatV(command, argptr);
-	_logger.LogAt(F(" => %s"), buffer.c_str());
-	_currentCommand = buffer;
-	_serial.println(buffer.c_str());
+	_currentCommand.clear();
+	_currentCommand.appendFormatV(command, argptr);
 
-	const auto result = PopCommandResult(timeout);
+	const auto result = PopCommandResult(false, timeout);
 	va_end(argptr);	
 	return result;
 }
@@ -53,12 +109,10 @@ void SimcomAtCommands::SendAt_P(AtCommand commandType, const __FlashStringHelper
 
 	va_list argptr;
 	va_start(argptr, command);
-
 	FixedString200 buffer;
-	buffer.appendFormatV(command, argptr);
-	_currentCommand = buffer;
-	_logger.LogAt(F(" => %s"), buffer.c_str());
-	_serial.println(buffer.c_str());
+
+	_currentCommand.clear();
+	_currentCommand.appendFormatV(command, argptr);
 
 	va_end(argptr);
 }
@@ -69,11 +123,8 @@ void SimcomAtCommands::SendAt_P(AtCommand commandType, bool expectEcho, const __
 	va_list argptr;
 	va_start(argptr, command);
 
-	FixedString200 buffer;
-	buffer.appendFormatV(command, argptr);
-	_currentCommand = buffer;
-	_logger.LogAt(F(" => %s"), buffer.c_str());
-	_serial.println(buffer.c_str());
+	_currentCommand.clear();
+	_currentCommand.appendFormatV(command, argptr);
 
 	va_end(argptr);
 }
@@ -111,7 +162,7 @@ AtResultType SimcomAtCommands::SetRegistrationMode(RegistrationMode mode, const 
 	const auto operatorFormat = _parserContext.IsOperatorNameReturnedInImsiFormat ? 2 : 0;
 	// don't need to use AtCommand::Cops here, AT+COPS write variant returns OK/ERROR
 	SendAt_P(AtCommand::Generic, F("AT+COPS=%d,%d,\"%s\""), mode, operatorFormat, operatorName);
-	return PopCommandResult(120000);
+	return PopCommandResult(false, 120000u);
 }
 
 AtResultType SimcomAtCommands::GetSignalQuality(int16_t& signalQuality)
@@ -197,38 +248,10 @@ AtResultType SimcomAtCommands::SetSipQuickSend(bool cipqsend)
 AtResultType SimcomAtCommands::AttachGprs()
 {	
 	SendAt_P(AtCommand::Generic, F("AT+CIICR"));
-	return PopCommandResult(60000);
+	return PopCommandResult(false, 60000u);
 }
 
-AtResultType SimcomAtCommands::PopCommandResult()
-{
-	return PopCommandResult(AT_DEFAULT_TIMEOUT);
-}
-AtResultType SimcomAtCommands::PopCommandResult(int timeout)
-{
-	const unsigned long start = millis();
-	while(_parser.commandReady == false && (millis()-start) < (unsigned long)timeout)
-	{
-		if(_serial.available())
-		{
-			char c = _serial.read();
-			_parser.FeedChar(c);
-		}
-	}
 
-	const auto commandResult = _parser.GetAtResultType();
-	const auto elapsedMs = millis() - start;	
-	_logger.LogAt(F("    -- %d ms --"), elapsedMs);
-	if (commandResult == AtResultType::Timeout)
-	{
-		_logger.Log(F("                      --- !!! '%s' - TIMEOUT!!! ---      "), _currentCommand.c_str(), elapsedMs);
-	}
-	if (commandResult == AtResultType::Error)
-	{
-		_logger.Log(F("                      --- !!! '%s' - ERROR!!! ---      "), _currentCommand.c_str(), elapsedMs);
-	}
-	return commandResult;
-}
 /*
 Disables/enables echo on serial port
 */
@@ -263,7 +286,7 @@ AtResultType SimcomAtCommands::SetApn(const char *apnName, const char *username,
 AtResultType SimcomAtCommands::At()
 {	
 	SendAt_P(AtCommand::Generic, false, F("AT"));
-	return PopCommandResult(30);
+	return PopCommandResult(false, 60u);
 }
 
 void SimcomAtCommands::OnDataReceived(DataReceivedCallback onDataReceived)
@@ -326,18 +349,7 @@ AtResultType SimcomAtCommands::GetImei(FixedString20 &imei)
 	return PopCommandResult();
 }
 
-void SimcomAtCommands::wait(uint64_t ms)
-{
-	const unsigned long start = millis();
-	while ((millis() - start) <= ms)
-	{
-		if (_serial.available())
-		{
-			auto c = _serial.read();
-			_parser.FeedChar(c);
-		}
-	}
-}
+
 
 bool SimcomAtCommands::GarbageOnSerialDetected()
 {
@@ -361,7 +373,7 @@ AtResultType SimcomAtCommands::SendUssdWaitResponse(char *ussd, FixedString150& 
 {
 	_parserContext.UssdResponse = &response;
 	SendAt_P(AtCommand::Cusd, F("AT+CUSD=1,\"%s\""), ussd);
-	return PopCommandResult(10000);
+	return PopCommandResult(false, 10000u);
 }
 
 int SimcomAtCommands::FindCurrentBaudRate()
@@ -392,7 +404,7 @@ int SimcomAtCommands::FindCurrentBaudRate()
 AtResultType SimcomAtCommands::Cipshut()
 {	
 	SendAt_P(AtCommand::Cipshut, F("AT+CIPSHUT"));
-	return PopCommandResult(20000);
+	return PopCommandResult(false, 20000u);
 }
 
 AtResultType SimcomAtCommands::Call(char *number)
@@ -425,14 +437,15 @@ AtResultType SimcomAtCommands::BeginConnect(ProtocolType protocol, uint8_t mux, 
 	SendAt_P(AtCommand::Generic, 
 		F("AT+CIPSTART=%d,\"%s\",\"%s\",\"%d\""),
 		mux, ProtocolToStr(protocol), address, port);	
-	return PopCommandResult(60000);
+	return PopCommandResult(false, 60000u);
 }
 
-AtResultType SimcomAtCommands::Read(int mux, FixedStringBase& outputBuffer)
+AtResultType SimcomAtCommands::Read(int mux, FixedStringBase& outputBuffer, uint16_t& availableBytes)
 {
 	_parserContext.CipRxGetBuffer = &outputBuffer;
+	_parserContext.CiprxGetAvailableBytes = &availableBytes;
 	SendAt_P(AtCommand::CipRxGetRead,F("AT+CIPRXGET=2,%d,%d"), mux, outputBuffer.capacity());
-	return PopCommandResult();
+	return PopCommandResult(true);
 }
 
 AtResultType SimcomAtCommands::Send(int mux, FixedStringBase& data, uint16_t &sentBytes)
@@ -442,7 +455,7 @@ AtResultType SimcomAtCommands::Send(int mux, FixedStringBase& data, uint16_t &se
 	_parserContext.CipsendState = CipsendStateType::WaitingForPrompt;
 	_parserContext.CipsendSentBytes = &sentBytes;
 	SendAt_P(AtCommand::CipSend, F("AT+CIPSEND=%d,%d"), mux, data.length());
-	return PopCommandResult();
+	return PopCommandResult(true);
 }
 
 AtResultType SimcomAtCommands::CloseConnection(uint8_t mux)

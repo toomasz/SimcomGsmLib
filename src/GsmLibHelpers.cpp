@@ -34,16 +34,16 @@ const __FlashStringHelper * RegStatusToStr(GsmRegistrationState state)
 	}
 }
 
-const __FlashStringHelper* ProtocolToStr(ProtocolType protocol)
+const char* ProtocolToStr(ProtocolType protocol)
 {
 	switch (protocol)
 	{
 	case ProtocolType::Tcp:
-		return F("TCP");
+		return "TCP";
 	case ProtocolType::Udp:
-		return F("UDP");
+		return "UDP";
 	default:
-		return F("");
+		return "";
 	}
 }
 

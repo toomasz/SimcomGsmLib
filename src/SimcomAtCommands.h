@@ -5,13 +5,13 @@
 #include <Arduino.h>
 #include <stdio.h>
 #include <stdarg.h>
+#include <stdint.h>
 #include "Parsing/SequenceDetector.h"
 #include "Parsing/SimcomResponseParser.h"
 #include "Parsing/ParserContext.h"
 #include "GsmLogger.h"
 #include "SimcomGsmTypes.h"
 #include <pgmspace.h>
-
 class S900Socket;
 
 class SimcomAtCommands
@@ -24,12 +24,13 @@ private:
 		UpdateBaudRateCallback _updateBaudRateCallback;
 		ParserContext _parserContext;
 		FixedString50 _currentCommand;
-
+		uint64_t _lastIncomingByteTime;
 		void SendAt_P(AtCommand commandType, const __FlashStringHelper *command, ...);
 		void SendAt_P(AtCommand commandType, bool expectEcho, const __FlashStringHelper *command, ...);
 
-		AtResultType PopCommandResult(int timeout);
-		AtResultType PopCommandResult();		
+		AtResultType PopCommandResult(bool ensureDelay, uint64_t timeout);
+		AtResultType PopCommandResult(bool ensureDelay = false);
+		void ReadCharAndFeedParser();
 public:
 		GsmLogger& Logger() 
 		{
@@ -48,7 +49,7 @@ public:
 		AtResultType SetBaudRate(uint32_t baud);
 
 		AtResultType At();
-		AtResultType GenericAt(int timeout, const __FlashStringHelper* command,...);
+		AtResultType GenericAt(uint64_t timeout, const __FlashStringHelper* command,...);
 
 		AtResultType Shutdown();
 		AtResultType GetSimStatus(SimState &simStatus);
@@ -78,7 +79,7 @@ public:
 		AtResultType SetSipQuickSend(bool cipqsend);
 		AtResultType SetTransparentMode(bool transparentMode);
 		AtResultType BeginConnect(ProtocolType protocol, uint8_t mux, const char *address, int port);
-		AtResultType Read(int mux, FixedStringBase& outputBuffer);
+		AtResultType Read(int mux, FixedStringBase& outputBuffer, uint16_t& availableBytes);
 		AtResultType Send(int mux, FixedStringBase& data, uint16_t &sentBytes);
 		AtResultType CloseConnection(uint8_t mux);
 		AtResultType GetConnectionInfo(uint8_t mux, ConnectionInfo &connectionInfo);

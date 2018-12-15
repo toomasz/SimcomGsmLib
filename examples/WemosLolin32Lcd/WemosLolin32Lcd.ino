@@ -1,4 +1,3 @@
-#include <WiFi.h>
 #include <SimcomAtCommands.h>
 #include <GsmLibHelpers.h>
 #include <OperatorNameHelper.h>
@@ -10,17 +9,17 @@
 
 #include <SimcomAtCommandsEsp32.h>
 
-SimcomAtCommandsEsp32 gsmAt(Serial1, 16, 12);
+SimcomAtCommandsEsp32 gsmAt(Serial2, 16, 17);
 GsmModule gsm(gsmAt);
 
-SSD1306 display(188, 4, 15);
+SSD1306 display(0x3c, 5, 4);
 Gui gui(display);
 
 ConnectionDataValidator connectionValidator;
 bool justConnectedToModem = true;
 void OnLog(const char* gsmLog)
 {
-	Serial.print("[GSM]");
+	Serial.printf("%u8 [GSM]", millis());
 	Serial.println(gsmLog);
 }
 int receivedBytes = 0;
@@ -32,7 +31,9 @@ void OnDataReceived(uint8_t mux, FixedStringBase &data)
 		return;
 	}
 	receivedBytes += data.length();
-	Serial.printf("Received %d bytes\n", data.length());
+	FixedString200 dataStr;
+	BinaryToString(data, dataStr);
+	Serial.printf("Received %d bytes: %s\n", data.length(), dataStr.c_str());
 	for (int i = 0; i < data.length(); i++)
 	{
 		connectionValidator.ValidateIncomingByte(data[i], i, receivedBytes);
@@ -98,7 +99,7 @@ void loop()
 					}
 				}
 
-				FixedString50 data;
+				FixedString10 data;
 				for(int i=0; i < data.capacity(); i++)
 				{				
 					data.append(n);
@@ -127,19 +128,27 @@ void loop()
 	}	
 	
 	display.display();
-	gsm.Wait(1000);
+
+	Serial.println();
+	Serial.println("       ######       ");
+	Serial.println();
+
+	gsm.Wait(2000);
 }
 
 void ReadDataFromConnection()
 {
-	FixedString20 buffer;
-	while (gsmAt.Read(0, buffer) == AtResultType::Success)
+	FixedString<5> buffer;
+	uint16_t leftBytes = 0;
+	while (gsmAt.Read(0, buffer, leftBytes) == AtResultType::Success)
 	{
-		if (buffer.length() == 0)
+		
+		OnDataReceived(0, buffer);
+		buffer.clear();
+
+		if (leftBytes == 0)
 		{
 			return;
 		}
-		OnDataReceived(0, buffer);
-		buffer.clear();
 	}
 }

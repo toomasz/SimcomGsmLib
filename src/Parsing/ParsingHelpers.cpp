@@ -116,18 +116,32 @@ struct IpStatusEntry
 	const __FlashStringHelper *str;
 	SimcomIpState status;
 };
+const  char IpInitalStr[] PROGMEM  = "STATE: IP INITIAL";
+const char IpStartStr[]  PROGMEM = "STATE: IP START";
+const char IpConfigStr[]  PROGMEM = "STATE: IP CONFIG";
+const char IpGporsActStr[]  PROGMEM = "STATE: IP GPRSACT";
+const char IpStatusStr[]  PROGMEM = "STATE: IP STATUS";
+const char TcpConnectingStr[]  PROGMEM = "STATE: TCP CONNECTING";
+const char TcpClosedStr[]  PROGMEM = "STATE: TCP CLOSED";
+const char PdpDeactStr[]  PROGMEM = "STATE: PDP DEACT";
+const char ConnectOkStr[]  PROGMEM = "STATE: CONNECT OK";
+const char IpProcessingStr[]  PROGMEM = "STATE: IP PROCESSING";
+
+
+#define FPSTR(x) reinterpret_cast<const __FlashStringHelper*>(x)
+
 struct IpStatusEntry IpStatusMap[] =
 {
-	F("STATE: IP INITIAL"), SimcomIpState::IpInitial,
-	F("STATE: IP START"), SimcomIpState::IpStart,
-	F("STATE: IP CONFIG"), SimcomIpState::IpConfig,
-	F("STATE: IP GPRSACT"), SimcomIpState::IpGprsact,
-	F("STATE: IP STATUS"), SimcomIpState::IpStatus,
-	F("STATE: TCP CONNECTING"), SimcomIpState::TcpConnecting,
-	F("STATE: TCP CLOSED"), SimcomIpState::TcpClosed,
-	F("STATE: PDP DEACT"), SimcomIpState::PdpDeact,
-	F("STATE: CONNECT OK"), SimcomIpState::ConnectOk,
-	F("STATE: IP PROCESSING"), SimcomIpState::IpProcessing,
+	FPSTR(IpInitalStr), SimcomIpState::IpInitial,
+	FPSTR(IpStartStr), SimcomIpState::IpStart,
+	FPSTR(IpConfigStr), SimcomIpState::IpConfig,
+	FPSTR(IpGporsActStr), SimcomIpState::IpGprsact,
+	FPSTR(IpStatusStr), SimcomIpState::IpStatus,
+	FPSTR(TcpConnectingStr), SimcomIpState::TcpConnecting,
+	FPSTR(TcpClosedStr), SimcomIpState::TcpClosed,
+	FPSTR(PdpDeactStr), SimcomIpState::PdpDeact,
+	FPSTR(ConnectOkStr), SimcomIpState::ConnectOk,
+	FPSTR(IpProcessingStr), SimcomIpState::IpProcessing,
 	0,SimcomIpState::Unknown
 };
 

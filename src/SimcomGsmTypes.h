@@ -4,7 +4,7 @@
 #include <FixedString.h>
 #include <stdint.h>
 
-typedef void(*UpdateBaudRateCallback)(int baudRate);
+typedef void(*UpdateBaudRateCallback)(uint64_t baudRate);
 
 enum class SimState : uint8_t
 {

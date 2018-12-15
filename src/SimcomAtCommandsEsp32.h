@@ -1,8 +1,12 @@
 #ifndef _SIMCOM_GSM_LIB_ESP32_H
 #define _SIMCOM_GSM_LIB_ESP32_H
 
+#ifdef  ESP32
+
 #include <HardwareSerial.h>
 #include "SimcomAtCommands.h"
+
+
 
 class SimcomAtCommandsEsp32 : public SimcomAtCommands
 {
@@ -10,7 +14,7 @@ class SimcomAtCommandsEsp32 : public SimcomAtCommands
 	static int _rxPin;
 	static HardwareSerial* _serial;
 	static bool _isSerialInitialized;
-	static void UpdateBaudRate(int baudRate)
+	static void UpdateBaudRate(uint64_t baudRate)
 	{
 		if (_isSerialInitialized)
 		{
@@ -32,6 +36,8 @@ public:
 		_rxPin = rxPin;
 	}
 };
+
+#endif //  ESP32
 
 #endif
 

@@ -28,11 +28,15 @@ struct ParserContext
 	bool IsRxManual;
 	FixedStringBase* CipRxGetBuffer;
 	uint16_t CiprxGetLeftBytesToRead;
+	// number of bytes that are left to be read from connection
+	uint16_t* CiprxGetAvailableBytes;
+
 	bool CipQSend;
 
 	CipsendStateType CipsendState;
 	FixedStringBase* CipsendBuffer;
 	uint16_t *CipsendSentBytes;
+
 };
 
 #endif

@@ -1,30 +1,43 @@
 #include <SimcomAtCommands.h>
+#include <SoftwareSerial.h>
 
-void UpdateBaudRate(int baudRate)
+SoftwareSerial ss(10,9);
+
+void UpdateBaudRate(uint64_t baudRate)
 {
-	Serial2.end();
-	Serial2.begin(baudRate, SERIAL_8N1, 16, 12, false);
+	ss.end();
+	ss.begin(baudRate);
 }
 
-SimcomAtCommands gsm(Serial2, UpdateBaudRate);
+SimcomAtCommands gsm(ss, UpdateBaudRate);
+
+void OnLog(const char* gsmLog)
+{
+	Serial.print("[GSM]" );
+	Serial.println(gsmLog);
+}
 
 void setup()
 {
-	Serial.begin(500000);
 	delay(500);
+	gsm.Logger().LogAtCommands = true;
+	gsm.Logger().OnLog(OnLog);
+
+	Serial.begin(115200);
 	Serial.println("Trying to find modem baud rate...");
 	auto baudRate = gsm.FindCurrentBaudRate();
-	Serial.printf("Found baud rate: %d\nPlease use AT commands!\n", baudRate);
+	Serial.print("Found baud rate: ");
+	Serial.print(baudRate);
 }
 
 void loop()
 {
-	while (Serial2.available())
+	while (ss.available())
 	{
-		Serial.write(Serial2.read());
+		Serial.write(ss.read());
 	}
 	while (Serial.available())
 	{
-		Serial2.write(Serial.read());
+		ss.write(Serial.read());
 	}
 }

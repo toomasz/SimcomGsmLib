@@ -24,9 +24,12 @@ bool GsmModule::GetVariablesFromModem()
 	{
 		return false;
 	}
-	if (OperatorNameHelper::GetRealOperatorName(_gsm, operatorName) == AtResultType::Timeout)
+	if (gsmRegStatus == GsmRegistrationState::HomeNetwork || gsmRegStatus == GsmRegistrationState::Roaming)
 	{
-		return false;
+		if (OperatorNameHelper::GetRealOperatorName(_gsm, operatorName) == AtResultType::Timeout)
+		{
+			return false;
+		}
 	}
 	if (_gsm.GetIncomingCall(callInfo) == AtResultType::Timeout)
 	{
@@ -48,7 +51,7 @@ void GsmModule::Loop()
 	}
 	if (_state == GsmState::NoShield)
 	{
-		if (!_gsm.EnsureModemConnected(460800))
+		if (!_gsm.EnsureModemConnected(9600))
 		{
 			delay(500);
 			return;
@@ -60,6 +63,8 @@ void GsmModule::Loop()
 	if (_state == GsmState::Initializing)
 	{
 		bool cipmux;
+		//_gsm.FlightModeOn();
+		//_gsm.FlightModeOff();
 		_gsm.GetCipmux(cipmux);
 		_gsm.Cipshut();
 		ChangeState(GsmState::SearchingForNetwork);
@@ -119,7 +124,6 @@ void GsmModule::Loop()
 		bool cipQsend;
 		if (_gsm.GetCipQuickSend(cipQsend) == AtResultType::Success)
 		{
-			Serial.printf("CIPQSEND = %d\n", cipQsend);
 		}
 
 		_gsm.SetCipmux(true);

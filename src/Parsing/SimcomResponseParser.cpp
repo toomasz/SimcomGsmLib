@@ -49,6 +49,8 @@ void SimcomResponseParser::FeedChar(char c)
 			{
 				_parserContext.CipsendState = CipsendStateType::WaitingForDataAccept;
 				_response.clear();
+				_logger.Log(F("Writing %d b of data"), _parserContext.CipsendBuffer->length());
+
 				_serial.write(_parserContext.CipsendBuffer->c_str(), _parserContext.CipsendBuffer->length());
 
 				int readBytes = 0;
@@ -167,8 +169,6 @@ bool SimcomResponseParser::IsOkLine()
 
 bool SimcomResponseParser::ParseUnsolicited(FixedStringBase& line)
 {
-
-
 	if(line.equals(F("+CIPRXGET: 1,0")))
 	{
 		return true;
@@ -348,6 +348,7 @@ ParserState SimcomResponseParser::ParseLine()
 				parser.NextNum(dataLeft))
 			{
 				_parserContext.CiprxGetLeftBytesToRead = dataSize;
+				*_parserContext.CiprxGetAvailableBytes = dataLeft;
 				return ParserState::PartialSuccess;				 
 			}
 		}
