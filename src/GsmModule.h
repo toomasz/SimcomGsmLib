@@ -45,6 +45,7 @@ class GsmModule
 	GsmState _state;
 	bool GetVariablesFromModem();
 public:
+	uint64_t BaudRate;
 	GsmState GetState()
 	{
 		return _state;

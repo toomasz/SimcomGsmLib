@@ -5,7 +5,8 @@
 GsmModule::GsmModule(SimcomAtCommands &gsm):
 	_gsm(gsm), 
 	_justConnectedToModem(false), 
-	_state(GsmState::Initial)
+	_state(GsmState::Initial),
+	BaudRate(115200)
 {
 }
 
@@ -51,7 +52,7 @@ void GsmModule::Loop()
 	}
 	if (_state == GsmState::NoShield)
 	{
-		if (!_gsm.EnsureModemConnected(9600))
+		if (!_gsm.EnsureModemConnected(BaudRate))
 		{
 			delay(500);
 			return;
