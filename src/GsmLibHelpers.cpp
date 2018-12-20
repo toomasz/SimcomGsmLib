@@ -81,7 +81,7 @@ void BinaryToString(FixedStringBase&source, FixedStringBase& target)
 		}
 		else
 		{
-			target.appendFormat("\\%2x", c);
+			target.appendFormat("\\%x", c);
 		}
 	}
 }

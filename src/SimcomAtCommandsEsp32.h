@@ -18,13 +18,16 @@ class SimcomAtCommandsEsp32 : public SimcomAtCommands
 	{
 		if (_isSerialInitialized)
 		{
-			_serial->flush();
-			_serial->clearWriteError();
-			_serial->end();
-			delay(10);
+			_serial->updateBaudRate(baudRate);
+			return;
 		}
+		
+		Serial.println("call serial.begin");
 		_serial->begin(baudRate, SERIAL_8N1, _txPin, _rxPin, false);
+		Serial.println("serial.begin ended...");
+
 		_isSerialInitialized = true;
+		
 	}
 
 public:

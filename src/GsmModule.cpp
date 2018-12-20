@@ -64,10 +64,11 @@ void GsmModule::Loop()
 	if (_state == GsmState::Initializing)
 	{
 		bool cipmux;
-		//_gsm.FlightModeOn();
-		//_gsm.FlightModeOff();
+		_gsm.FlightModeOn();
+		_gsm.FlightModeOff();
+		_gsm.wait(5000);
 		_gsm.GetCipmux(cipmux);
-		_gsm.Cipshut();
+		//_gsm.Cipshut();
 		ChangeState(GsmState::SearchingForNetwork);
 		return;
 	}

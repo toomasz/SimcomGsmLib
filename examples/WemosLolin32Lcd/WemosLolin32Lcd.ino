@@ -9,7 +9,7 @@
 
 #include <SimcomAtCommandsEsp32.h>
 
-SimcomAtCommandsEsp32 gsmAt(Serial2, 16, 17);
+SimcomAtCommandsEsp32 gsmAt(Serial1, 16, 14);
 GsmModule gsm(gsmAt);
 
 SSD1306 display(0x3c, 5, 4);
@@ -33,7 +33,7 @@ void OnDataReceived(uint8_t mux, FixedStringBase &data)
 	receivedBytes += data.length();
 	FixedString200 dataStr;
 	BinaryToString(data, dataStr);
-	Serial.printf("Received %d bytes: %s\n", data.length(), dataStr.c_str());
+	Serial.printf("Received %d bytes: '%s'\n", data.length(), dataStr.c_str());
 	for (int i = 0; i < data.length(); i++)
 	{
 		connectionValidator.ValidateIncomingByte(data[i], i, receivedBytes);
