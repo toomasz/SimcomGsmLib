@@ -11,6 +11,7 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)src\SimcomAtCommands.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)src\SimcomAtCommandsEsp32.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)src\GsmModule.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)src\GsmAsyncSocket.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="$(MSBuildThisFileDirectory)src\GsmLogger.h" />
@@ -26,6 +27,7 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)src\SimcomAtCommands.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)src\SimcomAtCommandsEsp32.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)src\GsmModule.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)src\GsmAsyncSocket.h" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Functions">

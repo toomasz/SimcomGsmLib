@@ -173,6 +173,36 @@ bool SimcomResponseParser::ParseUnsolicited(FixedStringBase& line)
 	{
 		return true;
 	}
+	if (line.equals(F("SMS Ready")))
+	{
+		return true;
+	}
+	if (line.equals(F("Call Ready")))
+	{
+		return true;
+	}
+	
+	if (line.equals(F("OVER-VOLTAGE WARNNING")))
+	{
+		_logger.Log(F(" Over voltage warning  !!!"));
+		return true;
+	}
+	if (line.equals(F("OVER-VOLTAGE POWER DOWN")))
+	{
+		_logger.Log(F(" Over voltage power down  !!!"));
+		return true;
+	}
+	if (line.equals(F("UNDER-VOLTAGE WARNNING")))
+	{
+		_logger.Log(F(" Under voltage warning !!!"));
+		return true;
+	}
+	if (line.equals(F("UNDER-VOLTAGE POWER DOWN")))
+	{
+		_logger.Log(F(" Over voltage power down  !!!"));
+		return true;
+	}
+
 	DelimParser parser(line);
 
 	uint8_t mux;
@@ -188,17 +218,7 @@ bool SimcomResponseParser::ParseUnsolicited(FixedStringBase& line)
 			}
 		}
 	}
-	if (parser.StartsWith(F("+RECEIVE,")))
-	{
-		uint8_t mux;
-		uint16_t dataLength;
-		if (!parser.NextNum(mux))
-		{
-			return false;
-		}
-		parser.SetSeparator(':');
-		return parser.NextNum(dataLength);		
-	}
+	
 	return false;
 }
 

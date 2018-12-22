@@ -3,7 +3,7 @@
 #include "SimcomAtCommands.h"
 #include <FixedString.h>
 #include <WString.h>
-
+#include "GsmAsyncSocket.h"
 
 enum class GsmState
 {
@@ -45,6 +45,10 @@ class GsmModule
 	GsmState _state;
 	bool GetVariablesFromModem();
 public:
+	GsmAsyncSocket* CreateSocket()
+	{
+
+	}
 	uint64_t BaudRate;
 	GsmState GetState()
 	{

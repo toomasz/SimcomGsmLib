@@ -16,6 +16,9 @@ SSD1306 display(0x3c, 5, 4);
 Gui gui(display);
 
 ConnectionDataValidator connectionValidator;
+
+GsmAsyncSocket *socket = nullptr;
+
 bool justConnectedToModem = true;
 void OnLog(const char* gsmLog)
 {
@@ -42,11 +45,11 @@ void OnDataReceived(uint8_t mux, FixedStringBase &data)
 
 void setup()
 {	
-	gsmAt.Logger().LogAtCommands = true;
+	//gsmAt.Logger().LogAtCommands = true;
 	gsmAt.Logger().OnLog(OnLog);
 
 	Serial.begin(500000);
-
+	socket = gsm.CreateSocket();
 	gui.init();
 }
 
@@ -66,6 +69,11 @@ void loop()
 
 	const auto state = gsm.GetState();
 	gui.DisplayGsmState(gsm);
+
+	if (socket->IsNetworkAvailable())
+	{
+
+	}
 
 	if (state == GsmState::ConnectedToGprs)
 	{
@@ -133,7 +141,7 @@ void loop()
 	Serial.println("       ######       ");
 	Serial.println();
 
-	gsm.Wait(2000);
+	gsm.Wait(500);
 }
 
 void ReadDataFromConnection()
@@ -145,7 +153,6 @@ void ReadDataFromConnection()
 		
 		OnDataReceived(0, buffer);
 		buffer.clear();
-
 		if (leftBytes == 0)
 		{
 			return;
