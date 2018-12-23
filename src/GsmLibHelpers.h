@@ -3,7 +3,10 @@
 
 #include <WString.h>
 #include <SimcomGsmTypes.h>
+#include <Network\GsmAsyncSocket.h>
 
+const __FlashStringHelper* SocketEventTypeToStr(SocketEventType socketEvent);
+const __FlashStringHelper* SocketStateToStr(SocketStateType state);
 const __FlashStringHelper* IpStatusToStr(SimcomIpState ipStatus);
 const __FlashStringHelper* RegStatusToStr(GsmRegistrationState state);
 const char* ProtocolToStr(ProtocolType protocol);

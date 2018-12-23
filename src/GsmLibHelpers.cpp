@@ -1,5 +1,4 @@
 #include "GsmLibHelpers.h"
-
 #include <pgmspace.h>
 #include <stdio.h>
 
@@ -44,6 +43,30 @@ const char* ProtocolToStr(ProtocolType protocol)
 		return "UDP";
 	default:
 		return "";
+	}
+}
+
+const __FlashStringHelper * SocketEventTypeToStr(SocketEventType socketEvent)
+{
+	switch (socketEvent)
+	{
+	case SocketEventType::ConnectFailed: return F("ConnectFailed");
+	case SocketEventType::ConnectSuccess: return F("ConnectSuccess");
+	case SocketEventType::Disconnecting: return F("Disconnecting");
+	case SocketEventType::Disconnected: return F("Disconnected");
+	default: return F("Unknown");
+	}
+}
+
+const __FlashStringHelper* SocketStateToStr(SocketStateType state)
+{
+	switch (state)
+	{
+	case SocketStateType::Closed: return F("Closed");
+	case SocketStateType::Connecting: return F("Connecting");
+	case SocketStateType::Connected: return F("Connected");
+	case SocketStateType::Closing: return F("Closing");
+	default: return F("Unknown");
 	}
 }
 

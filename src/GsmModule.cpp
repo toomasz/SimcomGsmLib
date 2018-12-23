@@ -4,9 +4,9 @@
 
 GsmModule::GsmModule(SimcomAtCommands &gsm):
 	_gsm(gsm), 
-	_justConnectedToModem(false), 
+	_socketManager(gsm, gsm.Logger()),
 	_state(GsmState::Initial),
-	BaudRate(115200)
+	BaudRate(115200)	
 {
 }
 
@@ -130,7 +130,12 @@ void GsmModule::Loop()
 
 		_gsm.SetCipmux(true);
 		_gsm.SetRxMode(true);
-		_gsm.SetApn("virgin-internet", "", "");
+		auto apnResult = _gsm.SetApn("virgin-internet", "", "");
+		if (apnResult == AtResultType::Timeout)
+		{
+			ChangeState(GsmState::NoShield);
+			return;
+		}
 		auto attachResult = _gsm.AttachGprs();
 		if (attachResult == AtResultType::Timeout)
 		{
@@ -154,11 +159,17 @@ void GsmModule::Loop()
 		ChangeState(GsmState::ConnectedToGprs);
 		return;
 	}
-	if (_state == GsmState::ConnectingToGprs)
+	if (_state == GsmState::ConnectedToGprs)
 	{
 		if (ipStatus == SimcomIpState::PdpDeact)
 		{
 			ChangeState(GsmState::ConnectingToGprs);
+			return;
+		}
+		if (!_socketManager.ReadDataFromSockets())
+		{
+			_gsm.Logger().Log(F("Timeout while trying to read from on of sockets"));
+			ChangeState(GsmState::NoShield);
 			return;
 		}
 	}

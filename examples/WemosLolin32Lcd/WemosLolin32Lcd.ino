@@ -25,21 +25,24 @@ void OnLog(const char* gsmLog)
 	Serial.printf("%u8 [GSM]", millis());
 	Serial.println(gsmLog);
 }
-int receivedBytes = 0;
 
-void OnDataReceived(uint8_t mux, FixedStringBase &data)
+void OnSocketEvent(void*ctx, SocketEventType eventType)
+{
+	Serial.printf("Socket event: %s\n", SocketEventTypeToStr(eventType));	
+}
+
+void OnSocketDataReceived(void* ctx, FixedStringBase& data)
 {
 	if (connectionValidator.HasError())
 	{
 		return;
 	}
-	receivedBytes += data.length();
 	FixedString200 dataStr;
 	BinaryToString(data, dataStr);
 	Serial.printf("Received %d bytes: '%s'\n", data.length(), dataStr.c_str());
 	for (int i = 0; i < data.length(); i++)
 	{
-		connectionValidator.ValidateIncomingByte(data[i], i, receivedBytes);
+		connectionValidator.ValidateIncomingByte(data[i], i, socket->GetReceivedBytes());
 	}
 }
 
@@ -49,14 +52,25 @@ void setup()
 	gsmAt.Logger().OnLog(OnLog);
 
 	Serial.begin(500000);
-	socket = gsm.CreateSocket();
 	gui.init();
+
+	socket = gsm.CreateSocket(0, ProtocolType::Tcp);
+	socket->OnSocketEvent(nullptr, OnSocketEvent);
+	socket->OnDataRecieved(nullptr, OnSocketDataReceived);
 }
+
 
 void loop()
 {
 	gui.Clear();
-
+	if (gsm.GarbageOnSerialDetected())
+	{
+		FixedString20 error("UART garbage !!!");
+		gui.DrawFramePopup(error, 40, 5);
+		gui.Display();
+		delay(500);
+		return;
+	}
 	if (connectionValidator.HasError())
 	{
 		auto error = connectionValidator.GetError();
@@ -72,90 +86,43 @@ void loop()
 
 	if (socket->IsNetworkAvailable())
 	{
+		if (socket->IsClosed())
+		{
+			socket->BeginConnect("conti.ml", 12668);
+		}
 
+		if (socket->IsConnected())
+		{
+			if (socket->GetSentBytes() == 0)
+			{
+				connectionValidator.NotifyConnected();
+				socket->Send("1", 1);
+			}
+			static uint64_t lastDataSend = 0;
+			if (millis() - lastDataSend > 10000)
+			{
+				lastDataSend = millis();
+				SendPacket();
+			}
+		}
+		gui.lcd_label(Font::F10, 0, 64 - 22, F("%s"), SocketStateToStr(socket->GetState()));
+		gui.lcd_label(Font::F10, 0, 64 - 12, F("r/s: %llu b/%llu b"), socket->GetReceivedBytes(), socket->GetSentBytes());
 	}
 
-	if (state == GsmState::ConnectedToGprs)
-	{
-		ConnectionInfo connection;
-
-		auto connectionInfoResult = gsmAt.GetConnectionInfo(0, connection);
-		if(connectionInfoResult == AtResultType::Success)
-		{
-			static bool justConnected = false;
-			if (connection.State == ConnectionState::Closed || connection.State == ConnectionState::Initial)
-			{
-				receivedBytes = 0;
-				connectionValidator.SetJustConnected();
-				gsmAt.BeginConnect(ProtocolType::Tcp, 0, "conti.ml", 12668);
-				justConnected = true;
-			}
-
-			if(connection.State == ConnectionState::Connected)
-			{
-				static uint8_t n = 0;
-
-				if (justConnected)
-				{
-					n = 0;
-					justConnected = false;
-					FixedString10 dataToSend = "1";
-					uint16_t sentBytes = 0;
-					if(gsmAt.Send(0, dataToSend, sentBytes) != AtResultType::Success)
-					{
-						Serial.println("Failed to send data");
-					}
-				}
-
-				FixedString10 data;
-				for(int i=0; i < data.capacity(); i++)
-				{				
-					data.append(n);
-					n++;
-				}
-				uint16_t sentBytes = 0;
-				if(gsmAt.Send(0, data, sentBytes) == AtResultType::Success)
-				{
-					Serial.printf("Success sent %d bytes\n", sentBytes);
-				}
-
-				if(data.length() > sentBytes)
-				{
-					n -= data.length() - sentBytes;
-				}
-
-				ReadDataFromConnection();
-			}
-			gui.lcd_label(Font::F10, 0, 64 - 22, F("%s"), ConnectionStateToStr(connection.State));
-			gui.lcd_label(Font::F10, 0, 64 - 12, F("received: %d b"), receivedBytes);
-		}
-		else
-		{
-			Serial.println("Failed to get conn info");
-		}
-	}	
 	
-	display.display();
-
-	Serial.println();
-	Serial.println("       ######       ");
-	Serial.println();
-
+	gui.Display();
+	Serial.println("\n       ######       \n");
 	gsm.Wait(500);
 }
-
-void ReadDataFromConnection()
+void SendPacket()
 {
-	FixedString<5> buffer;
-	uint16_t leftBytes = 0;
-	while (gsmAt.Read(0, buffer, leftBytes) == AtResultType::Success)
+	FixedString50 data;
+	connectionValidator.GenerateData(data);
+	uint16_t sentBytes = socket->Send(data);
+	if(sentBytes == -1)
 	{
-		
-		OnDataReceived(0, buffer);
-		buffer.clear();
-		if (leftBytes == 0)
-		{
-			return;
-		}
+		Serial.printf("Failed to send data");
 	}
+	Serial.printf("Success sent %d bytes\n", sentBytes);
+	connectionValidator.NotifyDataSent(data.length(), sentBytes);
 }

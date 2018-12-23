@@ -13,14 +13,32 @@ class ConnectionDataValidator
 		hasDataError = true;
 		dataError = error;
 	}
-	
+	int n;
 public:
+
+	void GenerateData(FixedStringBase &targetStr)
+	{
+		for (int i = 0; i < targetStr.capacity(); i++)
+		{
+			targetStr.append(n);
+			n++;
+		}
+	}
+	void NotifyDataSent(uint16_t dataLength, uint16_t sentBytes)
+	{
+		if (dataLength > sentBytes)
+		{
+			n -= dataLength - sentBytes;
+		}
+	}
 	ConnectionDataValidator()
 	{
+		n = 0;
 		prevChar = 255;
 	}
-	void SetJustConnected()
+	void NotifyConnected()
 	{
+		n = 0;
 		prevChar = 255;
 	}
 	FixedString100 GetError()

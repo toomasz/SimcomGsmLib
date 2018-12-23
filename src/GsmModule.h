@@ -3,7 +3,9 @@
 #include "SimcomAtCommands.h"
 #include <FixedString.h>
 #include <WString.h>
-#include "GsmAsyncSocket.h"
+#include "Network/GsmAsyncSocket.h"
+#include "Network/SocketManager.h"
+#include <vector>
 
 enum class GsmState
 {
@@ -22,8 +24,8 @@ enum class GsmState
 
 class GsmModule
 {
-	SimcomAtCommands& _gsm;
-	bool _justConnectedToModem;
+	SimcomAtCommands& _gsm;	
+	SocketManager _socketManager;
 	
 	void GetStateStringFromProg(char* stateStr, GsmState state)
 	{
@@ -41,13 +43,17 @@ class GsmModule
 			_gsm.Logger().Log(F("State changed %s -> %s"), inState, outState);
 		}
 		_state = newState;
+		_socketManager.SetIsNetworkAvailable(_state == GsmState::ConnectedToGprs);
 	}
 	GsmState _state;
 	bool GetVariablesFromModem();
-public:
-	GsmAsyncSocket* CreateSocket()
-	{
 
+public:
+	GsmModule(SimcomAtCommands &gsm);
+
+	GsmAsyncSocket* CreateSocket(uint8_t mux, ProtocolType protocolType)
+	{
+		return _socketManager.CreateSocket(mux, protocolType);
 	}
 	uint64_t BaudRate;
 	GsmState GetState()
@@ -65,7 +71,6 @@ public:
 	SimcomIpState ipStatus;
 	SimState simStatus;
 
-	GsmModule(SimcomAtCommands &gsm);
 	void Loop();
 	void Wait(uint64_t delayInMs)
 	{

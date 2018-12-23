@@ -17,11 +17,10 @@ void setup()
 	Serial.begin(500000);
 	Serial.println("Trying to find modem baud rate...");
 
-	Serial2.begin(115200, SERIAL_8N1, 16, 14, false);
 
-	/*auto baudRate = gsm.FindCurrentBaudRate();
+	auto baudRate = gsm.FindCurrentBaudRate();
 	Serial.print("Found baud rate: ");
-	Serial.print(baudRate);*/
+	Serial.print(baudRate);
 }
 
 void loop()

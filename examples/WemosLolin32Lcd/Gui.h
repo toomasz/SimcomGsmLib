@@ -236,13 +236,18 @@ public:
 	void DisplayIp(GsmIp& ip)
 	{
 		lcd_label(Font::F10, 0,26, F("ip: %s"), ip.ToString().c_str());
-	}
+	}	
 
 	void Clear()
 	{
 		_lcd.setColor(OLEDDISPLAY_COLOR::BLACK);
 		_lcd.fillRect(0, 0, 128, 64);
 		_lcd.setColor(OLEDDISPLAY_COLOR::WHITE);
+	}
+
+	void Display()
+	{
+		_lcd.display();
 	}
 
 	void DisplayBlinkIndicator()

@@ -6,12 +6,14 @@
 SimcomResponseParser::SimcomResponseParser(ParserContext& parserContext, GsmLogger& logger, Stream& serial, FixedStringBase &currentCommandStr):
 _logger(logger),
 _parserContext(parserContext),
-_dataReceivedCallback(nullptr),
 _garbageOnSerialDetected(false),
+IsGarbageDetectionActive(true),
 _serial(serial),
 _promptSequenceDetector("> "),
 commandReady(false),
-_currentCommandStr(currentCommandStr)
+_currentCommandStr(currentCommandStr),
+_onMuxEvent(nullptr),
+_onMuxEventCtx(nullptr)
 {
 	_currentCommand = AtCommand::Generic;
 	lineParserState = PARSER_INITIAL;
@@ -115,8 +117,11 @@ void SimcomResponseParser::FeedChar(char c)
 		{
 			if (ParsingHelpers::CheckIfLineContainsGarbage(_response))
 			{
-				_garbageOnSerialDetected = true;				
-				_logger.Log(F(" Garbage detected(%d b): "),_response.length());
+				if (IsGarbageDetectionActive)
+				{
+					_garbageOnSerialDetected = true;
+					_logger.Log(F(" Garbage detected(%d b): "), _response.length());
+				}
 
 			}
 			else
@@ -137,11 +142,6 @@ void SimcomResponseParser::FeedChar(char c)
 		_response.clear();
 	}
 
-}
-
-void SimcomResponseParser::OnDataReceived(DataReceivedCallback onDataReceived)
-{
-	_dataReceivedCallback = onDataReceived;
 }
 
 /* returns true if current line is error: ERROR, CME ERROR etc*/
@@ -214,6 +214,11 @@ bool SimcomResponseParser::ParseUnsolicited(FixedStringBase& line)
 			if (parser.NextString(str))
 			{
 				_logger.Log(F("Mux: %d, event = %s"), mux, str.c_str());
+				if (_onMuxEvent != nullptr)
+				{
+					_response.clear();
+					_onMuxEvent(_onMuxEventCtx, mux, str);
+				}
 				return true;
 			}
 		}
@@ -711,4 +716,10 @@ bool SimcomResponseParser::GarbageOnSerialDetected()
 void SimcomResponseParser::ResetUartGarbageDetected()
 {
 	_garbageOnSerialDetected = false;
+}
+
+void SimcomResponseParser::OnMuxEvent(void * ctx, MuxEventHandler onMuxEvent)
+{
+	_onMuxEventCtx = ctx;
+	_onMuxEvent = onMuxEvent;
 }

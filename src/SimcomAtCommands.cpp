@@ -49,14 +49,18 @@ AtResultType SimcomAtCommands::PopCommandResult(bool ensureDelay, uint64_t timeo
 	}
 	const auto commandResult = _parser.GetAtResultType();
 	const auto elapsedMs = millis() - start;
-	_logger.LogAt(F("    -- %d ms --"), elapsedMs);
-	if (commandResult == AtResultType::Timeout)
+	
+	if (commandResult == AtResultType::Success)
 	{
-		_logger.Log(F("                      --- !!! '%s' - TIMEOUT!!! ---      "), _currentCommand.c_str(), elapsedMs);
+		_logger.LogAt(F("  SUCCESS  -- %d ms --"), elapsedMs);
+	}	
+    else if (commandResult == AtResultType::Timeout)
+	{
+		_logger.Log(F("                      --- TIMEOUT executing '%s', elapsed %d ms ---"), _currentCommand.c_str(), elapsedMs);
 	}
-	if (commandResult == AtResultType::Error)
+	else if (commandResult == AtResultType::Error)
 	{
-		_logger.Log(F("                      --- !!! '%s' - ERROR!!! ---      "), _currentCommand.c_str(), elapsedMs);
+		_logger.Log(F("                      --- ERROR executing '%s', elapsed %d ms ---"), _currentCommand.c_str(), elapsedMs);
 	}
 	return commandResult;
 }
@@ -289,33 +293,13 @@ AtResultType SimcomAtCommands::At()
 	return PopCommandResult(false, 60u);
 }
 
-void SimcomAtCommands::OnDataReceived(DataReceivedCallback onDataReceived)
-{
-	_parser.OnDataReceived(onDataReceived);
-}
-
 AtResultType SimcomAtCommands::SetBaudRate(uint32_t baud)
 {	
 	SendAt_P(AtCommand::Generic, F("AT+IPR=%d"), baud);
 	return PopCommandResult();
 }
 bool SimcomAtCommands::EnsureModemConnected(long requestedBaudRate)
-{	
-	auto atResult = At();
-
-	int n = 1;
-	if (_currentBaudRate != 0)
-	{
-		while (atResult != AtResultType::Success && n-- > 0)
-		{
-			delay(20);
-			atResult = At();
-		}
-		if (atResult == AtResultType::Success || atResult == AtResultType::Error)
-		{
-			return true;
-		}
-	}
+{
 	_currentBaudRate = FindCurrentBaudRate();
 	if (_currentBaudRate == 0)
 	{
@@ -342,14 +326,44 @@ bool SimcomAtCommands::EnsureModemConnected(long requestedBaudRate)
 	_parser.ResetUartGarbageDetected();
 	return true;	
 }
+
+uint64_t SimcomAtCommands::FindCurrentBaudRate()
+{
+	if (_updateBaudRateCallback == nullptr)
+	{
+		_logger.Log(F("Change baud rate callback is null"));
+		return 0;
+	}
+
+	//garbage detection is disabled as change baud rate might result in 
+	//receiving couple of garbage characters, safe to ignore
+	_parser.IsGarbageDetectionActive = false;
+	int i = 0;
+	uint64_t baudRate = 0;
+	AtResultType commandResult;
+	do
+	{
+		auto baudRateToTry = _defaultBaudRates[i];
+		_logger.Log(F("Trying baud rate: %d"), baudRateToTry);
+		_updateBaudRateCallback(baudRateToTry);
+		commandResult = At();
+		if (commandResult == AtResultType::Success)
+		{
+			baudRate = baudRateToTry;
+		}
+
+		i++;
+	} while (_defaultBaudRates[i] != 0 && commandResult != AtResultType::Success);
+	_parser.IsGarbageDetectionActive = true;
+	return baudRate;
+}
+
 AtResultType SimcomAtCommands::GetImei(FixedString20 &imei)
 {	
 	_parserContext.Imei = &imei;
 	SendAt_P(AtCommand::Gsn, F("AT+GSN"));
 	return PopCommandResult();
 }
-
-
 
 bool SimcomAtCommands::GarbageOnSerialDetected()
 {
@@ -374,31 +388,6 @@ AtResultType SimcomAtCommands::SendUssdWaitResponse(char *ussd, FixedString150& 
 	_parserContext.UssdResponse = &response;
 	SendAt_P(AtCommand::Cusd, F("AT+CUSD=1,\"%s\""), ussd);
 	return PopCommandResult(false, 10000u);
-}
-
-int SimcomAtCommands::FindCurrentBaudRate()
-{
-	if (_updateBaudRateCallback == nullptr)
-	{
-		return 0;
-	}
-	int i = 0;
-	int baudRate = 0;
-	do
-	{
-		baudRate = _defaultBaudRates[i];
-		_logger.Log(F("Trying baud rate: %d"), baudRate);
-		_updateBaudRateCallback(baudRate);
-		if (At() == AtResultType::Success)
-		{
-			_logger.Log(F(" Found baud rate: %d"), baudRate);
-			return baudRate;
-		}
-		i++;
-	} 
-	while (_defaultBaudRates[i] != 0);
-
-	return 0;
 }
 
 AtResultType SimcomAtCommands::Cipshut()
@@ -470,7 +459,10 @@ AtResultType SimcomAtCommands::GetConnectionInfo(uint8_t mux, ConnectionInfo &co
 	SendAt_P(AtCommand::CipstatusSingleConnection, F("AT+CIPSTATUS=%d"), mux);
 	return PopCommandResult();
 }
-
+void SimcomAtCommands::OnMuxEvent(void* ctx, MuxEventHandler muxEventHandler)
+{
+	_parser.OnMuxEvent(ctx, muxEventHandler);
+}
 
 
 

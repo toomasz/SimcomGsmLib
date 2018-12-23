@@ -18,7 +18,7 @@ class SimcomAtCommands
 {
 private:
 		Stream &_serial;
-		int _currentBaudRate;
+		uint64_t _currentBaudRate;
 		GsmLogger _logger;
 		SimcomResponseParser _parser;
 		UpdateBaudRateCallback _updateBaudRateCallback;
@@ -41,8 +41,7 @@ public:
 
 		// Serial methods
 		bool EnsureModemConnected(long requestedBaudRate);
-		int FindCurrentBaudRate();
-		void OnDataReceived(DataReceivedCallback onDataReceived);
+		uint64_t FindCurrentBaudRate();
 		bool GarbageOnSerialDetected();
 
 		// Standard modem functions
@@ -84,6 +83,7 @@ public:
 		AtResultType CloseConnection(uint8_t mux);
 		AtResultType GetConnectionInfo(uint8_t mux, ConnectionInfo &connectionInfo);
 
+		void OnMuxEvent(void* ctx, MuxEventHandler muxEventHandler);
 		// GPRS
 		AtResultType SetApn(const char *apnName, const char *username, const char *password);
 		AtResultType AttachGprs();
