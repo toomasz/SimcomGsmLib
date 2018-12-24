@@ -1,6 +1,7 @@
 #pragma once
 
 #include <FixedString.h>
+#include "Network\GsmAsyncSocket.h"
 
 class ConnectionDataValidator
 {
@@ -48,6 +49,14 @@ public:
 	bool HasError()
 	{
 		return hasDataError;
+	}
+
+	void ValidateIncomingData(FixedStringBase& data, GsmAsyncSocket *socket)
+	{
+		for (int i = 0; i < data.length(); i++)
+		{
+			ValidateIncomingByte(data[i], i, socket->GetReceivedBytes());
+		}
 	}
 	
 	void ValidateIncomingByte(char c, int position, int receivedBytes)

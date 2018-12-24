@@ -4,6 +4,7 @@
 #include <SimcomAtCommands.h>
 #include <FixedString.h>
 #include <GsmModule.h>
+#include <GsmLibHelpers.h>
 
 enum class Font
 {
@@ -74,6 +75,12 @@ public:
 		_lcd.setColor(OLEDDISPLAY_COLOR::WHITE);
 		_lcd.fillRect(2, batteryPlusHeight + 2 + batteryLeftPixels, width - 2 * 2, fillHeightWhen100Percent - 2 - batteryLeftPixels);
 
+	}
+
+	void DisplaySocketState(GsmAsyncSocket *socket)
+	{
+		lcd_label(Font::F10, 0, 64 - 22, F("%s"), SocketStateToStr(socket->GetState()));
+		lcd_label(Font::F10, 0, 64 - 12, F("r/s: %llu b/%llu b"), socket->GetReceivedBytes(), socket->GetSentBytes());
 	}
 
 	void DisplayGsmState(GsmModule& gsm)
@@ -285,7 +292,7 @@ public:
 		DisplayError(error);
 	}
 
-	void DisplayError(FixedStringBase& error)
+	void DisplayError(FixedString100 error)
 	{
 		Clear();
 		_lcd.setColor(OLEDDISPLAY_COLOR::WHITE);

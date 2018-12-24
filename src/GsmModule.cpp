@@ -116,6 +116,7 @@ void GsmModule::Loop()
 
 	if (_state == GsmState::ConnectingToGprs)
 	{
+		
 		_gsm.Cipshut();
 
 		if (_gsm.SetSipQuickSend(true) == AtResultType::Success)

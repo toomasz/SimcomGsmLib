@@ -6,7 +6,6 @@
 #include "ConnectionDataValidator.h"
 #include <Wire.h>
 #include <GsmModule.h>
-
 #include <SimcomAtCommandsEsp32.h>
 
 SimcomAtCommandsEsp32 gsmAt(Serial1, 16, 14);
@@ -16,20 +15,7 @@ SSD1306 display(0x3c, 5, 4);
 Gui gui(display);
 
 ConnectionDataValidator connectionValidator;
-
 GsmAsyncSocket *socket = nullptr;
-
-bool justConnectedToModem = true;
-void OnLog(const char* gsmLog)
-{
-	Serial.printf("%u8 [GSM]", millis());
-	Serial.println(gsmLog);
-}
-
-void OnSocketEvent(void*ctx, SocketEventType eventType)
-{
-	Serial.printf("Socket event: %s\n", SocketEventTypeToStr(eventType));	
-}
 
 void OnSocketDataReceived(void* ctx, FixedStringBase& data)
 {
@@ -40,22 +26,28 @@ void OnSocketDataReceived(void* ctx, FixedStringBase& data)
 	FixedString200 dataStr;
 	BinaryToString(data, dataStr);
 	Serial.printf("Received %d bytes: '%s'\n", data.length(), dataStr.c_str());
-	for (int i = 0; i < data.length(); i++)
-	{
-		connectionValidator.ValidateIncomingByte(data[i], i, socket->GetReceivedBytes());
-	}
+	connectionValidator.ValidateIncomingData(data, socket);	
 }
 
 void setup()
 {	
 	//gsmAt.Logger().LogAtCommands = true;
-	gsmAt.Logger().OnLog(OnLog);
-
 	Serial.begin(500000);
+
+	gsmAt.Logger().OnLog([](const char *logEntry) 
+	{
+		Serial.printf("%u8 [GSM]", millis());
+		Serial.println(logEntry);
+	});
+
 	gui.init();
 
 	socket = gsm.CreateSocket(0, ProtocolType::Tcp);
-	socket->OnSocketEvent(nullptr, OnSocketEvent);
+
+	socket->OnSocketEvent(nullptr, [](void*ctx, SocketEventType eventType) 
+	{
+		Serial.printf("Socket event: %s\n", SocketEventTypeToStr(eventType));
+	});
 	socket->OnDataRecieved(nullptr, OnSocketDataReceived);
 }
 
@@ -65,16 +57,13 @@ void loop()
 	gui.Clear();
 	if (gsm.GarbageOnSerialDetected())
 	{
-		FixedString20 error("UART garbage !!!");
-		gui.DrawFramePopup(error, 40, 5);
-		gui.Display();
+		gui.DisplayError("UART garbage !!!");
 		delay(500);
 		return;
 	}
 	if (connectionValidator.HasError())
 	{
-		auto error = connectionValidator.GetError();
-		gui.DisplayError(error);
+		gui.DisplayError(connectionValidator.GetError());
 		delay(500);
 		return;
 	}
@@ -105,8 +94,8 @@ void loop()
 				SendPacket();
 			}
 		}
-		gui.lcd_label(Font::F10, 0, 64 - 22, F("%s"), SocketStateToStr(socket->GetState()));
-		gui.lcd_label(Font::F10, 0, 64 - 12, F("r/s: %llu b/%llu b"), socket->GetReceivedBytes(), socket->GetSentBytes());
+
+		gui.DisplaySocketState(socket);
 	}
 
 	
@@ -122,6 +111,7 @@ void SendPacket()
 	if(sentBytes == -1)
 	{
 		Serial.printf("Failed to send data");
+		return;
 	}
 	Serial.printf("Success sent %d bytes\n", sentBytes);
 	connectionValidator.NotifyDataSent(data.length(), sentBytes);
