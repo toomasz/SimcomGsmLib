@@ -4,6 +4,7 @@
 #include <inttypes.h>
 #include "SimcomGsmTypes.h"
 #include "SimcomAtCommands.h"
+#include "GsmLogger.h"
 #include <FixedString.h>
 class GsmModule;
 
@@ -17,6 +18,7 @@ enum class SocketStateType : uint8_t
 
 enum class SocketEventType : uint8_t
 {
+	ConnectBegin,
 	ConnectFailed,
 	ConnectSuccess,
 	Disconnecting,
@@ -36,19 +38,24 @@ class GsmAsyncSocket
 	bool _isNetworkAvailable;
 	ProtocolType _protocol;
 	SimcomAtCommands& _gsm;
+	SocketStateType _state;
+	uint64_t _receivedBytes;
+	uint64_t _sentBytes;
+	GsmLogger& _logger;
+
 	void* _onSocketEventCtx;
 	SocketEventHandler _onSocketEvent;
 	void* _onSocketDataReceivedCtx;
 	SocketDataReceivedHandler _onSocketDataReceived;
-	SocketStateType _state;
-	void ChangeState(SocketStateType newState);
+
+	SocketStateType EventToState(SocketEventType eventType);
+	bool ChangeState(SocketStateType newState);
 	void SetIsNetworkAvailable(bool isNetworkAvailable);
 	void RaiseEvent(SocketEventType eventType);
-	bool ReadIncomingData();
-	uint64_t _receivedBytes;
-	uint64_t _sentBytes;
+	void OnMuxEvent(FixedStringBase &eventStr);
+	bool ReadIncomingData();	
 public:
-	GsmAsyncSocket(SimcomAtCommands& gsm, uint8_t mux, ProtocolType protocol);
+	GsmAsyncSocket(SimcomAtCommands& gsm, uint8_t mux, ProtocolType protocol, GsmLogger& logger);
 	SocketStateType GetState()
 	{
 		return _state;

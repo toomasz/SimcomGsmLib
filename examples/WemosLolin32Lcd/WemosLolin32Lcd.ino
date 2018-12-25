@@ -23,22 +23,28 @@ void OnSocketDataReceived(void* ctx, FixedStringBase& data)
 	{
 		return;
 	}
+	PrintIncomingData(data);
+	connectionValidator.ValidateIncomingData(data, socket);	
+}
+
+void PrintIncomingData(FixedStringBase& data)
+{
 	FixedString200 dataStr;
 	BinaryToString(data, dataStr);
 	Serial.printf("Received %d bytes: '%s'\n", data.length(), dataStr.c_str());
-	connectionValidator.ValidateIncomingData(data, socket);	
 }
 
 void setup()
 {	
-	//gsmAt.Logger().LogAtCommands = true;
+	gsmAt.Logger().LogAtCommands = true;
 	Serial.begin(500000);
 
-	gsmAt.Logger().OnLog([](const char *logEntry) 
+	gsm.OnLog([](const char *logEntry)
 	{
 		Serial.printf("%u8 [GSM]", millis());
 		Serial.println(logEntry);
 	});
+	gsm.ApnName = "virgin-internet";
 
 	gui.init();
 
@@ -67,7 +73,6 @@ void loop()
 		delay(500);
 		return;
 	}
-
 	gsm.Loop();
 
 	const auto state = gsm.GetState();
@@ -77,7 +82,12 @@ void loop()
 	{
 		if (socket->IsClosed())
 		{
-			socket->BeginConnect("conti.ml", 12668);
+			static uint64_t lastConnectTime =0;
+			if (millis() - lastConnectTime > 5000)
+			{
+				lastConnectTime = millis();
+				socket->BeginConnect("conti.ml", 12668);
+			}
 		}
 
 		if (socket->IsConnected())
@@ -100,8 +110,8 @@ void loop()
 
 	
 	gui.Display();
-	Serial.println("\n       ######       \n");
-	gsm.Wait(500);
+	//Serial.println("\n       ######       \n");
+	gsm.Wait(250);
 }
 void SendPacket()
 {

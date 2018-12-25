@@ -179,6 +179,7 @@ bool SimcomResponseParser::ParseUnsolicited(FixedStringBase& line)
 	}
 	if (line.equals(F("Call Ready")))
 	{
+		_logger.Log(F("Call ready"));
 		return true;
 	}
 	

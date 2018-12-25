@@ -5,6 +5,7 @@
 #include <WString.h>
 #include "Network/GsmAsyncSocket.h"
 #include "Network/SocketManager.h"
+#include "GsmLogger.h"
 #include <vector>
 
 enum class GsmState
@@ -20,13 +21,11 @@ enum class GsmState
 	ConnectedToGprs,
 };
 
-
-
 class GsmModule
 {
 	SimcomAtCommands& _gsm;	
 	SocketManager _socketManager;
-	
+	GsmLogger& _logger;
 	void GetStateStringFromProg(char* stateStr, GsmState state)
 	{
 		strcpy_P(stateStr, (PGM_P)StateToStr(state));
@@ -49,6 +48,9 @@ class GsmModule
 	bool GetVariablesFromModem();
 
 public:
+	char *ApnName;
+	char* ApnUser;
+	char* ApnPassword;
 	GsmModule(SimcomAtCommands &gsm);
 
 	GsmAsyncSocket* CreateSocket(uint8_t mux, ProtocolType protocolType)
@@ -70,6 +72,7 @@ public:
 	GsmIp ipAddress;
 	SimcomIpState ipStatus;
 	SimState simStatus;
+	void OnLog(GsmLogCallback onLog);
 
 	void Loop();
 	void Wait(uint64_t delayInMs)

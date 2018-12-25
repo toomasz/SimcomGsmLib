@@ -13,28 +13,7 @@ class SocketManager
 	SimcomAtCommands& _atCommands;
 	GsmLogger &_logger;
 	bool _isNetworkAvailable;
-
-	bool ParseSocketEvent(FixedStringBase&eventStr, SocketEventType& socketEvent)
-	{
-		if (eventStr == F("CONNECT OK"))
-		{
-			socketEvent = SocketEventType::ConnectSuccess;
-			return true;
-		}
-		if (eventStr == F("CONNECT FAIL"))
-		{
-			socketEvent = SocketEventType::ConnectFailed;
-			return true;
-		}
-		if (eventStr == F("CLOSED"))
-		{
-			socketEvent = SocketEventType::Disconnected;
-			return true;
-		}
-		_logger.Log(F("Failed to parse socket event: %s"), eventStr.c_str());
-		return false;
-	}
-
+	
 	void OnMuxEvent(uint8_t mux, FixedStringBase& eventStr)
 	{
 		auto socket = _sockets[mux];
@@ -43,15 +22,8 @@ class SocketManager
 			_logger.Log(F("Received socket event but socket was null"));
 			return;
 		}
-
-		SocketEventType socketEvent;
-		if (ParseSocketEvent(eventStr, socketEvent))
-		{
-			socket->RaiseEvent(socketEvent);
-		}
-	}
-
-	
+		socket->OnMuxEvent(eventStr);
+	}	
 
 public:
 	SocketManager(SimcomAtCommands &atCommands, GsmLogger& logger):
@@ -107,7 +79,7 @@ public:
 			_logger.Log(F("Socket %d is already created"), mux);
 			return nullptr;
 		}
-		auto socket = new GsmAsyncSocket(_atCommands, mux, protocolType);
+		auto socket = new GsmAsyncSocket(_atCommands, mux, protocolType, _logger);
 		_sockets[mux] = socket;
 		_logger.Log(F("Socket %d created"), mux);
 		return socket;

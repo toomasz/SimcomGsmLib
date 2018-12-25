@@ -298,7 +298,7 @@ AtResultType SimcomAtCommands::SetBaudRate(uint32_t baud)
 	SendAt_P(AtCommand::Generic, F("AT+IPR=%d"), baud);
 	return PopCommandResult();
 }
-bool SimcomAtCommands::EnsureModemConnected(long requestedBaudRate)
+bool SimcomAtCommands::EnsureModemConnected(uint64_t requestedBaudRate)
 {
 	_currentBaudRate = FindCurrentBaudRate();
 	if (_currentBaudRate == 0)
@@ -308,13 +308,16 @@ bool SimcomAtCommands::EnsureModemConnected(long requestedBaudRate)
 
 	_logger.Log(F("Found baud rate = %d"), _currentBaudRate);
 	
-	if (SetBaudRate(requestedBaudRate) != AtResultType::Success)
+	if (_currentBaudRate != requestedBaudRate)
 	{
-		_logger.Log(F("Failed to update baud rate to %d"), requestedBaudRate);
-		return false;
+		if (SetBaudRate(requestedBaudRate) != AtResultType::Success)
+		{
+			_logger.Log(F("Failed to update baud rate to %d"), requestedBaudRate);
+			return false;
+		}
+		_currentBaudRate = requestedBaudRate;
+		_logger.Log(F("Updated baud rate to = %d"), _currentBaudRate);
 	}
-	_currentBaudRate = requestedBaudRate;
-	_logger.Log(F("Updated baud rate to = %d"), _currentBaudRate);
 
 	At();
 
@@ -434,7 +437,7 @@ AtResultType SimcomAtCommands::Read(int mux, FixedStringBase& outputBuffer, uint
 	_parserContext.CipRxGetBuffer = &outputBuffer;
 	_parserContext.CiprxGetAvailableBytes = &availableBytes;
 	SendAt_P(AtCommand::CipRxGetRead,F("AT+CIPRXGET=2,%d,%d"), mux, outputBuffer.capacity());
-	return PopCommandResult(true);
+	return PopCommandResult(false);
 }
 
 AtResultType SimcomAtCommands::Send(int mux, FixedStringBase& data, uint16_t &sentBytes)
@@ -444,7 +447,7 @@ AtResultType SimcomAtCommands::Send(int mux, FixedStringBase& data, uint16_t &se
 	_parserContext.CipsendState = CipsendStateType::WaitingForPrompt;
 	_parserContext.CipsendSentBytes = &sentBytes;
 	SendAt_P(AtCommand::CipSend, F("AT+CIPSEND=%d,%d"), mux, data.length());
-	return PopCommandResult(true);
+	return PopCommandResult(false);
 }
 
 AtResultType SimcomAtCommands::CloseConnection(uint8_t mux)

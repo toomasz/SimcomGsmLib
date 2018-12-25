@@ -13,7 +13,7 @@ void GsmAsyncSocket::OnDataRecieved(void * ctx, SocketDataReceivedHandler onSock
 	_onSocketDataReceivedCtx = ctx;
 }
 
-GsmAsyncSocket::GsmAsyncSocket(SimcomAtCommands& gsm, uint8_t mux, ProtocolType protocol):
+GsmAsyncSocket::GsmAsyncSocket(SimcomAtCommands& gsm, uint8_t mux, ProtocolType protocol, GsmLogger& logger):
 _gsm(gsm),
 _mux(mux),
 _isNetworkAvailable(false),
@@ -24,7 +24,8 @@ _onSocketEvent(nullptr),
 _onSocketDataReceivedCtx(nullptr),
 _onSocketDataReceived(nullptr),
 _receivedBytes(0),
-_sentBytes(0)
+_sentBytes(0),
+_logger(logger)
 {
 }
 
@@ -43,11 +44,11 @@ bool GsmAsyncSocket::IsConnected()
 }
 bool GsmAsyncSocket::BeginConnect(const char* host, uint16_t port)
 {
-	ChangeState(SocketStateType::Connecting);
+	RaiseEvent(SocketEventType::ConnectBegin);
 	auto connectResult = _gsm.BeginConnect(_protocol, _mux, host, port);
 	if (connectResult != AtResultType::Success)
 	{
-		ChangeState(SocketStateType::Closed);
+		RaiseEvent(SocketEventType::ConnectFailed);
 		return false;
 	}
 	return true;
@@ -72,14 +73,19 @@ int16_t GsmAsyncSocket::Send(const char * data, uint16_t length)
 	return Send(dataStr);
 }
 
-void GsmAsyncSocket::ChangeState(SocketStateType newState)
+bool GsmAsyncSocket::ChangeState(SocketStateType newState)
 {
+	if (_state == newState)
+	{
+		return false;
+	}
 	_state = newState;
 	if (newState == SocketStateType::Closed)
 	{
 		_receivedBytes = 0;
 		_sentBytes = 0;
 	}
+	return true;
 }
 
 void GsmAsyncSocket::SetIsNetworkAvailable(bool isNetworkAvailable)
@@ -95,33 +101,59 @@ void GsmAsyncSocket::SetIsNetworkAvailable(bool isNetworkAvailable)
 	}
 }
 
-void GsmAsyncSocket::RaiseEvent(SocketEventType eventType)
+SocketStateType GsmAsyncSocket::EventToState(SocketEventType eventType)
 {
 	switch (eventType)
 	{
-	case SocketEventType::ConnectFailed:
-		ChangeState(SocketStateType::Closed);
-		break;
-	case SocketEventType::ConnectSuccess:
-		ChangeState(SocketStateType::Connected);
-		break;
-	case SocketEventType::Disconnecting:
-		ChangeState(SocketStateType::Closing);
-		break;
-	case SocketEventType::Disconnected:
-		ChangeState(SocketStateType::Closed);
-		break;
-	default:
-		break;
+	case SocketEventType::ConnectBegin: return SocketStateType::Connecting;
+	case SocketEventType::ConnectFailed: return SocketStateType::Closed;
+	case SocketEventType::ConnectSuccess: return SocketStateType::Connected;
+	case SocketEventType::Disconnecting: return SocketStateType::Closing;
+	case SocketEventType::Disconnected:	return SocketStateType::Closed;
 	}
+}
+
+void GsmAsyncSocket::RaiseEvent(SocketEventType eventType)
+{
+	auto newState = EventToState(eventType);
+
+	if (!ChangeState(newState))
+	{
+		return;
+	}
+	
 	if (_onSocketEvent != nullptr)
 	{
 		_onSocketEvent(this, eventType);
 	}
 }
 
+void GsmAsyncSocket::OnMuxEvent(FixedStringBase & eventStr)
+{
+	if (eventStr == F("CONNECT OK"))
+	{
+		RaiseEvent(SocketEventType::ConnectSuccess);
+	}
+	else if (eventStr == F("CONNECT FAIL"))
+	{
+		RaiseEvent(SocketEventType::ConnectFailed);
+	}
+	else if (eventStr == F("CLOSED"))
+	{
+		RaiseEvent(SocketEventType::Disconnected);
+	}
+	else
+	{
+		_logger.Log(F("Failed to parse socket event: %s"), eventStr.c_str());
+	}
+}
+
 bool GsmAsyncSocket::ReadIncomingData()
 {
+	if (_state != SocketStateType::Connected)
+	{
+		return true;
+	}
 	FixedString100 dataBuffer;
 	uint16_t leftData;
 	auto gsmReadResult = _gsm.Read(_mux, dataBuffer, leftData);

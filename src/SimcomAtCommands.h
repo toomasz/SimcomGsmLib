@@ -40,7 +40,7 @@ public:
 		SimcomAtCommands(Stream& serial, UpdateBaudRateCallback updateBaudRateCallback);
 
 		// Serial methods
-		bool EnsureModemConnected(long requestedBaudRate);
+		bool EnsureModemConnected(uint64_t requestedBaudRate);
 		uint64_t FindCurrentBaudRate();
 		bool GarbageOnSerialDetected();
 

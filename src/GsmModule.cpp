@@ -5,7 +5,11 @@
 GsmModule::GsmModule(SimcomAtCommands &gsm):
 	_gsm(gsm), 
 	_socketManager(gsm, gsm.Logger()),
+	_logger(gsm.Logger()),
 	_state(GsmState::Initial),
+	ApnName(""),
+	ApnUser(""),
+	ApnPassword(""),
 	BaudRate(115200)	
 {
 }
@@ -64,10 +68,22 @@ void GsmModule::Loop()
 	if (_state == GsmState::Initializing)
 	{
 		bool cipmux;
-		_gsm.FlightModeOn();
-		_gsm.FlightModeOff();
+		if (_gsm.FlightModeOn() == AtResultType::Timeout)
+		{
+			ChangeState(GsmState::NoShield);
+			return;
+		}
+		if (_gsm.FlightModeOff() == AtResultType::Timeout)
+		{
+			ChangeState(GsmState::NoShield);
+			return;
+		}
 		_gsm.wait(5000);
-		_gsm.GetCipmux(cipmux);
+		if (_gsm.GetCipmux(cipmux) == AtResultType::Timeout)
+		{
+			ChangeState(GsmState::NoShield);
+			return;
+		}
 		//_gsm.Cipshut();
 		ChangeState(GsmState::SearchingForNetwork);
 		return;
@@ -116,27 +132,43 @@ void GsmModule::Loop()
 
 	if (_state == GsmState::ConnectingToGprs)
 	{
-		
+		_logger.Log(F("Connecting to GPRS"));
+		_logger.Log(F("Executing CIPSHUT"));
 		_gsm.Cipshut();
 
-		if (_gsm.SetSipQuickSend(true) == AtResultType::Success)
+		_logger.Log(F("Executing CIPQSEND"));
+		if (_gsm.SetSipQuickSend(true) == AtResultType::Timeout)
 		{
-			Serial.println("Successfully set CIPQSEND to 1\n");
+			ChangeState(GsmState::NoShield);
+			return;
 		}
 
 		bool cipQsend;
-		if (_gsm.GetCipQuickSend(cipQsend) == AtResultType::Success)
+		if (_gsm.GetCipQuickSend(cipQsend) == AtResultType::Timeout)
 		{
+			ChangeState(GsmState::NoShield);
+			return;
 		}
-
-		_gsm.SetCipmux(true);
-		_gsm.SetRxMode(true);
-		auto apnResult = _gsm.SetApn("virgin-internet", "", "");
+		_logger.Log(F("Executing CIPMUX=1"));
+		if (_gsm.SetCipmux(true) == AtResultType::Timeout)
+		{
+			ChangeState(GsmState::NoShield);
+			return;
+		}
+		_logger.Log(F("Executing CIPRXGET=1"));
+		if (_gsm.SetRxMode(true) == AtResultType::Timeout)
+		{
+			ChangeState(GsmState::NoShield);
+			return;
+		}
+		_logger.Log(F("Executing CSTT"));
+		auto apnResult = _gsm.SetApn(ApnName, ApnUser, ApnPassword);
 		if (apnResult == AtResultType::Timeout)
 		{
 			ChangeState(GsmState::NoShield);
 			return;
 		}
+		_logger.Log(F("Executing CIICR"));
 		auto attachResult = _gsm.AttachGprs();
 		if (attachResult == AtResultType::Timeout)
 		{
@@ -147,6 +179,7 @@ void GsmModule::Loop()
 		{
 			return;
 		}
+		_logger.Log(F("Executing CIFSR"));
 		auto ipAddressResult = _gsm.GetIpAddress(ipAddress);
 		if (ipAddressResult == AtResultType::Timeout)
 		{
@@ -169,7 +202,7 @@ void GsmModule::Loop()
 		}
 		if (!_socketManager.ReadDataFromSockets())
 		{
-			_gsm.Logger().Log(F("Timeout while trying to read from on of sockets"));
+			_logger.Log(F("Timeout while trying to read from on of sockets"));
 			ChangeState(GsmState::NoShield);
 			return;
 		}
@@ -245,6 +278,10 @@ const __FlashStringHelper* GsmModule::StateToStr(GsmState state)
 	case GsmState::ConnectedToGprs: return F("ConnectedToGprs");
 	default: return F("Unknown");
 	}
+}
+void GsmModule::OnLog(GsmLogCallback onLog)
+{
+	_gsm.Logger().OnLog(onLog);
 }
 
 int GsmModule::GarbageOnSerialDetected()
