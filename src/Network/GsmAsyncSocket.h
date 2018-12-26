@@ -53,6 +53,7 @@ class GsmAsyncSocket
 	void SetIsNetworkAvailable(bool isNetworkAvailable);
 	void RaiseEvent(SocketEventType eventType);
 	void OnMuxEvent(FixedStringBase &eventStr);
+	void OnCipstatusInfo(ConnectionInfo& connectionInfo);
 	bool ReadIncomingData();	
 public:
 	GsmAsyncSocket(SimcomAtCommands& gsm, uint8_t mux, ProtocolType protocol, GsmLogger& logger);

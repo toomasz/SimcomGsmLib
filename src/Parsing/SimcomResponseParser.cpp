@@ -13,7 +13,9 @@ _promptSequenceDetector("> "),
 commandReady(false),
 _currentCommandStr(currentCommandStr),
 _onMuxEvent(nullptr),
-_onMuxEventCtx(nullptr)
+_onMuxEventCtx(nullptr),
+_onMuxCipstatusInfo(nullptr),
+_onMuxCipstatusInfoCtx(nullptr)
 {
 	_currentCommand = AtCommand::Generic;
 	lineParserState = PARSER_INITIAL;
@@ -305,6 +307,15 @@ ParserState SimcomResponseParser::ParseLine()
 			{
 				if(parser.StartsWith(F("C: ")))
 				{ 
+					ConnectionInfo info;
+					if (ParsingHelpers::ParseSocketStatusLine(parser, info))
+					{
+						if (_onMuxCipstatusInfo != nullptr)
+						{
+							_onMuxCipstatusInfo(_onMuxCipstatusInfoCtx, info);
+						}
+						_logger.Log(F("Parse success"));
+					}
 					internalState++;
 					if (internalState == 7)
 					{
@@ -319,44 +330,14 @@ ParserState SimcomResponseParser::ParseLine()
 	{
 		if (parser.StartsWith(F("+CIPSTATUS: ")))
 		{
-			uint8_t mux;
-			uint8_t bearer;
-			FixedString20 protocolStr;
-			FixedString20 ipAddressStr;
-			uint16_t port;
-			FixedString20 connectionStateStr;
-			if (parser.NextNum(mux) &&
-				parser.NextNum(bearer, true) &&
-				parser.NextString(protocolStr) &&
-				parser.NextString(ipAddressStr) &&
-				parser.NextNum(port, true) &&
-				parser.NextString(connectionStateStr))
+			if (ParsingHelpers::ParseSocketStatusLine(parser, *_parserContext.CurrentConnectionInfo, true))
 			{
-				ProtocolType protocolType;
-				ConnectionState connectionState;
-
-				if(ParsingHelpers::ParseConnectionState(connectionStateStr, connectionState))
-				{
-					auto connInfo = _parserContext.CurrentConnectionInfo;
-
-					connInfo->Mux = mux;
-					connInfo->Bearer = bearer;
-
-					if (protocolStr.length() > 0 && !ParsingHelpers::ParseProtocolType(protocolStr, connInfo->Protocol))
-					{
-						return ParserState::PartialError;
-					}
-					if (ipAddressStr.length() > 0 && !ParsingHelpers::ParseIpAddress(ipAddressStr, connInfo->RemoteAddress))
-					{
-						return ParserState::PartialError;
-					}
-
-					connInfo->Port = port;
-					connInfo->State = connectionState;
-					return ParserState::PartialSuccess;
-				}
+				return ParserState::PartialSuccess;
 			}
-			return ParserState::PartialError;
+			else
+			{
+				return ParserState::PartialError;
+			}			
 		}
 	}
 
@@ -723,4 +704,10 @@ void SimcomResponseParser::OnMuxEvent(void * ctx, MuxEventHandler onMuxEvent)
 {
 	_onMuxEventCtx = ctx;
 	_onMuxEvent = onMuxEvent;
+}
+
+void SimcomResponseParser::OnMuxCipstatusInfo(void * ctx, MuxCipstatusInfoHandler onMuxCipstatusInfo)
+{
+	_onMuxCipstatusInfoCtx = ctx;
+	_onMuxCipstatusInfo = onMuxCipstatusInfo;
 }

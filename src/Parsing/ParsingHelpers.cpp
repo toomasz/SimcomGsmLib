@@ -178,3 +178,47 @@ bool ParsingHelpers::CheckIfLineContainsGarbage(FixedStringBase & line)
 	}
 	return garbageCharacterCount > 2;
 }
+
+bool ParsingHelpers::ParseSocketStatusLine(DelimParser & parser, ConnectionInfo& connectionInfo, bool allowNullBearer)
+{
+	uint8_t mux;
+	uint8_t bearer;
+	FixedString20 protocolStr;
+	FixedString20 ipAddressStr;
+	uint16_t port;
+	FixedString20 connectionStateStr;
+
+	auto parsingAllSegmentsIsOk =
+		parser.NextNum(mux) &&
+		parser.NextNum(bearer, allowNullBearer) &&
+		parser.NextString(protocolStr) &&
+		parser.NextString(ipAddressStr) &&
+		parser.NextNum(port, true) &&
+		parser.NextString(connectionStateStr);
+	if (!parsingAllSegmentsIsOk)
+	{
+		return false;
+	}	
+	ProtocolType protocolType;
+	ConnectionState connectionState;
+
+	if (!ParsingHelpers::ParseConnectionState(connectionStateStr, connectionState))
+	{
+		return false;
+	}
+	connectionInfo.Mux = mux;
+	connectionInfo.Bearer = bearer;
+
+	if (protocolStr.length() > 0 && !ParsingHelpers::ParseProtocolType(protocolStr, connectionInfo.Protocol))
+	{
+		return false;
+	}
+	if (ipAddressStr.length() > 0 && !ParsingHelpers::ParseIpAddress(ipAddressStr, connectionInfo.RemoteAddress))
+	{
+		return false;
+	}
+
+	connectionInfo.Port = port;
+	connectionInfo.State = connectionState;
+	return true;
+}

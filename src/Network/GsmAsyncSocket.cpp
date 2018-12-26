@@ -148,6 +148,26 @@ void GsmAsyncSocket::OnMuxEvent(FixedStringBase & eventStr)
 	}
 }
 
+void GsmAsyncSocket::OnCipstatusInfo(ConnectionInfo &connectionInfo)
+{
+	switch (connectionInfo.State)
+	{
+	case ConnectionState::Connecting:
+		RaiseEvent(SocketEventType::ConnectBegin);
+		break;
+	case ConnectionState::Connected:
+		RaiseEvent(SocketEventType::ConnectSuccess);
+		break;
+	case ConnectionState::RemoteClosing:
+	case ConnectionState::Closing:
+		RaiseEvent(SocketEventType::Disconnecting);
+		break;
+	case ConnectionState::Closed:
+		RaiseEvent(SocketEventType::Disconnected);
+		break;
+	}
+}
+
 bool GsmAsyncSocket::ReadIncomingData()
 {
 	if (_state != SocketStateType::Connected)

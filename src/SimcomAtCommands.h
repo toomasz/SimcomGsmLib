@@ -84,6 +84,7 @@ public:
 		AtResultType GetConnectionInfo(uint8_t mux, ConnectionInfo &connectionInfo);
 
 		void OnMuxEvent(void* ctx, MuxEventHandler muxEventHandler);
+		void OnCipstatusInfo(void * ctx, MuxCipstatusInfoHandler muxCipstatusHandler);
 		// GPRS
 		AtResultType SetApn(const char *apnName, const char *username, const char *password);
 		AtResultType AttachGprs();

@@ -23,7 +23,21 @@ class SocketManager
 			return;
 		}
 		socket->OnMuxEvent(eventStr);
-	}	
+	}
+	void OnCipstatusInfo(ConnectionInfo& connectionInfo)
+	{
+		auto mux = connectionInfo.Mux;
+		if (mux >= SocketCount)
+		{
+			return;
+		}
+		auto socket = _sockets[mux];
+		if (socket == nullptr)
+		{
+			return;
+		}
+		socket->OnCipstatusInfo(connectionInfo);
+	}
 
 public:
 	SocketManager(SimcomAtCommands &atCommands, GsmLogger& logger):
@@ -35,6 +49,10 @@ public:
 		atCommands.OnMuxEvent(this, [](void* ctx, uint8_t mux, FixedStringBase& eventStr)
 		{
 			reinterpret_cast<SocketManager*>(ctx)->OnMuxEvent(mux, eventStr);
+		});
+		atCommands.OnCipstatusInfo(this, [](void* ctx, ConnectionInfo& connectionInfo)
+		{
+			reinterpret_cast<SocketManager*>(ctx)->OnCipstatusInfo(connectionInfo);
 		});
 	}		
 

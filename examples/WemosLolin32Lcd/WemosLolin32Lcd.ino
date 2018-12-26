@@ -36,7 +36,7 @@ void PrintIncomingData(FixedStringBase& data)
 
 void setup()
 {	
-	gsmAt.Logger().LogAtCommands = true;
+	//gsmAt.Logger().LogAtCommands = true;
 	Serial.begin(500000);
 
 	gsm.OnLog([](const char *logEntry)
@@ -44,6 +44,7 @@ void setup()
 		Serial.printf("%u8 [GSM]", millis());
 		Serial.println(logEntry);
 	});
+	gsm.BaudRate = 460800;
 	gsm.ApnName = "virgin-internet";
 
 	gui.init();

@@ -3,7 +3,7 @@
 
 #include <FixedString.h>
 #include "SimcomGsmTypes.h"
-
+#include "DelimParser.h"
 class ParsingHelpers
 {
 public:
@@ -14,6 +14,7 @@ public:
 	static bool ParseConnectionState(FixedString20& connectionStateStr, ConnectionState& connectionState);
 	static bool ParseIpStatus(const char *str, SimcomIpState &status);
 	static bool CheckIfLineContainsGarbage(FixedStringBase &line);
+	static bool ParseSocketStatusLine(DelimParser& parser, ConnectionInfo& connectionInfo, bool allowNullBearer = false);
 };
 
 #endif

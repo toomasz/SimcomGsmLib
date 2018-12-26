@@ -466,6 +466,10 @@ void SimcomAtCommands::OnMuxEvent(void* ctx, MuxEventHandler muxEventHandler)
 {
 	_parser.OnMuxEvent(ctx, muxEventHandler);
 }
+void SimcomAtCommands::OnCipstatusInfo(void* ctx, MuxCipstatusInfoHandler muxCipstatusHandler)
+{
+	_parser.OnMuxCipstatusInfo(ctx, muxCipstatusHandler);
+}
 
 
 
