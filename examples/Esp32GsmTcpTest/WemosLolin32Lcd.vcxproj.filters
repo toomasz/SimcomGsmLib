@@ -15,9 +15,6 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <None Include="WemosLolin32Lcd.ino" />
-  </ItemGroup>
-  <ItemGroup>
     <ClInclude Include="__vm\.WemosLolin32Lcd.vsarduino.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -38,5 +35,8 @@
     <ClCompile Include="ConnectionDataValidator.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Esp32GsmTcpTest.ino" />
   </ItemGroup>
 </Project>

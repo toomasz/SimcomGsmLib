@@ -2,14 +2,14 @@
 #define _SIMCOM_RESPONSE_PARSER_H
 
 #include <Arduino.h>
-#include "GsmLibConstants.h"
+#include "../GsmLibConstants.h"
 #include "ParserContext.h"
 #include "DelimParser.h"
 #include "SequenceDetector.h"
-#include "GsmLogger.h"
+#include "../GsmLogger.h"
 #include <FixedString.h>
 
-typedef void(*MuxEventHandler)(void* ctx, uint8_t mux, FixedStringBase& eventStr);
+typedef bool(*MuxEventHandler)(void* ctx, uint8_t mux, FixedStringBase& eventStr);
 typedef void(*MuxCipstatusInfoHandler)(void* ctx, ConnectionInfo& info);
 class SimcomResponseParser
 {

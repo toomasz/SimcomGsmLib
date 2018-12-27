@@ -2,9 +2,9 @@
 #define _GSM_ASYNC_SOCKET_H
 
 #include <inttypes.h>
-#include "SimcomGsmTypes.h"
-#include "SimcomAtCommands.h"
-#include "GsmLogger.h"
+#include "../SimcomGsmTypes.h"
+#include "../SimcomAtCommands.h"
+#include "../GsmLogger.h"
 #include <FixedString.h>
 class GsmModule;
 
@@ -52,7 +52,7 @@ class GsmAsyncSocket
 	bool ChangeState(SocketStateType newState);
 	void SetIsNetworkAvailable(bool isNetworkAvailable);
 	void RaiseEvent(SocketEventType eventType);
-	void OnMuxEvent(FixedStringBase &eventStr);
+	bool OnMuxEvent(FixedStringBase &eventStr);
 	void OnCipstatusInfo(ConnectionInfo& connectionInfo);
 	bool ReadIncomingData();	
 public:

@@ -1,6 +1,6 @@
 #include "SimcomResponseParser.h"
 
-#include "GsmLibHelpers.h"
+#include "../GsmLibHelpers.h"
 #include "ParsingHelpers.h"
 
 SimcomResponseParser::SimcomResponseParser(ParserContext& parserContext, GsmLogger& logger, Stream& serial, FixedStringBase &currentCommandStr):
@@ -219,8 +219,7 @@ bool SimcomResponseParser::ParseUnsolicited(FixedStringBase& line)
 				_logger.Log(F("Mux: %d, event = %s"), mux, str.c_str());
 				if (_onMuxEvent != nullptr)
 				{
-					_response.clear();
-					_onMuxEvent(_onMuxEventCtx, mux, str);
+					return _onMuxEvent(_onMuxEventCtx, mux, str);
 				}
 				return true;
 			}
@@ -235,7 +234,7 @@ ParserState SimcomResponseParser::ParseLine()
 	if (_state == ParserState::WaitingForEcho)
 	{
 		if (_response.equals(_currentCommandStr))
-		{
+		{		
 			return ParserState::Timeout;
 		}
 		return ParserState::None;
@@ -450,7 +449,7 @@ ParserState SimcomResponseParser::ParseLine()
 	}
 	if(_currentCommand == AtCommand::Cipclose)
 	{
-		if (_response.equals(F("CLOSE OK")))
+		if (_response.endsWith(F("CLOSE OK")))
 		{
 			return ParserState::Success;
 		}

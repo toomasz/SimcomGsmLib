@@ -9,7 +9,7 @@ SocketManager::SocketManager(SimcomAtCommands &atCommands, GsmLogger& logger) :
 {
 	atCommands.OnMuxEvent(this, [](void* ctx, uint8_t mux, FixedStringBase& eventStr)
 	{
-		reinterpret_cast<SocketManager*>(ctx)->OnMuxEvent(mux, eventStr);
+		return reinterpret_cast<SocketManager*>(ctx)->OnMuxEvent(mux, eventStr);
 	});
 	atCommands.OnCipstatusInfo(this, [](void* ctx, ConnectionInfo& connectionInfo)
 	{
@@ -17,15 +17,15 @@ SocketManager::SocketManager(SimcomAtCommands &atCommands, GsmLogger& logger) :
 	});
 }
 
-void SocketManager::OnMuxEvent(uint8_t mux, FixedStringBase& eventStr)
+bool SocketManager::OnMuxEvent(uint8_t mux, FixedStringBase& eventStr)
 {
 	auto socket = _sockets[mux];
 	if (socket == nullptr)
 	{
 		_logger.Log(F("Received socket event but socket was null"));
-		return;
+		return false;
 	}
-	socket->OnMuxEvent(eventStr);
+	return socket->OnMuxEvent(eventStr);
 }
 void SocketManager::OnCipstatusInfo(ConnectionInfo& connectionInfo)
 {

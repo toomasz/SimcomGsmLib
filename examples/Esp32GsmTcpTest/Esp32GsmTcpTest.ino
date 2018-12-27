@@ -104,6 +104,13 @@ void loop()
 				lastDataSend = millis();
 				SendPacket();
 			}
+
+			static uint64_t lastClose = millis();
+			if (millis() - lastClose > 40000)
+			{				
+				lastClose = millis();
+				socket->Close();
+			}
 		}
 
 		gui.DisplaySocketState(socket);

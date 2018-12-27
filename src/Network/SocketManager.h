@@ -14,7 +14,7 @@ class SocketManager
 	GsmLogger &_logger;
 	bool _isNetworkAvailable;
 	
-	void OnMuxEvent(uint8_t mux, FixedStringBase& eventStr);
+	bool OnMuxEvent(uint8_t mux, FixedStringBase& eventStr);
 	void OnCipstatusInfo(ConnectionInfo& connectionInfo);
 public:
 	SocketManager(SimcomAtCommands &atCommands, GsmLogger& logger);

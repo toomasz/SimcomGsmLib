@@ -56,11 +56,8 @@ bool GsmAsyncSocket::BeginConnect(const char* host, uint16_t port)
 
 bool GsmAsyncSocket::Close()
 {
-	auto result = _gsm.CloseConnection(_mux);
-	if (result == AtResultType::Success)
-	{
-		RaiseEvent(SocketEventType::Disconnected);
-	}
+	RaiseEvent(SocketEventType::Disconnecting);
+	const auto result = _gsm.CloseConnection(_mux);
 	return result == AtResultType::Success;
 }
 
@@ -122,6 +119,7 @@ SocketStateType GsmAsyncSocket::EventToState(SocketEventType eventType)
 	case SocketEventType::Disconnecting: return SocketStateType::Closing;
 	case SocketEventType::Disconnected:	return SocketStateType::Closed;
 	}
+	return  SocketStateType::Closed;
 }
 
 void GsmAsyncSocket::RaiseEvent(SocketEventType eventType)
@@ -142,7 +140,7 @@ void GsmAsyncSocket::RaiseEvent(SocketEventType eventType)
 	}
 }
 
-void GsmAsyncSocket::OnMuxEvent(FixedStringBase & eventStr)
+bool GsmAsyncSocket::OnMuxEvent(FixedStringBase & eventStr)
 {
 	if (eventStr == F("CONNECT OK"))
 	{
@@ -156,10 +154,20 @@ void GsmAsyncSocket::OnMuxEvent(FixedStringBase & eventStr)
 	{
 		RaiseEvent(SocketEventType::Disconnected);
 	}
+	else if (eventStr == F("CLOSE OK"))
+	{
+		RaiseEvent(SocketEventType::Disconnected);
+		// N, CLOSE OK is returned as response to CIPCLOSE=N
+		// return false so line is not treated as URC and passed to code 
+		// waiting for cipclose response
+		return false;
+	}
 	else
 	{
 		_logger.Log(F("Failed to parse socket event: %s"), eventStr.c_str());
+		return false;
 	}
+	return true;
 }
 
 void GsmAsyncSocket::OnCipstatusInfo(ConnectionInfo &connectionInfo)
