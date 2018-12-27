@@ -314,7 +314,6 @@ ParserState SimcomResponseParser::ParseLine()
 						{
 							_onMuxCipstatusInfo(_onMuxCipstatusInfoCtx, info);
 						}
-						_logger.Log(F("Parse success"));
 					}
 					internalState++;
 					if (internalState == 7)

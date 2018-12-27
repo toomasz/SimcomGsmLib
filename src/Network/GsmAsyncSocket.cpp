@@ -14,18 +14,18 @@ void GsmAsyncSocket::OnDataRecieved(void * ctx, SocketDataReceivedHandler onSock
 }
 
 GsmAsyncSocket::GsmAsyncSocket(SimcomAtCommands& gsm, uint8_t mux, ProtocolType protocol, GsmLogger& logger):
-_gsm(gsm),
-_mux(mux),
-_isNetworkAvailable(false),
-_protocol(protocol),
-_state(SocketStateType::Closed),
-_onSocketEventCtx(nullptr),
-_onSocketEvent(nullptr),
-_onSocketDataReceivedCtx(nullptr),
-_onSocketDataReceived(nullptr),
-_receivedBytes(0),
-_sentBytes(0),
-_logger(logger)
+	_gsm(gsm),
+	_mux(mux),
+	_isNetworkAvailable(false),
+	_protocol(protocol),
+	_state(SocketStateType::Closed),
+	_onSocketEventCtx(nullptr),
+	_onSocketEvent(nullptr),
+	_onSocketDataReceivedCtx(nullptr),
+	_onSocketDataReceived(nullptr),
+	_receivedBytes(0),
+	_sentBytes(0),
+	_logger(logger)
 {
 }
 
@@ -54,6 +54,16 @@ bool GsmAsyncSocket::BeginConnect(const char* host, uint16_t port)
 	return true;
 }
 
+bool GsmAsyncSocket::Close()
+{
+	auto result = _gsm.CloseConnection(_mux);
+	if (result == AtResultType::Success)
+	{
+		RaiseEvent(SocketEventType::Disconnected);
+	}
+	return result == AtResultType::Success;
+}
+
 int16_t GsmAsyncSocket::Send(FixedStringBase & data)
 {
 	uint16_t sentBytes = 0;
@@ -63,6 +73,7 @@ int16_t GsmAsyncSocket::Send(FixedStringBase & data)
 		_sentBytes += sentBytes;
 		return sentBytes;
 	}
+	RaiseEvent(SocketEventType::Disconnected);
 	return -1;
 }
 
@@ -116,7 +127,10 @@ SocketStateType GsmAsyncSocket::EventToState(SocketEventType eventType)
 void GsmAsyncSocket::RaiseEvent(SocketEventType eventType)
 {
 	auto newState = EventToState(eventType);
-
+	if (newState == SocketStateType::Closing && _state == SocketStateType::Closed)
+	{
+		return;
+	}
 	if (!ChangeState(newState))
 	{
 		return;

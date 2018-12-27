@@ -99,7 +99,7 @@ void loop()
 				socket->Send("1", 1);
 			}
 			static uint64_t lastDataSend = 0;
-			if (millis() - lastDataSend > 10000)
+			if (millis() - lastDataSend > 20000)
 			{
 				lastDataSend = millis();
 				SendPacket();
@@ -116,7 +116,7 @@ void loop()
 }
 void SendPacket()
 {
-	FixedString50 data;
+	FixedString20 data;
 	connectionValidator.GenerateData(data);
 	uint16_t sentBytes = socket->Send(data);
 	if(sentBytes == -1)

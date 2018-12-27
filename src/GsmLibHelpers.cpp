@@ -50,6 +50,7 @@ const __FlashStringHelper * SocketEventTypeToStr(SocketEventType socketEvent)
 {
 	switch (socketEvent)
 	{
+	case SocketEventType::ConnectBegin: return F("ConnectBegin");
 	case SocketEventType::ConnectFailed: return F("ConnectFailed");
 	case SocketEventType::ConnectSuccess: return F("ConnectSuccess");
 	case SocketEventType::Disconnecting: return F("Disconnecting");

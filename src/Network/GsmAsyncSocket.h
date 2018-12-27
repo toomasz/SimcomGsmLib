@@ -75,6 +75,7 @@ public:
 	{
 		return _receivedBytes;
 	}
+	bool Close();
 	int16_t Send(FixedStringBase& data);
 	int16_t Send(const char* data, uint16_t length);
 };
