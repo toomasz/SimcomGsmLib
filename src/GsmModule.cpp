@@ -68,22 +68,26 @@ void GsmModule::Loop()
 	if (_state == GsmState::Initializing)
 	{
 		bool cipmux;
-		if (_gsm.FlightModeOn() == AtResultType::Timeout)
-		{
-			ChangeState(GsmState::NoShield);
-			return;
-		}
-		if (_gsm.FlightModeOff() == AtResultType::Timeout)
-		{
-			ChangeState(GsmState::NoShield);
-			return;
-		}
-		_gsm.wait(5000);
 		if (_gsm.GetCipmux(cipmux) == AtResultType::Timeout)
 		{
 			ChangeState(GsmState::NoShield);
 			return;
 		}
+		if (cipmux)
+		{
+			if (_gsm.FlightModeOn() == AtResultType::Timeout)
+			{
+				ChangeState(GsmState::NoShield);
+				return;
+			}
+			if (_gsm.FlightModeOff() == AtResultType::Timeout)
+			{
+				ChangeState(GsmState::NoShield);
+				return;
+			}
+			_gsm.wait(5000);
+		}
+		
 		//_gsm.Cipshut();
 		ChangeState(GsmState::SearchingForNetwork);
 		return;
@@ -91,7 +95,7 @@ void GsmModule::Loop()
 
 	if (_state == GsmState::SimError)
 	{
-		auto simResult = _gsm.GetSimStatus(simStatus);
+		const auto simResult = _gsm.GetSimStatus(simStatus);
 		if (simResult == AtResultType::Timeout)
 		{
 			ChangeState(GsmState::NoShield);
@@ -114,7 +118,7 @@ void GsmModule::Loop()
 	}
 	if (_state == GsmState::SearchingForNetwork)
 	{
-		auto regStatusResult = _gsm.GetRegistrationStatus(gsmRegStatus);
+		const auto regStatusResult = _gsm.GetRegistrationStatus(gsmRegStatus);
 		if (regStatusResult == AtResultType::Timeout)
 		{
 			ChangeState(GsmState::NoShield);

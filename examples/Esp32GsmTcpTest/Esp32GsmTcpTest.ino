@@ -96,20 +96,14 @@ void loop()
 			if (socket->GetSentBytes() == 0)
 			{
 				connectionValidator.NotifyConnected();
-				socket->Send("1", 1);
+				const auto sentBytes = socket->Send("1", 1);
+				Serial.printf("Send mode bytes result: %d\n", sentBytes);
 			}
 			static uint64_t lastDataSend = 0;
 			if (millis() - lastDataSend > 20000)
 			{
 				lastDataSend = millis();
 				SendPacket();
-			}
-
-			static uint64_t lastClose = millis();
-			if (millis() - lastClose > 40000)
-			{				
-				lastClose = millis();
-				socket->Close();
 			}
 		}
 

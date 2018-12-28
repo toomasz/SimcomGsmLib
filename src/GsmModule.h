@@ -6,6 +6,7 @@
 #include "Network/GsmAsyncSocket.h"
 #include "Network/SocketManager.h"
 #include "GsmLogger.h"
+#include "SimcomGsmTypes.h"
 #include <vector>
 
 enum class GsmState
