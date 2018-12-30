@@ -22,18 +22,16 @@ class SimcomAtCommandsEsp32 : public SimcomAtCommands
 			return;
 		}
 		
-		Serial.println("call serial.begin");
 		_serial->begin(baudRate, SERIAL_8N1, _txPin, _rxPin, false);
-		Serial.println("serial.begin ended...");
-
-		_isSerialInitialized = true;
-		
+		_isSerialInitialized = true;		
 	}
 
 public:
 	SimcomAtCommandsEsp32(HardwareSerial& serial, int txPin, int rxPin)
 		:SimcomAtCommands(serial, UpdateBaudRate)
 	{
+		Serial.println("SimcomAtCommandsEsp32::SimcomAtCommandsEsp32");
+
 		_serial = &serial;
 		_txPin = txPin;
 		_rxPin = rxPin;

@@ -2,8 +2,9 @@
 #define _GSMLIBHELPERS_H
 
 #include <WString.h>
-#include <SimcomGsmTypes.h>
-#include <Network\GsmAsyncSocket.h>
+#include "SimcomGsmTypes.h"
+#include "Network\GsmAsyncSocket.h"
+#include <FixedString.h>
 
 const __FlashStringHelper* SocketEventTypeToStr(SocketEventType socketEvent);
 const __FlashStringHelper* SocketStateToStr(SocketStateType state);

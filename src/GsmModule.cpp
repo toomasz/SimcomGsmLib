@@ -12,6 +12,7 @@ GsmModule::GsmModule(SimcomAtCommands &gsm):
 	ApnPassword(""),
 	BaudRate(115200)	
 {
+	Serial.println("GsmModule::GsmModule");
 }
 
 bool GsmModule::GetVariablesFromModem()

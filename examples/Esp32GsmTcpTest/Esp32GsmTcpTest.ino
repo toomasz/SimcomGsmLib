@@ -11,8 +11,7 @@
 SimcomAtCommandsEsp32 gsmAt(Serial1, 16, 14);
 GsmModule gsm(gsmAt);
 
-SSD1306 display(0x3c, 5, 4);
-Gui gui(display);
+Gui gui(0x3c, 5, 4);
 
 ConnectionDataValidator connectionValidator;
 GsmAsyncSocket *socket = nullptr;

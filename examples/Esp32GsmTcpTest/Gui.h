@@ -14,20 +14,15 @@ enum class Font
 
 class Gui
 {
-	SSD1306& _lcd;
+	SSD1306 _lcd;
 public:
-	Gui(SSD1306 &lcd):
-	_lcd(lcd)
+	Gui(uint8_t i2cAddress, uint8_t sda, uint8_t scl):
+	_lcd(i2cAddress, sda, scl)
 	{
 
 	}
 	void init()
 	{
-		pinMode(23, OUTPUT);
-		digitalWrite(23, LOW);    // set GPIO16 low to reset OLED
-		delay(50);
-		digitalWrite(23, HIGH);
-
 		if (!_lcd.init())
 		{
 			Serial.println("Failed to init lcd");

@@ -27,6 +27,7 @@ enum class SocketEventType : uint8_t
 
 typedef void(*SocketEventHandler)(void* ctx, SocketEventType eventType);
 typedef void(*SocketDataReceivedHandler)(void *ctx, FixedStringBase& data);
+typedef void(*OnPollHandler)(void *ctx);
 
 class SocketManager;
 
@@ -47,6 +48,8 @@ class GsmAsyncSocket
 	SocketEventHandler _onSocketEvent;
 	void* _onSocketDataReceivedCtx;
 	SocketDataReceivedHandler _onSocketDataReceived;
+	void* _onPollCtx;
+	OnPollHandler _onPoll;
 
 	SocketStateType EventToState(SocketEventType eventType);
 	bool ChangeState(SocketStateType newState);
@@ -63,6 +66,7 @@ public:
 	}
 	void OnSocketEvent(void *ctx, SocketEventHandler socketEventHandler);
 	void OnDataRecieved(void *ctx, SocketDataReceivedHandler onSocketDataReceived);
+	void OnPoll(void* ctx, OnPollHandler onPollHandler);
 	bool IsNetworkAvailable();
 	bool IsClosed();
 	bool IsConnected();
@@ -78,6 +82,7 @@ public:
 	bool Close();
 	int16_t Send(FixedStringBase& data);
 	int16_t Send(const char* data, uint16_t length);
+	int16_t Send(const char* data);
 };
 
 #endif

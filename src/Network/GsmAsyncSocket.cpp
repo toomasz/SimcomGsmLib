@@ -1,17 +1,6 @@
 #include "GsmAsyncSocket.h"
-#include "GsmModule.h"
-
-void GsmAsyncSocket::OnSocketEvent(void *ctx, SocketEventHandler socketEventHandler)
-{
-	_onSocketEvent = socketEventHandler;
-	_onSocketDataReceivedCtx = ctx;
-}
-
-void GsmAsyncSocket::OnDataRecieved(void * ctx, SocketDataReceivedHandler onSocketDataReceived)
-{
-	_onSocketDataReceived = onSocketDataReceived;
-	_onSocketDataReceivedCtx = ctx;
-}
+#include "../GsmModule.h"
+#include "../GsmLibHelpers.h"
 
 GsmAsyncSocket::GsmAsyncSocket(SimcomAtCommands& gsm, uint8_t mux, ProtocolType protocol, GsmLogger& logger):
 	_gsm(gsm),
@@ -23,6 +12,8 @@ GsmAsyncSocket::GsmAsyncSocket(SimcomAtCommands& gsm, uint8_t mux, ProtocolType 
 	_onSocketEvent(nullptr),
 	_onSocketDataReceivedCtx(nullptr),
 	_onSocketDataReceived(nullptr),
+	_onPollCtx(nullptr),
+	_onPoll(nullptr),
 	_receivedBytes(0),
 	_sentBytes(0),
 	_logger(logger)
@@ -56,6 +47,7 @@ bool GsmAsyncSocket::BeginConnect(const char* host, uint16_t port)
 
 bool GsmAsyncSocket::Close()
 {
+	_logger.Log(F("Socket [%d] Close"), _mux);
 	RaiseEvent(SocketEventType::Disconnecting);
 	const auto result = _gsm.CloseConnection(_mux);
 	return result == AtResultType::Success;
@@ -81,6 +73,13 @@ int16_t GsmAsyncSocket::Send(const char * data, uint16_t length)
 	return Send(dataStr);
 }
 
+int16_t GsmAsyncSocket::Send(const char * data)
+{
+	auto length = strlen(data);
+	FixedString100 dataStr;
+	dataStr.append(data, length);
+	return Send(dataStr);
+}
 bool GsmAsyncSocket::ChangeState(SocketStateType newState)
 {
 	if (_state == newState)
@@ -134,9 +133,10 @@ void GsmAsyncSocket::RaiseEvent(SocketEventType eventType)
 		return;
 	}
 	
+	_logger.Log(F("Socket [%d] event: %s"), _mux, SocketEventTypeToStr(eventType));
 	if (_onSocketEvent != nullptr)
 	{
-		_onSocketEvent(this, eventType);
+		_onSocketEvent(_onSocketEventCtx, eventType);
 	}
 }
 
@@ -196,7 +196,7 @@ bool GsmAsyncSocket::ReadIncomingData()
 	{
 		return true;
 	}
-	FixedString100 dataBuffer;
+	FixedString200 dataBuffer;
 	uint16_t leftData;
 	auto gsmReadResult = _gsm.Read(_mux, dataBuffer, leftData);
 	if (gsmReadResult != AtResultType::Success)
@@ -208,10 +208,16 @@ bool GsmAsyncSocket::ReadIncomingData()
 		RaiseEvent(SocketEventType::Disconnected);
 		return true;
 	}
+	if (_onPoll != nullptr)
+	{
+		_onPoll(_onPollCtx);
+	}
+
 	if (dataBuffer.length() == 0)
 	{
 		return true;
 	}
+	_logger.Log(F("Read %d bytes from socket [%d]"), dataBuffer.length(), _mux);
 	_receivedBytes += dataBuffer.length();
 
 	if (_onSocketDataReceived != nullptr)
@@ -219,4 +225,22 @@ bool GsmAsyncSocket::ReadIncomingData()
 		_onSocketDataReceived(_onSocketDataReceivedCtx, dataBuffer);
 	}
 	return true;
+}
+
+void GsmAsyncSocket::OnSocketEvent(void *ctx, SocketEventHandler socketEventHandler)
+{
+	_onSocketEvent = socketEventHandler;
+	_onSocketEventCtx = ctx;
+}
+
+void GsmAsyncSocket::OnDataRecieved(void* ctx, SocketDataReceivedHandler onSocketDataReceived)
+{
+	_onSocketDataReceived = onSocketDataReceived;
+	_onSocketDataReceivedCtx = ctx;
+}
+
+void GsmAsyncSocket::OnPoll(void* ctx, OnPollHandler onPollHandler)
+{
+	_onPoll = onPollHandler;
+	_onPollCtx = ctx;
 }

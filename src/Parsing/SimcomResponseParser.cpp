@@ -17,6 +17,7 @@ _onMuxEventCtx(nullptr),
 _onMuxCipstatusInfo(nullptr),
 _onMuxCipstatusInfoCtx(nullptr)
 {
+	Serial.println("SimcomResponseParser::SimcomResponseParser");
 	_currentCommand = AtCommand::Generic;
 	lineParserState = PARSER_INITIAL;
 	_state = ParserState::Timeout;
@@ -219,6 +220,7 @@ bool SimcomResponseParser::ParseUnsolicited(FixedStringBase& line)
 				_logger.Log(F("Mux: %d, event = %s"), mux, str.c_str());
 				if (_onMuxEvent != nullptr)
 				{
+					_response.clear();
 					return _onMuxEvent(_onMuxEventCtx, mux, str);
 				}
 				return true;
