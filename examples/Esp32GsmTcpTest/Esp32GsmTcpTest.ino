@@ -35,7 +35,7 @@ void PrintIncomingData(FixedStringBase& data)
 
 void setup()
 {	
-	//gsmAt.Logger().LogAtCommands = true;
+	gsmAt.Logger().LogAtCommands = true;
 	Serial.begin(500000);
 
 	gsm.OnLog([](const char *logEntry)
@@ -106,7 +106,6 @@ void loop()
 	
 	gui.Display();
 	//Serial.println("\n       ######       \n");
-	gsm.Wait(250);
 }
 void SendPacket()
 {

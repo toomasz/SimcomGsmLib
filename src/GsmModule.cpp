@@ -1,5 +1,6 @@
 #include "OperatorNameHelper.h"
 #include "GsmModule.h"
+#include "GsmLibHelpers.h"
 
 
 GsmModule::GsmModule(SimcomAtCommands &gsm):
@@ -35,13 +36,17 @@ void GsmModule::OnGsmModuleEvent(GsmModuleEventType eventType)
 		Serial.println("Voltage is too high!");
 	}
 }
-bool GsmModule::GetVariablesFromModem()
+bool GsmModule::ReadModemProperties()
 {
+	static IntervalTimer getVariablesTimer(GetPropertiesInterval);
+	if (!getVariablesTimer.IsElapsed())
+	{
+		return true;
+	}
 	if (_gsm.GetRegistrationStatus(gsmRegStatus) == AtResultType::Timeout)
 	{
 		return false;
 	}
-
 	if (_gsm.GetSignalQuality(signalQuality) == AtResultType::Timeout)
 	{
 		return false;
@@ -61,15 +66,24 @@ bool GsmModule::GetVariablesFromModem()
 	{
 		return false;
 	}
-	if (_gsm.GetIpState(ipStatus) == AtResultType::Timeout)
+	if (_state == GsmState::ConnectedToGprs)
 	{
-		return false;
+		if (_gsm.GetIpState(ipStatus) == AtResultType::Timeout)
+		{
+			return false;
+		}
 	}
 	return true;
 }
 
 void GsmModule::Loop()
 {
+	static IntervalTimer loopIntervalTimer(TickInterval);
+	if (!loopIntervalTimer.IsElapsed())
+	{
+		return;
+	}
+
 	if (_state == GsmState::Error)
 	{
 		return;
@@ -143,7 +157,7 @@ void GsmModule::Loop()
 		return;
 	}
 
-	if (!GetVariablesFromModem())
+	if (!ReadModemProperties())
 	{
 		ChangeState(GsmState::NoShield);
 		return;
@@ -238,19 +252,22 @@ void GsmModule::Loop()
 		}
 		if (!_socketManager.ReadDataFromSockets())
 		{
-			_logger.Log(F("Timeout while trying to read from on of sockets"));
+			_logger.Log(F("Timeout while trying to read data from socket"));
 			ChangeState(GsmState::NoShield);
 			return;
 		}
 	}
-
-	if (_gsm.GetSimStatus(simStatus) == AtResultType::Success)
+	static IntervalTimer simStatusTimer(SimStatusInterval);
+	if (simStatusTimer.IsElapsed())
 	{
-		if (simStatus != SimState::Ok)
+		if (_gsm.GetSimStatus(simStatus) == AtResultType::Success)
 		{
-			ChangeState(GsmState::SimError);
-			delay(500);
-			return;
+			if (simStatus != SimState::Ok)
+			{
+				ChangeState(GsmState::SimError);
+				delay(500);
+				return;
+			}
 		}
 	}
 

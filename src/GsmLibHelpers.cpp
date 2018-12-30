@@ -109,3 +109,36 @@ void BinaryToString(FixedStringBase&source, FixedStringBase& target)
 		}
 	}
 }
+
+
+IntervalTimer::IntervalTimer(int delay)
+{
+	_delay = delay;
+	_ticks = 0;
+	_isElapsed = false;
+}
+
+void IntervalTimer::Tick()
+{
+	auto ms = millis();
+	if (ms - _ticks < _delay)
+	{
+		return;
+	}
+	_isElapsed = true;
+	_ticks = ms;
+
+}
+
+void IntervalTimer::SetElapsed()
+{
+	_isElapsed = true;
+}
+
+bool IntervalTimer::IsElapsed()
+{
+	Tick();
+	auto isElapsed = _isElapsed;
+	_isElapsed = false;
+	return isElapsed;
+}

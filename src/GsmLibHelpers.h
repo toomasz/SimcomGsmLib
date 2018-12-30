@@ -14,4 +14,16 @@ const char* ProtocolToStr(ProtocolType protocol);
 const __FlashStringHelper* ConnectionStateToStr(ConnectionState state);
 void BinaryToString(FixedStringBase&source, FixedStringBase& target);
 
+class IntervalTimer
+{
+	uint64_t _ticks;
+	int _delay;
+	bool _isElapsed;
+	void Tick();
+	void SetElapsed();
+public:
+	IntervalTimer(int delay);
+	bool IsElapsed();
+};
+
 #endif

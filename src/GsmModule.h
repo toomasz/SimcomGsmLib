@@ -36,6 +36,10 @@ class GsmModule
 
 	void ChangeState(GsmState newState)
 	{
+		if (_state == GsmState::Error)
+		{
+			return;
+		}
 		if (_state != newState)
 		{
 			char inState[20];
@@ -48,9 +52,12 @@ class GsmModule
 		_socketManager.SetIsNetworkAvailable(_state == GsmState::ConnectedToGprs);
 	}
 	GsmState _state;
-	bool GetVariablesFromModem();
+	bool ReadModemProperties();
 
 public:
+	uint16_t TickInterval = 100;
+	uint16_t SimStatusInterval = 1000;
+	uint16_t GetPropertiesInterval = 1000;
 	char *ApnName;
 	char* ApnUser;
 	char* ApnPassword;

@@ -252,16 +252,14 @@ public:
 	void DisplayBlinkIndicator()
 	{
 		static bool rectState = false;
-		rectState = !rectState;
-		if (rectState)
-		{
-			_lcd.setColor(OLEDDISPLAY_COLOR::WHITE);
-		}
-		else
-		{
-			_lcd.setColor(OLEDDISPLAY_COLOR::BLACK);
-		}
 
+		static IntervalTimer blinkIntervalTimer(200);
+		if(blinkIntervalTimer.IsElapsed())
+		{
+			rectState = !rectState;
+		}
+		auto color = rectState ? OLEDDISPLAY_COLOR::WHITE : OLEDDISPLAY_COLOR::BLACK;
+		_lcd.setColor(color);
 		const int rectSize= 10;
 		_lcd.fillCircle(128 - 50, 8, 8);
 	}
