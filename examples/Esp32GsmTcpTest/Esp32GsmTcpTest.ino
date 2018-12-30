@@ -7,6 +7,7 @@
 #include <Wire.h>
 #include <GsmModule.h>
 #include <SimcomAtCommandsEsp32.h>
+#include <FixedString.h>
 
 SimcomAtCommandsEsp32 gsmAt(Serial1, 16, 14);
 GsmModule gsm(gsmAt);
@@ -52,8 +53,14 @@ void setup()
 
 	socket->OnSocketEvent(nullptr, [](void*ctx, SocketEventType eventType) 
 	{
+		if (eventType == SocketEventType::ConnectSuccess)
+		{
+			connectionValidator.NotifyConnected();
+			socket->Send("1", 1);
+		}
 		Serial.printf("Socket event: %s\n", SocketEventTypeToStr(eventType));
 	});
+	
 	socket->OnDataRecieved(nullptr, OnSocketDataReceived);
 }
 
@@ -85,13 +92,7 @@ void loop()
 		}
 
 		if (socket->IsConnected())
-		{
-			if (socket->GetSentBytes() == 0)
-			{
-				connectionValidator.NotifyConnected();
-				const auto sentBytes = socket->Send("1", 1);
-				Serial.printf("Send mode bytes result: %d\n", sentBytes);
-			}
+		{			
 			static uint64_t lastDataSend = 0;
 			if (millis() - lastDataSend > 20000)
 			{

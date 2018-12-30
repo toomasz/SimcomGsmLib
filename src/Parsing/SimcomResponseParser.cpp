@@ -56,12 +56,12 @@ void SimcomResponseParser::FeedChar(char c)
 			{
 				_parserContext.CipsendState = CipsendStateType::WaitingForDataAccept;
 				_response.clear();
-				_logger.Log(F("Writing %d b of data"), _parserContext.CipsendBuffer->length());
+				_logger.Log(F("Writing %d b of data"), _parserContext.CipsendDataLength);
 
-				_serial.write(_parserContext.CipsendBuffer->c_str(), _parserContext.CipsendBuffer->length());
+				_serial.write(_parserContext.CipsendBuffer->c_str() + _parserContext.CipsendDataIndex, _parserContext.CipsendDataLength);
 
 				int readBytes = 0;
-				while (readBytes < _parserContext.CipsendBuffer->length())
+				while (readBytes < _parserContext.CipsendDataLength)
 				{
 					if (_serial.available())
 					{
@@ -556,7 +556,7 @@ ParserState SimcomResponseParser::ParseLine()
 				{
 					return ParserState::Error;
 				}
-				if (sentBytes > _parserContext.CipsendBuffer->length())
+				if (sentBytes > _parserContext.CipsendDataLength)
 				{
 					return ParserState::Error;
 				}

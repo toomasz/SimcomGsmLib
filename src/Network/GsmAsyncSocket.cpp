@@ -36,6 +36,7 @@ bool GsmAsyncSocket::IsConnected()
 bool GsmAsyncSocket::BeginConnect(const char* host, uint16_t port)
 {
 	RaiseEvent(SocketEventType::ConnectBegin);
+	_sendBuffer.clear();
 	auto connectResult = _gsm.BeginConnect(_protocol, _mux, host, port);
 	if (connectResult != AtResultType::Success)
 	{
@@ -43,6 +44,11 @@ bool GsmAsyncSocket::BeginConnect(const char* host, uint16_t port)
 		return false;
 	}
 	return true;
+}
+
+size_t GsmAsyncSocket::space()
+{
+	return _sendBuffer.freeBytes();
 }
 
 bool GsmAsyncSocket::Close()
@@ -55,30 +61,21 @@ bool GsmAsyncSocket::Close()
 
 int16_t GsmAsyncSocket::Send(FixedStringBase & data)
 {
-	uint16_t sentBytes = 0;
-	auto sendResult = _gsm.Send(_mux, data, sentBytes);
-	if (sendResult == AtResultType::Success)
-	{
-		_sentBytes += sentBytes;
-		return sentBytes;
-	}
-	RaiseEvent(SocketEventType::Disconnected);
-	return -1;
+	_sendBuffer.append(data.c_str(), data.length());
+	return data.length();
 }
 
 int16_t GsmAsyncSocket::Send(const char * data, uint16_t length)
 {
-	FixedString100 dataStr;
-	dataStr.append(data, length);
-	return Send(dataStr);
+	_sendBuffer.append(data, length);
+	return length;
 }
 
 int16_t GsmAsyncSocket::Send(const char * data)
 {
 	auto length = strlen(data);
-	FixedString100 dataStr;
-	dataStr.append(data, length);
-	return Send(dataStr);
+	_sendBuffer.append(data, length);
+	return length;
 }
 bool GsmAsyncSocket::ChangeState(SocketStateType newState)
 {
@@ -188,6 +185,29 @@ void GsmAsyncSocket::OnCipstatusInfo(ConnectionInfo &connectionInfo)
 		RaiseEvent(SocketEventType::Disconnected);
 		break;
 	}
+}
+
+bool GsmAsyncSocket::SendPendingData()
+{
+	uint16_t totalSentBytes = 0;
+	while (totalSentBytes < _sendBuffer.length())
+	{
+		uint16_t sentBytes = 0;
+		auto sendResult = _gsm.Send(_mux, _sendBuffer, totalSentBytes, _sendBuffer.length()-totalSentBytes, sentBytes);
+		if (sendResult != AtResultType::Success)
+		{
+			_sendBuffer.clear();
+			if (sendResult == AtResultType::Timeout)
+			{
+				return false;
+			}
+			RaiseEvent(SocketEventType::Disconnected);
+			return true;
+		}
+		totalSentBytes += sentBytes;
+		_sentBytes += sentBytes;
+	}
+	_sendBuffer.clear();
 }
 
 bool GsmAsyncSocket::ReadIncomingData()

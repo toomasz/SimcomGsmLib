@@ -42,6 +42,24 @@ void SocketManager::OnCipstatusInfo(ConnectionInfo& connectionInfo)
 	socket->OnCipstatusInfo(connectionInfo);
 }
 
+bool SocketManager::SendDataFromSockets()
+{
+	for (int i = 0; i < SocketCount; i++)
+	{
+		auto socket = _sockets[i];
+		if (socket == nullptr)
+		{
+			continue;
+		}
+
+		if (!socket->SendPendingData())
+		{
+			return false;
+		}
+	}
+	return true;
+}
+
 bool SocketManager::ReadDataFromSockets()
 {
 	for (int i = 0; i < SocketCount; i++)
@@ -51,6 +69,7 @@ bool SocketManager::ReadDataFromSockets()
 		{
 			continue;
 		}
+
 		if (!socket->ReadIncomingData())
 		{
 			return false;

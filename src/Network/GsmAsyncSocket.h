@@ -34,6 +34,7 @@ class SocketManager;
 class GsmAsyncSocket
 {
 	friend class SocketManager;
+	FixedString<2000> _sendBuffer;
 
 	uint8_t _mux;
 	bool _isNetworkAvailable;
@@ -57,6 +58,7 @@ class GsmAsyncSocket
 	void RaiseEvent(SocketEventType eventType);
 	bool OnMuxEvent(FixedStringBase &eventStr);
 	void OnCipstatusInfo(ConnectionInfo& connectionInfo);
+	bool SendPendingData();
 	bool ReadIncomingData();	
 public:
 	GsmAsyncSocket(SimcomAtCommands& gsm, uint8_t mux, ProtocolType protocol, GsmLogger& logger);
@@ -71,6 +73,7 @@ public:
 	bool IsClosed();
 	bool IsConnected();
 	bool BeginConnect(const char* host, uint16_t port);
+	size_t space();
 	uint64_t GetSentBytes()
 	{
 		return _sentBytes;

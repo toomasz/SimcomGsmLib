@@ -305,6 +305,5 @@ public:
 		_lcd.setFont(ArialMT_Plain_10);
 		_lcd.drawString(paddingSide + 4, paddingTop + 4 , message.c_str());
 	}
-
 };
 

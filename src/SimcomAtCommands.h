@@ -79,7 +79,9 @@ public:
 		AtResultType SetTransparentMode(bool transparentMode);
 		AtResultType BeginConnect(ProtocolType protocol, uint8_t mux, const char *address, int port);
 		AtResultType Read(int mux, FixedStringBase& outputBuffer, uint16_t& availableBytes);
+		AtResultType Send(int mux, FixedStringBase& data, uint16_t index, uint16_t length, uint16_t &sentBytes);
 		AtResultType Send(int mux, FixedStringBase& data, uint16_t &sentBytes);
+
 		AtResultType CloseConnection(uint8_t mux);
 		AtResultType GetConnectionInfo(uint8_t mux, ConnectionInfo &connectionInfo);
 

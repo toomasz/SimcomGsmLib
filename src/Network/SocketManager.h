@@ -18,6 +18,7 @@ class SocketManager
 	void OnCipstatusInfo(ConnectionInfo& connectionInfo);
 public:
 	SocketManager(SimcomAtCommands &atCommands, GsmLogger& logger);
+	bool SendDataFromSockets();
 	bool ReadDataFromSockets();
 	void SetIsNetworkAvailable(bool isNetworkAvailable);
 	GsmAsyncSocket* CreateSocket(uint8_t mux, ProtocolType protocolType);

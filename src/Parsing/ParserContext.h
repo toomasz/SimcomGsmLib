@@ -35,6 +35,8 @@ struct ParserContext
 
 	CipsendStateType CipsendState;
 	FixedStringBase* CipsendBuffer;
+	uint16_t CipsendDataIndex;
+	uint16_t CipsendDataLength;
 	uint16_t *CipsendSentBytes;
 
 };

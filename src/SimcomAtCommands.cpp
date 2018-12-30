@@ -440,14 +440,21 @@ AtResultType SimcomAtCommands::Read(int mux, FixedStringBase& outputBuffer, uint
 	return PopCommandResult(false);
 }
 
-AtResultType SimcomAtCommands::Send(int mux, FixedStringBase& data, uint16_t &sentBytes)
+AtResultType SimcomAtCommands::Send(int mux, FixedStringBase & data, uint16_t index, uint16_t length, uint16_t & sentBytes)
 {
 	sentBytes = 0;
 	_parserContext.CipsendBuffer = &data;
 	_parserContext.CipsendState = CipsendStateType::WaitingForPrompt;
+	_parserContext.CipsendDataIndex = index;
+	_parserContext.CipsendDataLength = length;
 	_parserContext.CipsendSentBytes = &sentBytes;
 	SendAt_P(AtCommand::CipSend, F("AT+CIPSEND=%d,%d"), mux, data.length());
 	return PopCommandResult(false);
+}
+
+AtResultType SimcomAtCommands::Send(int mux, FixedStringBase& data, uint16_t &sentBytes)
+{
+	return Send(mux, data, 0, data.length(), sentBytes);
 }
 
 AtResultType SimcomAtCommands::CloseConnection(uint8_t mux)

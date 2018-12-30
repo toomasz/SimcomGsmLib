@@ -250,6 +250,13 @@ void GsmModule::Loop()
 			ChangeState(GsmState::ConnectingToGprs);
 			return;
 		}
+		if (!_socketManager.SendDataFromSockets())
+		{
+			_logger.Log(F("Timeout while trying to send data from socket"));
+			ChangeState(GsmState::NoShield);
+			return;
+		}
+
 		if (!_socketManager.ReadDataFromSockets())
 		{
 			_logger.Log(F("Timeout while trying to read data from socket"));
