@@ -13,8 +13,28 @@ GsmModule::GsmModule(SimcomAtCommands &gsm):
 	BaudRate(115200)	
 {
 	Serial.println("GsmModule::GsmModule");
+	_gsm.OnGsmModuleEvent(this, [](void*ctx, GsmModuleEventType eventType) 
+	{
+		reinterpret_cast<GsmModule*>(ctx)->OnGsmModuleEvent(eventType);
+	});
 }
-
+void GsmModule::OnGsmModuleEvent(GsmModuleEventType eventType)
+{
+	if (eventType == GsmModuleEventType::OverVoltagePowerDown)
+	{
+		_error = "Over voltage power down";
+		ChangeState(GsmState::Error);
+	}
+	if (eventType == GsmModuleEventType::UnderVoltagePowerDown)
+	{
+		_error = "Under voltage power down";
+		ChangeState(GsmState::Error);
+	}
+	if (eventType == GsmModuleEventType::OverVoltageWarning)
+	{
+		Serial.println("Voltage is too high!");
+	}
+}
 bool GsmModule::GetVariablesFromModem()
 {
 	if (_gsm.GetRegistrationStatus(gsmRegStatus) == AtResultType::Timeout)
@@ -50,6 +70,17 @@ bool GsmModule::GetVariablesFromModem()
 
 void GsmModule::Loop()
 {
+	if (_state == GsmState::Error)
+	{
+		return;
+	}
+	if (GarbageOnSerialDetected())
+	{
+		_error = "Serial garbage detected";
+		ChangeState(GsmState::Error);
+		return;
+	}
+
 	if (_state == GsmState::Initial)
 	{
 		ChangeState(GsmState::NoShield);

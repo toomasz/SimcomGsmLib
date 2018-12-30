@@ -85,6 +85,7 @@ public:
 
 		void OnMuxEvent(void* ctx, MuxEventHandler muxEventHandler);
 		void OnCipstatusInfo(void * ctx, MuxCipstatusInfoHandler muxCipstatusHandler);
+		void OnGsmModuleEvent(void* ctx, OnGsmModuleEventHandler gsmModuleEventHandler);
 		// GPRS
 		AtResultType SetApn(const char *apnName, const char *username, const char *password);
 		AtResultType AttachGprs();

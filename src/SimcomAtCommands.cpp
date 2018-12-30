@@ -471,6 +471,11 @@ void SimcomAtCommands::OnCipstatusInfo(void* ctx, MuxCipstatusInfoHandler muxCip
 	_parser.OnMuxCipstatusInfo(ctx, muxCipstatusHandler);
 }
 
+void SimcomAtCommands::OnGsmModuleEvent(void * ctx, OnGsmModuleEventHandler gsmModuleEventHandler)
+{
+	_parser.OnGsmModuleEvent(ctx, gsmModuleEventHandler);
+}
+
 
 
 

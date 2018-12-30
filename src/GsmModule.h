@@ -20,6 +20,7 @@ enum class GsmState
 	RegistrationUnknown,
 	ConnectingToGprs,
 	ConnectedToGprs,
+	Error
 };
 
 class GsmModule
@@ -27,6 +28,7 @@ class GsmModule
 	SimcomAtCommands& _gsm;	
 	SocketManager _socketManager;
 	GsmLogger& _logger;
+	FixedString100 _error;
 	void GetStateStringFromProg(char* stateStr, GsmState state)
 	{
 		strcpy_P(stateStr, (PGM_P)StateToStr(state));
@@ -40,7 +42,7 @@ class GsmModule
 			char outState[20];
 			GetStateStringFromProg(inState, _state);
 			GetStateStringFromProg(outState, newState);
-			_gsm.Logger().Log(F("State changed %s -> %s"), inState, outState);
+			_logger.Log(F("State changed %s -> %s"), inState, outState);
 		}
 		_state = newState;
 		_socketManager.SetIsNetworkAvailable(_state == GsmState::ConnectedToGprs);
@@ -53,6 +55,13 @@ public:
 	char* ApnUser;
 	char* ApnPassword;
 	GsmModule(SimcomAtCommands &gsm);
+
+	void OnGsmModuleEvent(GsmModuleEventType eventType);
+
+	FixedStringBase& Error()
+	{
+		return _error;
+	}
 
 	GsmAsyncSocket* CreateSocket(uint8_t mux, ProtocolType protocolType)
 	{

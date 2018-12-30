@@ -11,6 +11,7 @@
 
 typedef bool(*MuxEventHandler)(void* ctx, uint8_t mux, FixedStringBase& eventStr);
 typedef void(*MuxCipstatusInfoHandler)(void* ctx, ConnectionInfo& info);
+typedef void(*OnGsmModuleEventHandler)(void *ctx, GsmModuleEventType eventType);
 class SimcomResponseParser
 {
 	enum LineState { PARSER_INITIAL, PARSER_CR, PARSER_LF, PARSER_LINE };
@@ -28,10 +29,13 @@ class SimcomResponseParser
 	Stream& _serial;
 	SequenceDetector _promptSequenceDetector;
 	AtCommand _currentCommand;
+	void RaiseGsmModuleEvent(GsmModuleEventType eventType);
 	FixedStringBase& _currentCommandStr;
 
 	MuxEventHandler _onMuxEvent;
 	void* _onMuxEventCtx;
+	OnGsmModuleEventHandler _onGsmModuleEvent;
+	void* _onGsmModuleEventCtx;
 
 	MuxCipstatusInfoHandler _onMuxCipstatusInfo;
 	void* _onMuxCipstatusInfoCtx;
@@ -45,6 +49,7 @@ public:
 	void ResetUartGarbageDetected();
 	void OnMuxEvent(void* ctx, MuxEventHandler onMuxEvent);
 	void OnMuxCipstatusInfo(void* ctx, MuxCipstatusInfoHandler onMuxCipstatusInfo);
+	void OnGsmModuleEvent(void* ctx, OnGsmModuleEventHandler handler);
 	bool IsGarbageDetectionActive;
 };
 

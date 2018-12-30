@@ -111,10 +111,9 @@ public:
 			DisplayIp(gsm.ipAddress);
 		}
 
-		if (gsm.GarbageOnSerialDetected())
+		if(state == GsmState::Error)
 		{
-			FixedString20 error("UART garbage !!!");
-			DrawFramePopup(error, 40, 5);
+			DrawFramePopup(gsm.Error(), 40, 5);
 		}
 
 		DisplayIncomingCall(gsm.callInfo);
@@ -232,8 +231,6 @@ public:
 			lcd_label(Font::F10, 10, 32, F("%s"), callInfo.CallerNumber.c_str());
 		}
 	}
-
-
 
 	void DisplayIp(GsmIp& ip)
 	{

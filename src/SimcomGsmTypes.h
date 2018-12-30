@@ -149,6 +149,14 @@ enum class CipsendStateType: uint8_t
 	WaitingForDataAccept,
 };
 
+enum class GsmModuleEventType : uint8_t
+{
+	UnderVoltageWarining,
+	OverVoltageWarning,
+	UnderVoltagePowerDown,
+	OverVoltagePowerDown
+};
+
 class IncomingCallInfo
 {
 public:

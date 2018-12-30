@@ -60,13 +60,7 @@ void setup()
 
 void loop()
 {
-	gui.Clear();
-	if (gsm.GarbageOnSerialDetected())
-	{
-		gui.DisplayError("UART garbage !!!");
-		delay(500);
-		return;
-	}
+	gui.Clear();	
 	if (connectionValidator.HasError())
 	{
 		gui.DisplayError(connectionValidator.GetError());

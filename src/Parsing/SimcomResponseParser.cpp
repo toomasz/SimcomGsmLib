@@ -15,7 +15,9 @@ _currentCommandStr(currentCommandStr),
 _onMuxEvent(nullptr),
 _onMuxEventCtx(nullptr),
 _onMuxCipstatusInfo(nullptr),
-_onMuxCipstatusInfoCtx(nullptr)
+_onMuxCipstatusInfoCtx(nullptr),
+_onGsmModuleEvent(nullptr),
+_onGsmModuleEventCtx(nullptr)
 {
 	Serial.println("SimcomResponseParser::SimcomResponseParser");
 	_currentCommand = AtCommand::Generic;
@@ -189,21 +191,25 @@ bool SimcomResponseParser::ParseUnsolicited(FixedStringBase& line)
 	if (line.equals(F("OVER-VOLTAGE WARNNING")))
 	{
 		_logger.Log(F(" Over voltage warning  !!!"));
+		RaiseGsmModuleEvent(GsmModuleEventType::OverVoltageWarning);
 		return true;
 	}
 	if (line.equals(F("OVER-VOLTAGE POWER DOWN")))
 	{
 		_logger.Log(F(" Over voltage power down  !!!"));
+		RaiseGsmModuleEvent(GsmModuleEventType::OverVoltagePowerDown);
 		return true;
 	}
 	if (line.equals(F("UNDER-VOLTAGE WARNNING")))
 	{
 		_logger.Log(F(" Under voltage warning !!!"));
+		RaiseGsmModuleEvent(GsmModuleEventType::UnderVoltageWarining);
 		return true;
 	}
 	if (line.equals(F("UNDER-VOLTAGE POWER DOWN")))
 	{
 		_logger.Log(F(" Over voltage power down  !!!"));
+		RaiseGsmModuleEvent(GsmModuleEventType::UnderVoltagePowerDown);
 		return true;
 	}
 
@@ -690,6 +696,14 @@ int SimcomResponseParser::StateTransition(char c)
 
 }
 
+void SimcomResponseParser::RaiseGsmModuleEvent(GsmModuleEventType eventType)
+{
+	if (_onGsmModuleEvent != nullptr)
+	{
+		_onGsmModuleEvent(_onGsmModuleEventCtx, eventType);
+	}
+}
+
 bool SimcomResponseParser::GarbageOnSerialDetected()
 {
 	return _garbageOnSerialDetected;
@@ -710,4 +724,10 @@ void SimcomResponseParser::OnMuxCipstatusInfo(void * ctx, MuxCipstatusInfoHandle
 {
 	_onMuxCipstatusInfoCtx = ctx;
 	_onMuxCipstatusInfo = onMuxCipstatusInfo;
+}
+
+void SimcomResponseParser::OnGsmModuleEvent(void * ctx, OnGsmModuleEventHandler onGsmModuleEvent)
+{
+	_onGsmModuleEventCtx = ctx;
+	_onGsmModuleEvent = onGsmModuleEvent;
 }
