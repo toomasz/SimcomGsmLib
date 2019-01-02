@@ -62,7 +62,10 @@ public:
 		AtResultType GetSignalQuality(int16_t &signalQuality);
 		AtResultType SetEcho(bool echoEnabled);
 		AtResultType SendSms(char *number, char *message);
+
+		// Calls
 		AtResultType Call(char *number);
+		AtResultType HangUp();
 		AtResultType GetIncomingCall(IncomingCallInfo &callInfo);
 		
 		// USSD

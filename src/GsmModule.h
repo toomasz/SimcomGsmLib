@@ -62,7 +62,10 @@ public:
 	char* ApnUser;
 	char* ApnPassword;
 	GsmModule(SimcomAtCommands &gsm);
-
+	SimcomAtCommands& At()
+	{
+		return _gsm;
+	}
 	void OnGsmModuleEvent(GsmModuleEventType eventType);
 
 	FixedStringBase& Error()

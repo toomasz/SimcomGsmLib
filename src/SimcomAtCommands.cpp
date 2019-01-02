@@ -405,6 +405,12 @@ AtResultType SimcomAtCommands::Call(char *number)
 	return PopCommandResult();
 }
 
+AtResultType SimcomAtCommands::HangUp()
+{
+	SendAt_P(AtCommand::Generic, F("ATH"));
+	return PopCommandResult();
+}
+
 AtResultType SimcomAtCommands::GetIncomingCall(IncomingCallInfo & callInfo)
 {
 	callInfo.HasIncomingCall = false;
