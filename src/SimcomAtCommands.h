@@ -19,9 +19,9 @@ class SimcomAtCommands
 private:
 		Stream &_serial;
 		uint64_t _currentBaudRate;
-		GsmLogger _logger;
 		SimcomResponseParser _parser;
 		UpdateBaudRateCallback _updateBaudRateCallback;
+		SetDtrCallback _setDtrCallback;
 		ParserContext _parserContext;
 		FixedString50 _currentCommand;
 		uint64_t _lastIncomingByteTime;
@@ -31,13 +31,17 @@ private:
 		AtResultType PopCommandResult(bool ensureDelay, uint64_t timeout);
 		AtResultType PopCommandResult(bool ensureDelay = false);
 		void ReadCharAndFeedParser();
+		void ReadCharAndIgnore();
+protected:
+		GsmLogger _logger;
+
 public:
 		GsmLogger& Logger() 
 		{
 			return _logger;
 		}
 		bool IsAsync;
-		SimcomAtCommands(Stream& serial, UpdateBaudRateCallback updateBaudRateCallback);
+		SimcomAtCommands(Stream& serial, UpdateBaudRateCallback updateBaudRateCallback, SetDtrCallback setDtrCallback = nullptr);
 
 		// Serial methods
 		bool EnsureModemConnected(uint64_t requestedBaudRate);
@@ -47,7 +51,7 @@ public:
 		// Standard modem functions
 		AtResultType SetBaudRate(uint32_t baud);
 
-		AtResultType At();
+		AtResultType At(uint32_t timeout = 60u);
 		AtResultType GenericAt(uint64_t timeout, const __FlashStringHelper* command,...);
 
 		AtResultType Shutdown();
@@ -91,11 +95,13 @@ public:
 		void OnMuxEvent(void* ctx, MuxEventHandler muxEventHandler);
 		void OnCipstatusInfo(void * ctx, MuxCipstatusInfoHandler muxCipstatusHandler);
 		void OnGsmModuleEvent(void* ctx, OnGsmModuleEventHandler gsmModuleEventHandler);
+		AtResultType EnterSleepMode();
+		AtResultType ExitSleepMode();
 		// GPRS
 		AtResultType SetApn(const char *apnName, const char *username, const char *password);
 		AtResultType AttachGprs();
 		AtResultType Cipshut();
-
+		bool SetDtr(bool value);
 		void wait(uint64_t millis);
 };
 

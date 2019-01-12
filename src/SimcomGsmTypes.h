@@ -5,6 +5,7 @@
 #include <stdint.h>
 
 typedef void(*UpdateBaudRateCallback)(uint64_t baudRate);
+typedef bool(*SetDtrCallback)(bool isHigh);
 
 enum class SimState : uint8_t
 {

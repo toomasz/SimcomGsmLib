@@ -35,3 +35,7 @@ AT+CIPSGTXT?
 
 
 SIM800 R14.18
+
+
+at+cmte?
+AT+CSCLK=1

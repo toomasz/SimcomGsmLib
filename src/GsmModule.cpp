@@ -11,6 +11,7 @@ GsmModule::GsmModule(SimcomAtCommands &gsm):
 	ApnName(""),
 	ApnUser(""),
 	ApnPassword(""),
+	_isInSleepMode(false),
 	BaudRate(115200)	
 {
 	Serial.println("GsmModule::GsmModule");
@@ -76,18 +77,73 @@ bool GsmModule::ReadModemProperties()
 	return true;
 }
 
-void GsmModule::Loop()
+bool GsmModule::RequestSleepIfEnabled()
 {
-	static IntervalTimer loopIntervalTimer(TickInterval);
-	if (!loopIntervalTimer.IsElapsed())
+	if (!SleepEnabled)
 	{
-		return;
+		return true;
 	}
 
+	if (_isInSleepMode)
+	{
+		return true;
+	}
+	
+
+	if (_gsm.EnterSleepMode() == AtResultType::Success)
+	{
+		_isInSleepMode = true;
+		_logger.Log(F("Successfully entered sleep mode"));
+		return true;
+	}
+	
+	_logger.Log(F("   Failed to enter sleep mode"));	
+	return false;
+}
+
+bool GsmModule::ExitSleepIfEnabled()
+{	
+	if (!_isInSleepMode)
+	{
+		return true;
+	}
+	
+	if (_gsm.ExitSleepMode() == AtResultType::Success)
+	{
+		_isInSleepMode = false;
+		return true;
+	}
+	
+	_logger.Log(F("   Failed to exit sleep mode"));
+	return false;
+	
+}
+
+void GsmModule::Loop()
+{
 	if (_state == GsmState::Error)
 	{
 		return;
 	}
+
+	static IntervalTimer loopIntervalTimer(TickInterval);
+	if (!loopIntervalTimer.IsElapsed())
+	{
+		if (_state == GsmState::ConnectedToGprs)
+		{
+			RequestSleepIfEnabled();
+		}
+		return;
+	}
+	
+	if (!ExitSleepIfEnabled())
+	{
+		_error = "Exit sleep failed";
+		ChangeState(GsmState::Error);
+		return;
+	}	
+
+	
 	if (GarbageOnSerialDetected())
 	{
 		_error = "Serial garbage detected";
@@ -102,6 +158,7 @@ void GsmModule::Loop()
 	}
 	if (_state == GsmState::NoShield)
 	{
+		_gsm.SetDtr(false);
 		if (!_gsm.EnsureModemConnected(BaudRate))
 		{
 			delay(500);

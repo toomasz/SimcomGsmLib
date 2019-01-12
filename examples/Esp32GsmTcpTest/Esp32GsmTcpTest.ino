@@ -9,7 +9,7 @@
 #include <SimcomAtCommandsEsp32.h>
 #include <FixedString.h>
 
-SimcomAtCommandsEsp32 gsmAt(Serial1, 16, 14);
+SimcomAtCommandsEsp32 gsmAt(Serial1, 16, 14, 25);
 GsmModule gsm(gsmAt);
 
 Gui gui(0x3c, 5, 4);
@@ -44,8 +44,10 @@ void setup()
 		Serial.printf("%u8 [GSM]", millis());
 		Serial.println(logEntry);
 	});
+	gsm.SleepEnabled = true;
 	gsm.BaudRate = 460800;
 	gsm.ApnName = "virgin-internet";
+	gsm.TickInterval = 300;
 
 	gui.init();
 

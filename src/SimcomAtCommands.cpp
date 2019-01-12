@@ -1,14 +1,15 @@
 #include "SimcomAtCommands.h"
 #include "GsmLibHelpers.h"
 
-SimcomAtCommands::SimcomAtCommands(Stream& serial, UpdateBaudRateCallback updateBaudRateCallback) :
+SimcomAtCommands::SimcomAtCommands(Stream& serial, UpdateBaudRateCallback updateBaudRateCallback, SetDtrCallback setDtrCallback) :
 _serial(serial),
+_updateBaudRateCallback(updateBaudRateCallback),
+_currentBaudRate(0),
+_setDtrCallback(setDtrCallback),
 _parser(_parserContext, _logger, serial, _currentCommand),
 IsAsync(false),
 _lastIncomingByteTime(0)
 {
-	_updateBaudRateCallback = updateBaudRateCallback;
-	_currentBaudRate = 0;
 }
 
 AtResultType SimcomAtCommands::PopCommandResult(bool ensureDelay)
@@ -26,7 +27,15 @@ void SimcomAtCommands::ReadCharAndFeedParser()
 	_parser.FeedChar(c);
 	_lastIncomingByteTime = millis();	
 }
-
+void SimcomAtCommands::ReadCharAndIgnore()
+{
+	if (!_serial.available())
+	{
+		return;
+	}
+	auto c = _serial.read();
+	_lastIncomingByteTime = millis();
+}
 AtResultType SimcomAtCommands::PopCommandResult(bool ensureDelay, uint64_t timeout)
 {
 	if (ensureDelay)
@@ -287,10 +296,10 @@ AtResultType SimcomAtCommands::SetApn(const char *apnName, const char *username,
 	return PopCommandResult();
 }
 
-AtResultType SimcomAtCommands::At()
+AtResultType SimcomAtCommands::At(uint32_t timeout)
 {	
 	SendAt_P(AtCommand::Generic, false, F("AT"));
-	return PopCommandResult(false, 60u);
+	return PopCommandResult(false, timeout);
 }
 
 AtResultType SimcomAtCommands::SetBaudRate(uint32_t baud)
@@ -399,6 +408,23 @@ AtResultType SimcomAtCommands::Cipshut()
 	return PopCommandResult(false, 20000u);
 }
 
+bool SimcomAtCommands::SetDtr(bool value)
+{
+	if (_setDtrCallback == nullptr)
+	{
+		return false;
+	}	
+	if (value)
+	{
+		_logger.Log(F("Pulling DTR up"));
+	}
+	else
+	{
+		_logger.Log(F("Pulling DTR down"));
+	}
+	return _setDtrCallback(value);
+}
+
 AtResultType SimcomAtCommands::Call(char *number)
 {
 	SendAt_P(AtCommand::Generic, F("ATD%s;"), number);
@@ -489,6 +515,67 @@ void SimcomAtCommands::OnGsmModuleEvent(void * ctx, OnGsmModuleEventHandler gsmM
 	_parser.OnGsmModuleEvent(ctx, gsmModuleEventHandler);
 }
 
+AtResultType SimcomAtCommands::EnterSleepMode()
+{
+	if (_setDtrCallback == nullptr)
+	{
+		return AtResultType::Error;
+	}
+	if (!_setDtrCallback(true))
+	{
+		return AtResultType::Error;
+	}
+	SendAt_P(AtCommand::Generic, F("AT+CSCLK=1"));
+	return PopCommandResult();
+}
+
+AtResultType SimcomAtCommands::ExitSleepMode()
+{
+	_logger.Log(F("Exiting sleep mode"));
+	if (!SetDtr(false))
+	{
+		return AtResultType::Error;
+	}
+	delay(90);
+	int n = 0;
+	while (At(60) != AtResultType::Success)
+	{	
+		if (n % 4 == 0 && n >= 4)
+		{
+			SetDtr(true);
+			delay(400);
+			SetDtr(false);
+		}
+		if (n == 40)
+		{
+			return AtResultType::Timeout;
+		}
+		n++;
+	}
+
+	for (int i = 0; i < 5; i++)
+	{
+		wait(1);
+		SendAt_P(AtCommand::Generic, F("AT+CSCLK=0"));
+		auto result = PopCommandResult();
+		if (result == AtResultType::Success)
+		{
+			for (int j = 0; j < 3; j++)
+			{
+				GsmRegistrationState regState;
+				wait(1);
+				if (GetRegistrationStatus(regState) == AtResultType::Success)
+				{
+					return AtResultType::Success;
+				}
+			}
+		}
+		wait(100);
+	}
+
+	
+	return AtResultType::Timeout;
+}
 
 
 

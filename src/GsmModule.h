@@ -9,7 +9,7 @@
 #include "SimcomGsmTypes.h"
 #include <vector>
 
-enum class GsmState
+enum class GsmState :uint8_t
 {
 	Initial,
 	NoShield,
@@ -29,11 +29,11 @@ class GsmModule
 	SocketManager _socketManager;
 	GsmLogger& _logger;
 	FixedString100 _error;
+	bool _isInSleepMode;
 	void GetStateStringFromProg(char* stateStr, GsmState state)
 	{
 		strcpy_P(stateStr, (PGM_P)StateToStr(state));
 	}
-
 	void ChangeState(GsmState newState)
 	{
 		if (_state == GsmState::Error)
@@ -47,20 +47,36 @@ class GsmModule
 			GetStateStringFromProg(inState, _state);
 			GetStateStringFromProg(outState, newState);
 			_logger.Log(F("State changed %s -> %s"), inState, outState);
-		}
+		}		
 		_state = newState;
 		_socketManager.SetIsNetworkAvailable(_state == GsmState::ConnectedToGprs);
+		if (_state == GsmState::NoShield)
+		{
+			ModuleConnectCount++;
+			if (ModuleConnectCount > 1)
+			{
+			//	_error = "GSM 2";
+			//	ChangeState(GsmState::Error);
+			}
+		}
 	}
 	GsmState _state;
 	bool ReadModemProperties();
 
+	bool RequestSleepIfEnabled();
+
+	bool ExitSleepIfEnabled();
+
 public:
+	bool SleepEnabled = false;
 	uint16_t TickInterval = 100;
 	uint16_t SimStatusInterval = 1000;
 	uint16_t GetPropertiesInterval = 1000;
 	char *ApnName;
 	char* ApnUser;
 	char* ApnPassword;
+	int ModuleConnectCount = 0;
+
 	GsmModule(SimcomAtCommands &gsm);
 	SimcomAtCommands& At()
 	{

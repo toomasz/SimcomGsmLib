@@ -19,8 +19,7 @@ void setup()
 
 
 	auto baudRate = gsm.FindCurrentBaudRate();
-	Serial.print("Found baud rate: ");
-	Serial.print(baudRate);
+	Serial.printf("Found baud rate: %d\n", baudRate);
 }
 
 void loop()

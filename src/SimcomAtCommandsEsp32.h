@@ -12,6 +12,7 @@ class SimcomAtCommandsEsp32 : public SimcomAtCommands
 {
 	static int _txPin;
 	static int _rxPin;
+	static int _dtrPin;
 	static HardwareSerial* _serial;
 	static bool _isSerialInitialized;
 	static void UpdateBaudRate(uint64_t baudRate)
@@ -26,13 +27,27 @@ class SimcomAtCommandsEsp32 : public SimcomAtCommands
 		_isSerialInitialized = true;		
 	}
 
-public:
-	SimcomAtCommandsEsp32(HardwareSerial& serial, int txPin, int rxPin)
-		:SimcomAtCommands(serial, UpdateBaudRate)
+	static bool SetDtr(bool isHigh)
 	{
-		Serial.println("SimcomAtCommandsEsp32::SimcomAtCommandsEsp32");
+		if (_dtrPin == -1)
+		{
+			return false;
+		}	
+		digitalWrite(_dtrPin, isHigh);
+		return true;
+	}
 
+public:
+	SimcomAtCommandsEsp32(HardwareSerial& serial, int txPin, int rxPin, int dtrPin = -1)
+		:SimcomAtCommands(serial, UpdateBaudRate, SetDtr)
+	{
+		Serial.println("SimcomAtCommandsEsp32::SimcomAtCommandsEsp32");		
 		_serial = &serial;
+		_dtrPin = dtrPin;
+		if (_dtrPin != -1)
+		{
+			pinMode(_dtrPin, OUTPUT_OPEN_DRAIN);
+		}
 		_txPin = txPin;
 		_rxPin = rxPin;
 	}
