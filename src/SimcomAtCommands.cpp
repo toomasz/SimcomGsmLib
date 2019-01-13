@@ -456,6 +456,11 @@ AtResultType SimcomAtCommands::Shutdown()
 	return PopCommandResult();
 }
 
+AtResultType SimcomAtCommands::EnableNetlight(bool enable)
+{
+	SendAt_P(AtCommand::Generic, F("AT+CNETLIGHT=%d"), enable ? 1 : 0);
+	return PopCommandResult();
+}
 
 AtResultType SimcomAtCommands::BeginConnect(ProtocolType protocol, uint8_t mux, const char *address, int port)
 {	

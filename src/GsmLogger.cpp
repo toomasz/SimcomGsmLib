@@ -26,7 +26,7 @@ void GsmLogger::Log(const __FlashStringHelper* format, ...)
 	buffer.appendFormatV(format, argptr);
 	if (_onLog != nullptr)
 	{
-		_onLog(buffer.c_str());
+		_onLog(buffer.c_str(), false);
 	}
 
 	va_end(argptr);
@@ -49,8 +49,16 @@ void GsmLogger::LogAt(const __FlashStringHelper* format, ...)
 	buffer.appendFormatV(format, argptr);
 	if (_onLog != nullptr)
 	{
-		_onLog(buffer.c_str());
+		_onLog(buffer.c_str(), false);
 	}
 
 	va_end(argptr);
+}
+
+void GsmLogger::Flush()
+{
+	if (_onLog != nullptr)
+	{
+		_onLog("", true);
+	}
 }

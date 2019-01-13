@@ -2,6 +2,7 @@
 #define _PARSER_CONTEXT_H
 
 #include "SimcomGsmTypes.h"
+#include "SequenceDetector.h"
 
 struct ParserContext
 {
@@ -38,6 +39,7 @@ struct ParserContext
 	uint16_t CipsendDataIndex;
 	uint16_t CipsendDataLength;
 	uint16_t *CipsendSentBytes;
+	SequenceDetector CipsendDataEchoDetector;
 
 };
 

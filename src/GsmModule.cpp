@@ -12,7 +12,8 @@ GsmModule::GsmModule(SimcomAtCommands &gsm):
 	ApnUser(""),
 	ApnPassword(""),
 	_isInSleepMode(false),
-	BaudRate(115200)	
+	BaudRate(115200),
+	_lightSleepCallback(nullptr)
 {
 	Serial.println("GsmModule::GsmModule");
 	_gsm.OnGsmModuleEvent(this, [](void*ctx, GsmModuleEventType eventType) 
@@ -88,7 +89,6 @@ bool GsmModule::RequestSleepIfEnabled()
 	{
 		return true;
 	}
-	
 
 	if (_gsm.EnterSleepMode() == AtResultType::Success)
 	{
@@ -113,7 +113,6 @@ bool GsmModule::ExitSleepIfEnabled()
 		_isInSleepMode = false;
 		return true;
 	}
-	
 	_logger.Log(F("   Failed to exit sleep mode"));
 	return false;
 	
@@ -131,7 +130,17 @@ void GsmModule::Loop()
 	{
 		if (_state == GsmState::ConnectedToGprs)
 		{
-			RequestSleepIfEnabled();
+			if (SleepEnabled)
+			{
+				RequestSleepIfEnabled();				
+				if (_lightSleepCallback != nullptr)
+				{
+					_logger.Log(F("Entering CPU sleep"));
+					_logger.Flush();
+					_lightSleepCallback(TickInterval);
+					_logger.Log(F("Wake up from CPU sleep"));
+				}				
+			}
 		}
 		return;
 	}

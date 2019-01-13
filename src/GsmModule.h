@@ -23,6 +23,8 @@ enum class GsmState :uint8_t
 	Error
 };
 
+typedef void(*LightSleepCallback)(uint64_t millis);
+
 class GsmModule
 {
 	SimcomAtCommands& _gsm;	
@@ -62,12 +64,16 @@ class GsmModule
 	}
 	GsmState _state;
 	bool ReadModemProperties();
-
 	bool RequestSleepIfEnabled();
-
 	bool ExitSleepIfEnabled();
-
+	LightSleepCallback _lightSleepCallback;
 public:
+	GsmModule(SimcomAtCommands &gsm);
+
+	void SetLightSleepCallback(LightSleepCallback lightSleepCallback)
+	{
+		_lightSleepCallback = lightSleepCallback;
+	}
 	bool SleepEnabled = false;
 	uint16_t TickInterval = 100;
 	uint16_t SimStatusInterval = 1000;
@@ -77,7 +83,7 @@ public:
 	char* ApnPassword;
 	int ModuleConnectCount = 0;
 
-	GsmModule(SimcomAtCommands &gsm);
+
 	SimcomAtCommands& At()
 	{
 		return _gsm;
@@ -109,7 +115,6 @@ public:
 	SimcomIpState ipStatus;
 	SimState simStatus;
 	void OnLog(GsmLogCallback onLog);
-
 	void Loop();
 	void Wait(uint64_t delayInMs)
 	{

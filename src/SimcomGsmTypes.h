@@ -147,6 +147,7 @@ enum class GsmRegistrationState : uint8_t
 enum class CipsendStateType: uint8_t
 {
 	WaitingForPrompt,
+	WaitingForDataEcho,
 	WaitingForDataAccept,
 };
 

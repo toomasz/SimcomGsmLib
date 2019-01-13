@@ -4,7 +4,7 @@
 #include <pgmspace.h>
 #include <WString.h>
 
-typedef void(*GsmLogCallback)(const char* logLine);
+typedef void(*GsmLogCallback)(const char* logLine, bool flush);
 
 class GsmLogger
 {
@@ -16,6 +16,7 @@ public:
 	void OnLog(GsmLogCallback onLog);
 	void Log(const __FlashStringHelper * format, ...);
 	void LogAt(const __FlashStringHelper* format, ...);
+	void Flush();
 };
 
 #endif

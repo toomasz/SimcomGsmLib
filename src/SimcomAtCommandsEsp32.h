@@ -36,7 +36,6 @@ class SimcomAtCommandsEsp32 : public SimcomAtCommands
 		digitalWrite(_dtrPin, isHigh);
 		return true;
 	}
-
 public:
 	SimcomAtCommandsEsp32(HardwareSerial& serial, int txPin, int rxPin, int dtrPin = -1)
 		:SimcomAtCommands(serial, UpdateBaudRate, SetDtr)

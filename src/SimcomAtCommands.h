@@ -53,8 +53,8 @@ public:
 
 		AtResultType At(uint32_t timeout = 60u, bool expectEcho = false);
 		AtResultType GenericAt(uint64_t timeout, const __FlashStringHelper* command,...);
-
 		AtResultType Shutdown();
+		AtResultType EnableNetlight(bool enable);
 		AtResultType GetSimStatus(SimState &simStatus);
 		AtResultType GetRegistrationStatus(GsmRegistrationState& registrationStatus);
 		AtResultType GetOperatorName(FixedStringBase &operatorName, bool returnImsi = false);

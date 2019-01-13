@@ -49,27 +49,30 @@ void SimcomResponseParser::FeedChar(char c)
 {	
 	if (_state != ParserState::WaitingForEcho)
 	{
-		if (_currentCommand == AtCommand::CipSend &&
-			_parserContext.CipsendState == CipsendStateType::WaitingForPrompt)
+		if (_currentCommand == AtCommand::CipSend)
 		{
-			if (_promptSequenceDetector.NextChar(c))
+			if (_parserContext.CipsendState == CipsendStateType::WaitingForPrompt)
 			{
-				_parserContext.CipsendState = CipsendStateType::WaitingForDataAccept;
-				_response.clear();
-				_logger.Log(F("Writing %d b of data"), _parserContext.CipsendDataLength);
-
-				_serial.write(_parserContext.CipsendBuffer->c_str() + _parserContext.CipsendDataIndex, _parserContext.CipsendDataLength);
-
-				int readBytes = 0;
-				while (readBytes < _parserContext.CipsendDataLength)
+				if (_promptSequenceDetector.NextChar(c))
 				{
-					if (_serial.available())
-					{
-						auto c = _serial.read();
-						readBytes++;
-					}
-				}
+					_parserContext.CipsendState = CipsendStateType::WaitingForDataEcho;
+					_response.clear();
+					_logger.Log(F("Writing %d b of data"), _parserContext.CipsendDataLength);
 
+					auto dataPtr = _parserContext.CipsendBuffer->c_str() + _parserContext.CipsendDataIndex;
+					auto dataLength = _parserContext.CipsendDataLength;
+
+					_serial.write(dataPtr, dataLength);
+					_parserContext.CipsendDataEchoDetector.SetSequence(dataPtr, dataLength);
+					return;
+				}
+			}
+			if (_parserContext.CipsendState == CipsendStateType::WaitingForDataEcho)
+			{
+				if (_parserContext.CipsendDataEchoDetector.NextChar(c))
+				{
+					_parserContext.CipsendState = CipsendStateType::WaitingForDataAccept;
+				}
 				return;
 			}
 		}

@@ -7,11 +7,14 @@
 
 class SequenceDetector
 {
-public:
 	const char* _sequence;
-	uint8_t state;
-	uint8_t length;
+	int _state;
+	int _length;
+public:	
+	SequenceDetector();
 	SequenceDetector(const char * sequence);
+	SequenceDetector(const char * sequence, int length);
+	void SetSequence(const char * sequence, int length);
 	bool NextChar(char c);
 };
 #endif

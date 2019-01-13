@@ -1,30 +1,54 @@
 #include "SequenceDetector.h"
 
-
-SequenceDetector::SequenceDetector(const char* sequence):_sequence(sequence)
+SequenceDetector::SequenceDetector()
 {
-	state = 0;
-	length = strlen(sequence);
+	_sequence = nullptr;
+	_state = 0;
+	_length = 0;
+}
+SequenceDetector::SequenceDetector(const char* sequence):
+	_sequence(sequence),
+	_state(0)
+{
+	_length = strlen(sequence);
+}
+
+SequenceDetector::SequenceDetector(const char * sequence, int length):
+	_sequence(sequence), 
+	_state(0), 
+	_length(length)
+{
+}
+
+void SequenceDetector::SetSequence(const char * sequence, int length)
+{
+	_sequence = sequence;
+	_state = 0;
+	_length = length;
 }
 /* returns true of sequence is detected */
 bool SequenceDetector::NextChar(char c)
 {
-	const char cByte = _sequence[state];
+	if (_sequence == nullptr)
+	{
+		return false;
+	}
+	const char cByte = _sequence[_state];
 	if (cByte == c)
 	{
-		state++;
+		_state++;
 	}
 	else
 	{
-		state = 0;
-		if (c == _sequence[state])
+		_state = 0;
+		if (c == _sequence[_state])
 		{
-			state++;
+			_state++;
 		}
 	}
-	if (state == length)
+	if (_state == _length)
 	{
-		state = 0;
+		_state = 0;
 		return true;
 	}
 	return false;
