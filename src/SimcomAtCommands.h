@@ -51,7 +51,7 @@ public:
 		// Standard modem functions
 		AtResultType SetBaudRate(uint32_t baud);
 
-		AtResultType At(uint32_t timeout = 60u);
+		AtResultType At(uint32_t timeout = 60u, bool expectEcho = false);
 		AtResultType GenericAt(uint64_t timeout, const __FlashStringHelper* command,...);
 
 		AtResultType Shutdown();

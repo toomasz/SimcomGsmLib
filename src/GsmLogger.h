@@ -10,7 +10,8 @@ class GsmLogger
 {
 	GsmLogCallback _onLog;
 public:
-	bool LogAtCommands;
+	bool LogEnabled = true;
+	bool LogAtCommands = false;
 	GsmLogger();	 
 	void OnLog(GsmLogCallback onLog);
 	void Log(const __FlashStringHelper * format, ...);

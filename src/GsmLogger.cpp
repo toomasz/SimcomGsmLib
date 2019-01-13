@@ -7,7 +7,6 @@
 GsmLogger::GsmLogger()
 {
 	_onLog = nullptr;
-	LogAtCommands = false;
 }
 void GsmLogger::OnLog(GsmLogCallback onLog)
 {
@@ -16,6 +15,10 @@ void GsmLogger::OnLog(GsmLogCallback onLog)
 
 void GsmLogger::Log(const __FlashStringHelper* format, ...)
 {
+	if (!LogEnabled)
+	{
+		return;
+	}
 	va_list argptr;
 	va_start(argptr, format);
 
@@ -31,6 +34,10 @@ void GsmLogger::Log(const __FlashStringHelper* format, ...)
 
 void GsmLogger::LogAt(const __FlashStringHelper* format, ...)
 {
+	if (!LogEnabled)
+	{
+		return;
+	}
 	if (!LogAtCommands)
 	{
 		return;

@@ -81,28 +81,7 @@ void SimcomAtCommands::wait(uint64_t ms)
 		ReadCharAndFeedParser();
 	}
 }
-AtResultType SimcomAtCommands::GetSimStatus(SimState &simStatus)
-{
-	SendAt_P(AtCommand::Cpin, F("AT+CPIN?"));
-	const auto result = PopCommandResult();
-	if (result == AtResultType::Success)
-	{
-		simStatus = _parserContext.SimStatus;
-	}
-	return result;
-}
 
-AtResultType SimcomAtCommands::GetRegistrationStatus(GsmRegistrationState& registrationStatus)
-{	
-	SendAt_P(AtCommand::Creg ,F("AT+CREG?"));
-
-	const auto result = PopCommandResult();
-	if (result == AtResultType::Success)
-	{
-		registrationStatus = _parserContext.RegistrationStatus;
-	}
-	return result;
-}
 AtResultType SimcomAtCommands::GenericAt(uint64_t timeout, const __FlashStringHelper* command, ...)
 {	
 	_parser.SetCommandType(AtCommand::Generic);
@@ -141,6 +120,36 @@ void SimcomAtCommands::SendAt_P(AtCommand commandType, bool expectEcho, const __
 
 	va_end(argptr);
 }
+
+AtResultType SimcomAtCommands::At(uint32_t timeout, bool expectEcho)
+{
+	SendAt_P(AtCommand::Generic, expectEcho, F("AT"));
+	return PopCommandResult(false, timeout);
+}
+
+AtResultType SimcomAtCommands::GetSimStatus(SimState &simStatus)
+{
+	SendAt_P(AtCommand::Cpin, F("AT+CPIN?"));
+	const auto result = PopCommandResult();
+	if (result == AtResultType::Success)
+	{
+		simStatus = _parserContext.SimStatus;
+	}
+	return result;
+}
+
+AtResultType SimcomAtCommands::GetRegistrationStatus(GsmRegistrationState& registrationStatus)
+{
+	SendAt_P(AtCommand::Creg, F("AT+CREG?"));
+
+	const auto result = PopCommandResult();
+	if (result == AtResultType::Success)
+	{
+		registrationStatus = _parserContext.RegistrationStatus;
+	}
+	return result;
+}
+
 AtResultType SimcomAtCommands::GetOperatorName(FixedStringBase &operatorName, bool returnImsi)
 {	
 	SendAt_P(AtCommand::Cops, F("AT+COPS?"));
@@ -294,12 +303,6 @@ AtResultType SimcomAtCommands::SetApn(const char *apnName, const char *username,
 {	
 	SendAt_P(AtCommand::Generic, F("AT+CSTT=\"%s\",\"%s\",\"%s\""), apnName, username, password);
 	return PopCommandResult();
-}
-
-AtResultType SimcomAtCommands::At(uint32_t timeout)
-{	
-	SendAt_P(AtCommand::Generic, false, F("AT"));
-	return PopCommandResult(false, timeout);
 }
 
 AtResultType SimcomAtCommands::SetBaudRate(uint32_t baud)
@@ -517,14 +520,11 @@ void SimcomAtCommands::OnGsmModuleEvent(void * ctx, OnGsmModuleEventHandler gsmM
 
 AtResultType SimcomAtCommands::EnterSleepMode()
 {
-	if (_setDtrCallback == nullptr)
+	if (!SetDtr(true))
 	{
 		return AtResultType::Error;
 	}
-	if (!_setDtrCallback(true))
-	{
-		return AtResultType::Error;
-	}
+
 	SendAt_P(AtCommand::Generic, F("AT+CSCLK=1"));
 	return PopCommandResult();
 }
@@ -536,15 +536,16 @@ AtResultType SimcomAtCommands::ExitSleepMode()
 	{
 		return AtResultType::Error;
 	}
-	delay(90);
+	delay(100);
 	int n = 0;
-	while (At(60) != AtResultType::Success)
+	while (At(60u, true) != AtResultType::Success)
 	{	
-		if (n % 4 == 0 && n >= 4)
+		if (n % 3 == 0 && n >= 3)
 		{
 			SetDtr(true);
-			delay(400);
+			delay(20);
 			SetDtr(false);
+			delay(100);
 		}
 		if (n == 40)
 		{

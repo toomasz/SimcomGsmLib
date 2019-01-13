@@ -20,8 +20,9 @@ class IntervalTimer
 	int _delay;
 	bool _isElapsed;
 	void Tick();
-	void SetElapsed();
+	void SetElapsed();	
 public:
+	void SetDelay(int delay);
 	IntervalTimer(int delay);
 	bool IsElapsed();
 };

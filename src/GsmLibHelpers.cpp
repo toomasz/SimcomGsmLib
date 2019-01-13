@@ -118,6 +118,11 @@ IntervalTimer::IntervalTimer(int delay)
 	_isElapsed = false;
 }
 
+void IntervalTimer::SetDelay(int delay)
+{
+	_delay = delay;
+}
+
 void IntervalTimer::Tick()
 {
 	auto ms = millis();

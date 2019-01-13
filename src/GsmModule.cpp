@@ -125,8 +125,8 @@ void GsmModule::Loop()
 	{
 		return;
 	}
-
 	static IntervalTimer loopIntervalTimer(TickInterval);
+	loopIntervalTimer.SetDelay(TickInterval);
 	if (!loopIntervalTimer.IsElapsed())
 	{
 		if (_state == GsmState::ConnectedToGprs)
