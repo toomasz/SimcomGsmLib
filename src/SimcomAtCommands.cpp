@@ -8,6 +8,7 @@ _currentBaudRate(0),
 _setDtrCallback(setDtrCallback),
 _parser(_parserContext, _logger, serial, _currentCommand),
 IsAsync(false),
+_isInSleepMode(false),
 _lastIncomingByteTime(0)
 {
 }
@@ -461,7 +462,12 @@ AtResultType SimcomAtCommands::EnableNetlight(bool enable)
 	SendAt_P(AtCommand::Generic, F("AT+CNETLIGHT=%d"), enable ? 1 : 0);
 	return PopCommandResult();
 }
-
+AtResultType SimcomAtCommands::GetTemperature(float& temperature)
+{
+	_parserContext.Temperature = &temperature;
+	SendAt_P(AtCommand::Cmte, F("AT+CMTE?"));
+	return PopCommandResult();
+}
 AtResultType SimcomAtCommands::BeginConnect(ProtocolType protocol, uint8_t mux, const char *address, int port)
 {	
 	_logger.Log(F("BeginConnect %s:%u"), address, port);
@@ -531,7 +537,12 @@ AtResultType SimcomAtCommands::EnterSleepMode()
 	}
 
 	SendAt_P(AtCommand::Generic, F("AT+CSCLK=1"));
-	return PopCommandResult();
+	auto result = PopCommandResult();
+	if (result == AtResultType::Success)
+	{
+		_isInSleepMode = true;
+	}
+	return result;
 }
 
 AtResultType SimcomAtCommands::ExitSleepMode()
@@ -572,6 +583,7 @@ AtResultType SimcomAtCommands::ExitSleepMode()
 				wait(1);
 				if (GetRegistrationStatus(regState) == AtResultType::Success)
 				{
+					_isInSleepMode = false;
 					return AtResultType::Success;
 				}
 			}
@@ -583,7 +595,10 @@ AtResultType SimcomAtCommands::ExitSleepMode()
 	return AtResultType::Timeout;
 }
 
-
+bool SimcomAtCommands::IsInSleepMode()
+{
+	return _isInSleepMode;
+}
 
 
 

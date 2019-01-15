@@ -32,6 +32,7 @@ private:
 		AtResultType PopCommandResult(bool ensureDelay = false);
 		void ReadCharAndFeedParser();
 		void ReadCharAndIgnore();
+		bool _isInSleepMode;
 protected:
 		GsmLogger _logger;
 
@@ -54,7 +55,6 @@ public:
 		AtResultType At(uint32_t timeout = 60u, bool expectEcho = false);
 		AtResultType GenericAt(uint64_t timeout, const __FlashStringHelper* command,...);
 		AtResultType Shutdown();
-		AtResultType EnableNetlight(bool enable);
 		AtResultType GetSimStatus(SimState &simStatus);
 		AtResultType GetRegistrationStatus(GsmRegistrationState& registrationStatus);
 		AtResultType GetOperatorName(FixedStringBase &operatorName, bool returnImsi = false);
@@ -66,7 +66,7 @@ public:
 		AtResultType GetSignalQuality(int16_t &signalQuality);
 		AtResultType SetEcho(bool echoEnabled);
 		AtResultType SendSms(char *number, char *message);
-
+	
 		// Calls
 		AtResultType Call(char *number);
 		AtResultType HangUp();
@@ -88,19 +88,26 @@ public:
 		AtResultType Read(int mux, FixedStringBase& outputBuffer, uint16_t& availableBytes);
 		AtResultType Send(int mux, FixedStringBase& data, uint16_t index, uint16_t length, uint16_t &sentBytes);
 		AtResultType Send(int mux, FixedStringBase& data, uint16_t &sentBytes);
-
 		AtResultType CloseConnection(uint8_t mux);
 		AtResultType GetConnectionInfo(uint8_t mux, ConnectionInfo &connectionInfo);
 
 		void OnMuxEvent(void* ctx, MuxEventHandler muxEventHandler);
 		void OnCipstatusInfo(void * ctx, MuxCipstatusInfoHandler muxCipstatusHandler);
 		void OnGsmModuleEvent(void* ctx, OnGsmModuleEventHandler gsmModuleEventHandler);
+
+		// Misc
+		AtResultType GetTemperature(float& temperature);
+		AtResultType EnableNetlight(bool enable);
+
+		// Sleep mode
+		bool IsInSleepMode();
 		AtResultType EnterSleepMode();
 		AtResultType ExitSleepMode();
 		// GPRS
 		AtResultType SetApn(const char *apnName, const char *username, const char *password);
 		AtResultType AttachGprs();
 		AtResultType Cipshut();
+
 		bool SetDtr(bool value);
 		void wait(uint64_t millis);
 };

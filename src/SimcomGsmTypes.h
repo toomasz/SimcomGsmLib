@@ -99,7 +99,8 @@ enum class AtCommand : uint8_t
 	CipRxGet,
 	CipRxGetRead,
 	CipQsendQuery,
-	CipSend
+	CipSend,
+	Cmte
 };
 
 enum class SimcomIpState : uint8_t

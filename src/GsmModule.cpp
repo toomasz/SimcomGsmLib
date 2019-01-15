@@ -57,6 +57,16 @@ bool GsmModule::ReadModemProperties()
 	{
 		return false;
 	}
+	static IntervalTimer getTemperatureTimer(GetTemperatureInterval);
+	getTemperatureTimer.SetDelay(GetTemperatureInterval);
+	if (getTemperatureTimer.IsElapsed())
+	{
+		_logger.Log(F("Reading module temperature"));
+		if (_gsm.GetTemperature(Temperature) == AtResultType::Timeout)
+		{
+			return false;
+		}
+	}
 	if (gsmRegStatus == GsmRegistrationState::HomeNetwork || gsmRegStatus == GsmRegistrationState::Roaming)
 	{
 		if (OperatorNameHelper::GetRealOperatorName(_gsm, operatorName) == AtResultType::Timeout)
@@ -199,7 +209,7 @@ void GsmModule::Loop()
 			}
 			_gsm.wait(5000);
 		}
-		
+		_gsm.EnableNetlight(true);
 		//_gsm.Cipshut();
 		ChangeState(GsmState::SearchingForNetwork);
 		return;

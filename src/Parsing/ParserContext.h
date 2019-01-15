@@ -40,7 +40,7 @@ struct ParserContext
 	uint16_t CipsendDataLength;
 	uint16_t *CipsendSentBytes;
 	SequenceDetector CipsendDataEchoDetector;
-
+	float *Temperature;
 };
 
 #endif

@@ -1,5 +1,5 @@
 #include "DelimParser.h"
-
+#include <stdlib.h> 
 
 DelimParser::DelimParser(FixedStringBase &line, char separator):
 	_line(line),
@@ -233,6 +233,83 @@ bool DelimParser::NextNum(uint16_t &dst, bool allowNull, int base)
 		x *= base;
 	} while (--i > _tokenStart);
 
+	return true;
+}
+bool DelimParser::ParseDouble(const char* str, int length, double &target, char decimalSeparator)
+{
+	if (length == 0)
+	{
+		return false;
+	}
+	bool isNegative = str[0] == '-';
+	int startIndex = isNegative ? 1 : 0;
+
+	int separatorIndex = -1;
+	for (int i = startIndex; i < length; i++)
+	{
+		if (str[i] == decimalSeparator)
+		{
+			separatorIndex = i;
+		}
+	}
+
+	double number = 0;
+	int intPartMultiplier = 1;
+
+	auto realPartEnd = separatorIndex != -1 ? separatorIndex - 1 : length - 1;
+
+	for (int i = realPartEnd; i >= startIndex; i--)
+	{
+		auto c = str[i];
+		if (c < '0' || c > '9')
+		{
+			return false;
+		}
+		number += (c - '0')*intPartMultiplier;
+		intPartMultiplier *= 10;
+	}
+
+	if (separatorIndex != -1)
+	{
+		double decimalPartMultiplier = 0.1;
+
+		for (int i = separatorIndex + 1; i < length; i++)
+		{
+			auto c = str[i];
+			if (c < '0' || c > '9')
+			{
+				return false;
+			}
+			number += (c - '0')*decimalPartMultiplier;
+			decimalPartMultiplier *= 0.1;
+		}
+	}
+	if (isNegative)
+	{
+		number = -number;
+	}
+
+	target = number;
+	return true;
+}
+bool DelimParser::NextFloat(float & dst)
+{
+	FixedString20 floatStr;
+
+	if (!NextToken())
+	{
+		return false;
+	}
+	
+	int tokLength = _position - 1 - _tokenStart;
+
+	double number = 0;
+	if (!ParseDouble(_line.c_str() + _tokenStart, tokLength, number))
+	{
+		return false;
+	}
+
+	dst = number;
 	return true;
 }
 

@@ -78,6 +78,7 @@ public:
 	uint16_t TickInterval = 100;
 	uint16_t SimStatusInterval = 1000;
 	uint16_t GetPropertiesInterval = 1000;
+	uint16_t GetTemperatureInterval = 5000;
 	char *ApnName;
 	char* ApnUser;
 	char* ApnPassword;
@@ -114,6 +115,7 @@ public:
 	GsmIp ipAddress;
 	SimcomIpState ipStatus;
 	SimState simStatus;
+	float Temperature = 0;
 	void OnLog(GsmLogCallback onLog);
 	void Loop();
 	void Wait(uint64_t delayInMs)

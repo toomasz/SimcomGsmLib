@@ -38,6 +38,8 @@ public:
 	bool NextNum(uint8_t & dst, bool allowNull = false, int base = 10);
 	bool NextNum(int16_t& dst, bool allowNull = false, int base = 10);
 	bool NextNum(uint16_t& dst, bool allowNull = false, int base = 10);
+	bool NextFloat(float& dst);
+	bool ParseDouble(const char* str, int length, double &target, char decimalSeparator = '.');
 
 	static const  __FlashStringHelper* StateToStr(LineParserState state);
 };

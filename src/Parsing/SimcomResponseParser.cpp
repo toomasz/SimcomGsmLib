@@ -605,6 +605,22 @@ ParserState SimcomResponseParser::ParseLine()
 		}	
 	}
 
+	if (_currentCommand == AtCommand::Cmte)
+	{
+		if (parser.StartsWith(F("+CMTE: ")))
+		{
+			if (!parser.Skip(1))
+			{
+				return ParserState::PartialError;
+			}
+			if (!parser.NextFloat(*_parserContext.Temperature))
+			{
+				return ParserState::PartialError;
+			}
+			return ParserState::PartialSuccess;
+		}
+	}
+
 	if (IsOkLine())
 	{
 		if (_state == ParserState::PartialSuccess)
