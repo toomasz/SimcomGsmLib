@@ -23,7 +23,6 @@ enum class GsmState :uint8_t
 	Error
 };
 
-typedef void(*LightSleepCallback)(uint64_t millis);
 
 class GsmModule
 {
@@ -49,31 +48,25 @@ class GsmModule
 			GetStateStringFromProg(inState, _state);
 			GetStateStringFromProg(outState, newState);
 			_logger.Log(F("State changed %s -> %s"), inState, outState);
-		}		
-		_state = newState;
-		_socketManager.SetIsNetworkAvailable(_state == GsmState::ConnectedToGprs);
+				
+			_state = newState;
+			_socketManager.SetIsNetworkAvailable(_state == GsmState::ConnectedToGprs);
+			_lastStateChange = millis();
+		}
 		if (_state == GsmState::NoShield)
 		{
-			ModuleConnectCount++;
-			if (ModuleConnectCount > 1)
-			{
-			//	_error = "GSM 2";
-			//	ChangeState(GsmState::Error);
-			}
+			ModuleConnectCount++;			
 		}
 	}
 	GsmState _state;
 	bool ReadModemProperties();
 	bool RequestSleepIfEnabled();
 	bool ExitSleepIfEnabled();
-	LightSleepCallback _lightSleepCallback;
+	uint64_t _lastStateChange = 0;
 public:
 	GsmModule(SimcomAtCommands &gsm);
 
-	void SetLightSleepCallback(LightSleepCallback lightSleepCallback)
-	{
-		_lightSleepCallback = lightSleepCallback;
-	}
+	
 	bool SleepEnabled = false;
 	uint16_t TickInterval = 100;
 	uint16_t SimStatusInterval = 1000;
@@ -83,7 +76,6 @@ public:
 	char* ApnUser;
 	char* ApnPassword;
 	int ModuleConnectCount = 0;
-
 
 	SimcomAtCommands& At()
 	{
@@ -104,6 +96,10 @@ public:
 	GsmState GetState()
 	{
 		return _state;
+	}
+	uint64_t GetTimeSinceStateChange()
+	{
+		return millis() - _lastStateChange;
 	}
 	const __FlashStringHelper* StateToStr(GsmState state);
 	int GarbageOnSerialDetected();

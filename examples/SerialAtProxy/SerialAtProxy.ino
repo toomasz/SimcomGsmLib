@@ -3,7 +3,7 @@
 
 SimcomAtCommandsEsp32 gsm(Serial2, 16, 14);
 
-void OnLog(const char* gsmLog)
+void OnLog(const char* gsmLog, bool _)
 {
 	Serial.print("[GSM]" );
 	Serial.println(gsmLog);

@@ -14,6 +14,9 @@
 #include <pgmspace.h>
 class S900Socket;
 
+
+typedef void(*CpuSleepCallback)(uint64_t millis);
+
 class SimcomAtCommands
 {
 private:
@@ -24,6 +27,7 @@ private:
 		SetDtrCallback _setDtrCallback;
 		ParserContext _parserContext;
 		FixedString50 _currentCommand;
+
 		uint64_t _lastIncomingByteTime;
 		void SendAt_P(AtCommand commandType, const __FlashStringHelper *command, ...);
 		void SendAt_P(AtCommand commandType, bool expectEcho, const __FlashStringHelper *command, ...);
@@ -33,6 +37,8 @@ private:
 		void ReadCharAndFeedParser();
 		void ReadCharAndIgnore();
 		bool _isInSleepMode;
+		CpuSleepCallback _cpuSleepCallback;
+
 protected:
 		GsmLogger _logger;
 
@@ -40,9 +46,11 @@ public:
 		GsmLogger& Logger() 
 		{
 			return _logger;
-		}
+		}		
+		FixedString50 TimeoutedCommand;
+
 		bool IsAsync;
-		SimcomAtCommands(Stream& serial, UpdateBaudRateCallback updateBaudRateCallback, SetDtrCallback setDtrCallback = nullptr);
+		SimcomAtCommands(Stream& serial, UpdateBaudRateCallback updateBaudRateCallback, SetDtrCallback setDtrCallback = nullptr, CpuSleepCallback cpuSleepCallback = nullptr);
 
 		// Serial methods
 		bool EnsureModemConnected(uint64_t requestedBaudRate);
@@ -60,7 +68,7 @@ public:
 		AtResultType GetOperatorName(FixedStringBase &operatorName, bool returnImsi = false);
 		AtResultType FlightModeOn();
 		AtResultType FlightModeOff();
-		AtResultType SetRegistrationMode(RegistrationMode mode, const char * operatorName);
+		AtResultType SetRegistrationMode(RegistrationMode mode, const char * operatorName = nullptr);
 		AtResultType GetImei(FixedString20 &imei);
 		AtResultType GetBatteryStatus(BatteryStatus &batteryStatus);
 		AtResultType GetSignalQuality(int16_t &signalQuality);
@@ -103,6 +111,7 @@ public:
 		bool IsInSleepMode();
 		AtResultType EnterSleepMode();
 		AtResultType ExitSleepMode();
+		bool CpuSleep(uint64_t millis);
 		// GPRS
 		AtResultType SetApn(const char *apnName, const char *username, const char *password);
 		AtResultType AttachGprs();
@@ -110,6 +119,7 @@ public:
 
 		bool SetDtr(bool value);
 		void wait(uint64_t millis);
+	
 };
 
 

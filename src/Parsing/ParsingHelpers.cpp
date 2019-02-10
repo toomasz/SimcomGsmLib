@@ -6,12 +6,14 @@ bool ParsingHelpers::ParseRegistrationStatus(uint16_t status, GsmRegistrationSta
 	switch (status)
 	{
 	case 0:
-	case 2:
-		state = GsmRegistrationState::SearchingForNetwork;
+		state = GsmRegistrationState::NotRegisteredNotSearching;
 		return true;
 	case 1:
 		state = GsmRegistrationState::HomeNetwork;
 		return true;
+	case 2:
+		state = GsmRegistrationState::SearchingForNetwork;
+		return true;	
 	case 3:
 		state = GsmRegistrationState::RegistrationDenied;
 		return true;

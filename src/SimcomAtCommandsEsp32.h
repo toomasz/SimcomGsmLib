@@ -6,8 +6,6 @@
 #include <HardwareSerial.h>
 #include "SimcomAtCommands.h"
 
-
-
 class SimcomAtCommandsEsp32 : public SimcomAtCommands
 {
 	static int _txPin;
@@ -36,9 +34,14 @@ class SimcomAtCommandsEsp32 : public SimcomAtCommands
 		digitalWrite(_dtrPin, isHigh);
 		return true;
 	}
+	static void LightSleep(uint64_t millis)
+	{
+		esp_sleep_enable_timer_wakeup(1000 * millis);
+		esp_light_sleep_start();
+	}
 public:
 	SimcomAtCommandsEsp32(HardwareSerial& serial, int txPin, int rxPin, int dtrPin = -1)
-		:SimcomAtCommands(serial, UpdateBaudRate, SetDtr)
+		:SimcomAtCommands(serial, UpdateBaudRate, SetDtr, LightSleep)
 	{
 		Serial.println("SimcomAtCommandsEsp32::SimcomAtCommandsEsp32");		
 		_serial = &serial;

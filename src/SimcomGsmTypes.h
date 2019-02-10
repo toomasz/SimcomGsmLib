@@ -138,6 +138,7 @@ enum class AtResultType : uint8_t
 
 enum class GsmRegistrationState : uint8_t
 {
+	NotRegisteredNotSearching,
 	SearchingForNetwork,
 	HomeNetwork,
 	RegistrationDenied,

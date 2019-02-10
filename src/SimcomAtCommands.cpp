@@ -1,9 +1,10 @@
 #include "SimcomAtCommands.h"
 #include "GsmLibHelpers.h"
 
-SimcomAtCommands::SimcomAtCommands(Stream& serial, UpdateBaudRateCallback updateBaudRateCallback, SetDtrCallback setDtrCallback) :
+SimcomAtCommands::SimcomAtCommands(Stream& serial, UpdateBaudRateCallback updateBaudRateCallback, SetDtrCallback setDtrCallback, CpuSleepCallback cpuSleepCallback) :
 _serial(serial),
 _updateBaudRateCallback(updateBaudRateCallback),
+_cpuSleepCallback(cpuSleepCallback),
 _currentBaudRate(0),
 _setDtrCallback(setDtrCallback),
 _parser(_parserContext, _logger, serial, _currentCommand),
@@ -49,7 +50,9 @@ AtResultType SimcomAtCommands::PopCommandResult(bool ensureDelay, uint64_t timeo
 		auto waitTime = millis() - before;
 		_logger.Log(F("Waited %u ms"), waitTime);
 	}
-	_serial.println(_currentCommand.c_str());
+	_serial.print(_currentCommand.c_str());
+	_serial.print("\r\n");
+	_serial.flush();
 	_logger.LogAt(F(" => %s"), _currentCommand.c_str());
 
 	const unsigned long start = millis();
@@ -66,6 +69,7 @@ AtResultType SimcomAtCommands::PopCommandResult(bool ensureDelay, uint64_t timeo
 	}	
     else if (commandResult == AtResultType::Timeout)
 	{
+		TimeoutedCommand = _currentCommand;
 		_logger.Log(F("                      --- TIMEOUT executing '%s', elapsed %d ms ---"), _currentCommand.c_str(), elapsedMs);
 	}
 	else if (commandResult == AtResultType::Error)
@@ -184,7 +188,15 @@ AtResultType SimcomAtCommands::SetRegistrationMode(RegistrationMode mode, const 
 {
 	const auto operatorFormat = _parserContext.IsOperatorNameReturnedInImsiFormat ? 2 : 0;
 	// don't need to use AtCommand::Cops here, AT+COPS write variant returns OK/ERROR
-	SendAt_P(AtCommand::Generic, F("AT+COPS=%d,%d,\"%s\""), mode, operatorFormat, operatorName);
+
+	if (operatorName == nullptr)
+	{
+		SendAt_P(AtCommand::Generic, F("AT+COPS=%d"), mode);
+	}
+	else
+	{
+		SendAt_P(AtCommand::Generic, F("AT+COPS=%d,%d,\"%s\""), mode, operatorFormat, operatorName);
+	}
 	return PopCommandResult(false, 120000u);
 }
 
@@ -552,11 +564,13 @@ AtResultType SimcomAtCommands::ExitSleepMode()
 	{
 		return AtResultType::Error;
 	}
+	
 	delay(100);
+	
 	int n = 0;
-	while (At(60u, true) != AtResultType::Success)
+	while (At(150u, false) != AtResultType::Success)
 	{	
-		if (n % 3 == 0 && n >= 3)
+		if (n % 2 == 0 && n >= 2)
 		{
 			SetDtr(true);
 			delay(20);
@@ -577,12 +591,15 @@ AtResultType SimcomAtCommands::ExitSleepMode()
 		auto result = PopCommandResult();
 		if (result == AtResultType::Success)
 		{
+			_logger.Log(F("Sucessfully executed AT+CSCLK=0, i = %d"), i);
 			for (int j = 0; j < 3; j++)
 			{
 				GsmRegistrationState regState;
 				wait(1);
 				if (GetRegistrationStatus(regState) == AtResultType::Success)
 				{
+					_logger.Log(F("Sucessfully executed AT+CREG j = %d"), j);
+
 					_isInSleepMode = false;
 					return AtResultType::Success;
 				}
@@ -598,6 +615,20 @@ AtResultType SimcomAtCommands::ExitSleepMode()
 bool SimcomAtCommands::IsInSleepMode()
 {
 	return _isInSleepMode;
+}
+
+bool SimcomAtCommands::CpuSleep(uint64_t millis)
+{
+	if (_cpuSleepCallback == nullptr)
+	{
+		return false;
+	}
+
+	_logger.Log(F("Entering CPU sleep"));
+	_logger.Flush();
+	_cpuSleepCallback(millis);
+	_logger.Log(F("Wake up from CPU sleep"));	
+	return true;
 }
 
 

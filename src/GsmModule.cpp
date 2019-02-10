@@ -12,8 +12,7 @@ GsmModule::GsmModule(SimcomAtCommands &gsm):
 	ApnUser(""),
 	ApnPassword(""),
 	_isInSleepMode(false),
-	BaudRate(115200),
-	_lightSleepCallback(nullptr)
+	BaudRate(115200)
 {
 	Serial.println("GsmModule::GsmModule");
 	_gsm.OnGsmModuleEvent(this, [](void*ctx, GsmModuleEventType eventType) 
@@ -142,14 +141,8 @@ void GsmModule::Loop()
 		{
 			if (SleepEnabled)
 			{
-				RequestSleepIfEnabled();				
-				if (_lightSleepCallback != nullptr)
-				{
-					_logger.Log(F("Entering CPU sleep"));
-					_logger.Flush();
-					_lightSleepCallback(TickInterval);
-					_logger.Log(F("Wake up from CPU sleep"));
-				}				
+				RequestSleepIfEnabled();
+				_gsm.CpuSleep(TickInterval);			
 			}
 		}
 		return;
@@ -240,6 +233,14 @@ void GsmModule::Loop()
 	}
 	if (_state == GsmState::SearchingForNetwork)
 	{
+		if (gsmRegStatus == GsmRegistrationState::NotRegisteredNotSearching)
+		{
+			if (_gsm.SetRegistrationMode(RegistrationMode::Automatic) == AtResultType::Timeout)
+			{
+				ChangeState(GsmState::NoShield);
+				return;
+			}
+		}
 		const auto regStatusResult = _gsm.GetRegistrationStatus(gsmRegStatus);
 		if (regStatusResult == AtResultType::Timeout)
 		{
@@ -378,6 +379,7 @@ void GsmModule::Loop()
 
 	switch (gsmRegStatus)
 	{		
+		case GsmRegistrationState::NotRegisteredNotSearching:
 		case GsmRegistrationState::SearchingForNetwork:
 		{
 			ChangeState(GsmState::SearchingForNetwork);
