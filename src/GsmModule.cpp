@@ -127,6 +127,25 @@ bool GsmModule::ExitSleepIfEnabled()
 	
 }
 
+bool GsmModule::UpdateRegistrationMode()
+{
+	if (OperatorSelectionMode == RegistrationMode::Automatic)
+	{
+		if (_gsm.SetRegistrationMode(OperatorSelectionMode) == AtResultType::Timeout)
+		{
+			return false;
+		}
+	}
+	else
+	{
+		if (_gsm.SetRegistrationMode(OperatorSelectionMode, true, NumericOperatorName) == AtResultType::Timeout)
+		{
+			return false;
+		}
+	}
+	return true;
+}
+
 void GsmModule::Loop()
 {
 	if (_state == GsmState::Error)
@@ -203,6 +222,11 @@ void GsmModule::Loop()
 			_gsm.wait(5000);
 		}
 		_gsm.EnableNetlight(true);
+		if (!UpdateRegistrationMode())
+		{
+			ChangeState(GsmState::NoShield);
+			return;
+		}
 		//_gsm.Cipshut();
 		ChangeState(GsmState::SearchingForNetwork);
 		return;
@@ -235,7 +259,8 @@ void GsmModule::Loop()
 	{
 		if (gsmRegStatus == GsmRegistrationState::NotRegisteredNotSearching)
 		{
-			if (_gsm.SetRegistrationMode(RegistrationMode::Automatic) == AtResultType::Timeout)
+
+			if (!UpdateRegistrationMode())
 			{
 				ChangeState(GsmState::NoShield);
 				return;

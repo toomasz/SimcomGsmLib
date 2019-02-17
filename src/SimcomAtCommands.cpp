@@ -184,9 +184,9 @@ AtResultType SimcomAtCommands::FlightModeOff()
 {
 	return GenericAt(10000, F("AT+CFUN=1"));
 }
-AtResultType SimcomAtCommands::SetRegistrationMode(RegistrationMode mode, const char *operatorName)
+AtResultType SimcomAtCommands::SetRegistrationMode(RegistrationMode mode, bool imsiFormat, const char *operatorName)
 {
-	const auto operatorFormat = _parserContext.IsOperatorNameReturnedInImsiFormat ? 2 : 0;
+	const auto operatorFormat = imsiFormat ? 2 : 0;
 	// don't need to use AtCommand::Cops here, AT+COPS write variant returns OK/ERROR
 
 	if (operatorName == nullptr)

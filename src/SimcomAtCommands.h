@@ -68,7 +68,7 @@ public:
 		AtResultType GetOperatorName(FixedStringBase &operatorName, bool returnImsi = false);
 		AtResultType FlightModeOn();
 		AtResultType FlightModeOff();
-		AtResultType SetRegistrationMode(RegistrationMode mode, const char * operatorName = nullptr);
+		AtResultType SetRegistrationMode(RegistrationMode mode, bool imsiFormat = false, const char * operatorName = nullptr);
 		AtResultType GetImei(FixedString20 &imei);
 		AtResultType GetBatteryStatus(BatteryStatus &batteryStatus);
 		AtResultType GetSignalQuality(int16_t &signalQuality);

@@ -63,6 +63,7 @@ class GsmModule
 	bool RequestSleepIfEnabled();
 	bool ExitSleepIfEnabled();
 	uint64_t _lastStateChange = 0;
+	bool UpdateRegistrationMode();
 public:
 	GsmModule(SimcomAtCommands &gsm);
 
@@ -76,6 +77,9 @@ public:
 	char* ApnUser;
 	char* ApnPassword;
 	int ModuleConnectCount = 0;
+	RegistrationMode OperatorSelectionMode = RegistrationMode::Automatic;
+	char *NumericOperatorName = "";
+
 
 	SimcomAtCommands& At()
 	{
