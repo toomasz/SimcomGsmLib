@@ -60,6 +60,25 @@ bool SocketManager::SendDataFromSockets()
 	return true;
 }
 
+bool SocketManager::AnyConnectAtTimeouted()
+{
+	bool anySocketHasAtConnectTimeout = false;
+	for (int i = 0; i < SocketCount; i++)
+	{
+		auto socket = _sockets[i];
+		if (socket == nullptr)
+		{
+			continue;
+		}
+
+		if (socket->GetAndResetHasConnectTimeout())
+		{
+			anySocketHasAtConnectTimeout = true;
+		}
+	}
+	return anySocketHasAtConnectTimeout;
+}
+
 bool SocketManager::ReadDataFromSockets()
 {
 	for (int i = 0; i < SocketCount; i++)

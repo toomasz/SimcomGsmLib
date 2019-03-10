@@ -38,6 +38,7 @@ class GsmAsyncSocket
 
 	uint8_t _mux;
 	bool _isNetworkAvailable;
+	bool _connectAtTimeouted;
 	ProtocolType _protocol;
 	SimcomAtCommands& _gsm;
 	SocketStateType _state;
@@ -58,6 +59,7 @@ class GsmAsyncSocket
 	void RaiseEvent(SocketEventType eventType);
 	bool OnMuxEvent(FixedStringBase &eventStr);
 	void OnCipstatusInfo(ConnectionInfo& connectionInfo);
+	bool GetAndResetHasConnectTimeout();
 	bool SendPendingData();
 	bool ReadIncomingData();	
 public:

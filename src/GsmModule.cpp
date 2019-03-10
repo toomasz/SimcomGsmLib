@@ -60,7 +60,7 @@ bool GsmModule::ReadModemProperties()
 	getTemperatureTimer.SetDelay(GetTemperatureInterval);
 	if (getTemperatureTimer.IsElapsed())
 	{
-		_logger.Log(F("Reading module temperature"));
+		_logger.Log(F("  ## Reading module temperature"));
 		if (_gsm.GetTemperature(Temperature) == AtResultType::Timeout)
 		{
 			return false;
@@ -350,6 +350,12 @@ void GsmModule::Loop()
 		if (ipStatus == SimcomIpState::PdpDeact)
 		{
 			ChangeState(GsmState::ConnectingToGprs);
+			return;
+		}
+		if (_socketManager.AnyConnectAtTimeouted())
+		{
+			_logger.Log(F("At timeout on connect detected"));
+			ChangeState(GsmState::NoShield);
 			return;
 		}
 		if (!_socketManager.SendDataFromSockets())

@@ -18,6 +18,8 @@ class SocketManager
 	void OnCipstatusInfo(ConnectionInfo& connectionInfo);
 public:
 	SocketManager(SimcomAtCommands &atCommands, GsmLogger& logger);
+
+	bool AnyConnectAtTimeouted();
 	bool SendDataFromSockets();
 	bool ReadDataFromSockets();
 	void SetIsNetworkAvailable(bool isNetworkAvailable);

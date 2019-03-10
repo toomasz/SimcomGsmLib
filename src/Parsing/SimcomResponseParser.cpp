@@ -91,7 +91,10 @@ void SimcomResponseParser::FeedChar(char c)
 	{		
 		if (lineParserState == PARSER_LINE)
 		{
-			_response.append(c);
+			if (_response.freeBytes() > 0)
+			{
+				_response.append(c);
+			}
 		}
 	}
 	// line -> delimiter

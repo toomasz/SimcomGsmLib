@@ -6,6 +6,7 @@ GsmAsyncSocket::GsmAsyncSocket(SimcomAtCommands& gsm, uint8_t mux, ProtocolType 
 	_gsm(gsm),
 	_mux(mux),
 	_isNetworkAvailable(false),
+	_connectAtTimeouted(false),
 	_protocol(protocol),
 	_state(SocketStateType::Closed),
 	_onSocketEventCtx(nullptr),
@@ -185,6 +186,16 @@ void GsmAsyncSocket::OnCipstatusInfo(ConnectionInfo &connectionInfo)
 		RaiseEvent(SocketEventType::Disconnected);
 		break;
 	}
+}
+
+bool GsmAsyncSocket::GetAndResetHasConnectTimeout()
+{
+	if (_connectAtTimeouted)
+	{
+		_connectAtTimeouted = false;
+		return true;
+	}
+	return false;
 }
 
 bool GsmAsyncSocket::SendPendingData()

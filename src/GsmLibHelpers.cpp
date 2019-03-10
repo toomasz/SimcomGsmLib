@@ -90,7 +90,10 @@ void BinaryToString(FixedStringBase&source, FixedStringBase& target)
 	for (int i = 0; i < source.length(); i++)
 	{
 		const char c = source[i];
-
+		if (target.freeBytes() < 3)
+		{
+			return;
+		}
 		if(isprint(c))
 		{
 			target.append(c);

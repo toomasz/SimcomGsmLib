@@ -48,7 +48,7 @@ public:
 		_dtrPin = dtrPin;
 		if (_dtrPin != -1)
 		{
-			pinMode(_dtrPin, OUTPUT_OPEN_DRAIN);
+			pinMode(_dtrPin, OUTPUT);
 		}
 		_txPin = txPin;
 		_rxPin = rxPin;
