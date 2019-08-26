@@ -39,8 +39,14 @@ bool GsmAsyncSocket::BeginConnect(const char* host, uint16_t port)
 	RaiseEvent(SocketEventType::ConnectBegin);
 	_sendBuffer.clear();
 	auto connectResult = _gsm.BeginConnect(_protocol, _mux, host, port);
+	
 	if (connectResult != AtResultType::Success)
 	{
+		if (connectResult == AtResultType::Timeout)
+		{
+			_logger.Log(F("_gsm::BeginConnect AT timeouted"));
+			_connectAtTimeouted = true;
+		}
 		RaiseEvent(SocketEventType::ConnectFailed);
 		return false;
 	}

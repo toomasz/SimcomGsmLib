@@ -59,14 +59,14 @@ class GsmModule
 		}
 	}
 	GsmState _state;
-	bool ReadModemProperties();
+	bool ReadModemProperties(bool force = false);
 	bool RequestSleepIfEnabled();
 	bool ExitSleepIfEnabled();
 	uint64_t _lastStateChange = 0;
 	bool UpdateRegistrationMode();
 public:
 	GsmModule(SimcomAtCommands &gsm);
-
+	bool GarbageDetectedDEBUG = false;
 	
 	bool SleepEnabled = false;
 	uint16_t TickInterval = 100;
@@ -115,7 +115,8 @@ public:
 	GsmIp ipAddress;
 	SimcomIpState ipStatus;
 	SimState simStatus;
-	float Temperature = 0;
+	uint16_t Lac = 0;
+	uint16_t CellId = 0;
 	void OnLog(GsmLogCallback onLog);
 	void Loop();
 	void Wait(uint64_t delayInMs)

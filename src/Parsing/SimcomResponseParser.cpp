@@ -604,6 +604,11 @@ ParserState SimcomResponseParser::ParseLine()
 			{
 				return ParserState::PartialError;
 			}
+			if (!parser.NextNum(_parserContext.CregLac, false, 16) || !parser.NextNum(_parserContext.CregCellId, false, 16))
+			{
+				_parserContext.CregLac = 0;
+				_parserContext.CregCellId = 0;
+			}
 			return ParserState::PartialSuccess;
 		}	
 	}

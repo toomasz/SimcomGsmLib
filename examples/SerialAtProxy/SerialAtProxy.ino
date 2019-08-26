@@ -1,7 +1,7 @@
 #include <SimcomAtCommandsEsp32.h>
 
 
-SimcomAtCommandsEsp32 gsm(Serial2, 16, 14);
+SimcomAtCommandsEsp32 gsm(Serial2, 33, 32);
 
 void OnLog(const char* gsmLog, bool _)
 {

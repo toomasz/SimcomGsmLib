@@ -25,6 +25,8 @@ struct ParserContext
 	bool Cipmux;
 	ConnectionInfo* CurrentConnectionInfo;
 	GsmRegistrationState RegistrationStatus;
+	uint16_t CregLac;
+	uint16_t CregCellId;
 	SimState SimStatus;
 	bool IsRxManual;
 	FixedStringBase* CipRxGetBuffer;

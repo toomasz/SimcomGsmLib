@@ -64,7 +64,9 @@ public:
 		AtResultType GenericAt(uint64_t timeout, const __FlashStringHelper* command,...);
 		AtResultType Shutdown();
 		AtResultType GetSimStatus(SimState &simStatus);
+		AtResultType SetCregMode(uint8_t mode);
 		AtResultType GetRegistrationStatus(GsmRegistrationState& registrationStatus);
+		AtResultType GetRegistrationStatus(GsmRegistrationState& registrationStatus, uint16_t& lac, uint16_t& cellId);
 		AtResultType GetOperatorName(FixedStringBase &operatorName, bool returnImsi = false);
 		AtResultType FlightModeOn();
 		AtResultType FlightModeOff();

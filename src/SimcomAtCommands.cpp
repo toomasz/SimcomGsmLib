@@ -143,6 +143,12 @@ AtResultType SimcomAtCommands::GetSimStatus(SimState &simStatus)
 	return result;
 }
 
+AtResultType SimcomAtCommands::SetCregMode(uint8_t mode)
+{
+	SendAt_P(AtCommand::Generic, F("AT+CREG=%d"), mode);
+	return PopCommandResult();	
+}
+
 AtResultType SimcomAtCommands::GetRegistrationStatus(GsmRegistrationState& registrationStatus)
 {
 	SendAt_P(AtCommand::Creg, F("AT+CREG?"));
@@ -151,6 +157,20 @@ AtResultType SimcomAtCommands::GetRegistrationStatus(GsmRegistrationState& regis
 	if (result == AtResultType::Success)
 	{
 		registrationStatus = _parserContext.RegistrationStatus;
+	}
+	return result;
+}
+
+AtResultType SimcomAtCommands::GetRegistrationStatus(GsmRegistrationState& registrationStatus, uint16_t& lac, uint16_t& cellId)
+{
+	SendAt_P(AtCommand::Creg, F("AT+CREG?"));
+
+	const auto result = PopCommandResult();
+	if (result == AtResultType::Success)
+	{
+		registrationStatus = _parserContext.RegistrationStatus;
+		lac = _parserContext.CregLac;
+		cellId = _parserContext.CregCellId;
 	}
 	return result;
 }
@@ -487,7 +507,7 @@ AtResultType SimcomAtCommands::BeginConnect(ProtocolType protocol, uint8_t mux, 
 	SendAt_P(AtCommand::Generic, 
 		F("AT+CIPSTART=%d,\"%s\",\"%s\",\"%d\""),
 		mux, ProtocolToStr(protocol), address, port);	
-	return PopCommandResult(false, 60000u);
+	return PopCommandResult(false, 30000u);
 }
 
 AtResultType SimcomAtCommands::Read(int mux, FixedStringBase& outputBuffer, uint16_t& availableBytes)

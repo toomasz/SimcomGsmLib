@@ -37,14 +37,18 @@ void GsmModule::OnGsmModuleEvent(GsmModuleEventType eventType)
 		Serial.println("Voltage is too high!");
 	}
 }
-bool GsmModule::ReadModemProperties()
+bool GsmModule::ReadModemProperties(bool force)
 {
-	static IntervalTimer getVariablesTimer(GetPropertiesInterval);
-	if (!getVariablesTimer.IsElapsed())
+	if (!force)
 	{
-		return true;
+		static IntervalTimer getVariablesTimer(GetPropertiesInterval);
+		if (!getVariablesTimer.IsElapsed())
+		{
+			return true;
+		}
 	}
-	if (_gsm.GetRegistrationStatus(gsmRegStatus) == AtResultType::Timeout)
+	
+	if (_gsm.GetRegistrationStatus(gsmRegStatus, Lac, CellId) == AtResultType::Timeout)
 	{
 		return false;
 	}
@@ -56,16 +60,7 @@ bool GsmModule::ReadModemProperties()
 	{
 		return false;
 	}
-	static IntervalTimer getTemperatureTimer(GetTemperatureInterval);
-	getTemperatureTimer.SetDelay(GetTemperatureInterval);
-	if (getTemperatureTimer.IsElapsed())
-	{
-		_logger.Log(F("  ## Reading module temperature"));
-		if (_gsm.GetTemperature(Temperature) == AtResultType::Timeout)
-		{
-			return false;
-		}
-	}
+	
 	if (gsmRegStatus == GsmRegistrationState::HomeNetwork || gsmRegStatus == GsmRegistrationState::Roaming)
 	{
 		if (OperatorNameHelper::GetRealOperatorName(_gsm, operatorName) == AtResultType::Timeout)
@@ -195,6 +190,7 @@ void GsmModule::Loop()
 			delay(500);
 			return;
 		}
+		ReadModemProperties(true);
 		ChangeState(GsmState::Initializing);
 		return;
 	}
@@ -227,6 +223,7 @@ void GsmModule::Loop()
 			ChangeState(GsmState::NoShield);
 			return;
 		}
+		_gsm.SetCregMode(2);
 		//_gsm.Cipshut();
 		ChangeState(GsmState::SearchingForNetwork);
 		return;
@@ -455,5 +452,9 @@ void GsmModule::OnLog(GsmLogCallback onLog)
 
 int GsmModule::GarbageOnSerialDetected()
 {
+	if (GarbageDetectedDEBUG)
+	{
+		return true;
+	}
 	return _gsm.GarbageOnSerialDetected();
 }
