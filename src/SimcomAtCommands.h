@@ -21,14 +21,14 @@ class SimcomAtCommands
 {
 private:
 		Stream &_serial;
+		UpdateBaudRateCallback _updateBaudRateCallback;
+		CpuSleepCallback _cpuSleepCallback;
+		SetDtrCallback _setDtrCallback;
 		uint64_t _currentBaudRate;
 		SimcomResponseParser _parser;
-		UpdateBaudRateCallback _updateBaudRateCallback;
-		SetDtrCallback _setDtrCallback;
 		ParserContext _parserContext;
 		FixedString50 _currentCommand;
 
-		uint64_t _lastIncomingByteTime;
 		void SendAt_P(AtCommand commandType, const __FlashStringHelper *command, ...);
 		void SendAt_P(AtCommand commandType, bool expectEcho, const __FlashStringHelper *command, ...);
 
@@ -37,8 +37,7 @@ private:
 		void ReadCharAndFeedParser();
 		void ReadCharAndIgnore();
 		bool _isInSleepMode;
-		CpuSleepCallback _cpuSleepCallback;
-
+		uint64_t _lastIncomingByteTime;
 protected:
 		GsmLogger _logger;
 
@@ -78,7 +77,7 @@ public:
 		AtResultType SendSms(char *number, char *message);
 	
 		// Calls
-		AtResultType Call(char *number);
+		AtResultType Call(const char *number);
 		AtResultType HangUp();
 		AtResultType GetIncomingCall(IncomingCallInfo &callInfo);
 		

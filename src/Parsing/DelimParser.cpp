@@ -30,6 +30,10 @@ LineParserState DelimParser::GetNextState(char c, LineParserState state)
 {
 	switch (state)
 	{
+	case LineParserState::Error:
+		return LineParserState::Error;
+	case LineParserState::End:
+		return LineParserState::Error;
 	case LineParserState::Delimiter:
 		if (c == _separator)
 		{
@@ -93,7 +97,7 @@ bool DelimParser::NextToken()
 		auto previousState = _currentState;
 		if (_position == _line.length())
 		{
-			_currentState = LineParserState::END;
+			_currentState = LineParserState::End;
 		}
 		else
 		{
@@ -335,8 +339,9 @@ const __FlashStringHelper* DelimParser::StateToStr(LineParserState state)
 	case LineParserState::EndQuote: return F("END_Q");
 	case LineParserState::Delimiter: return F("DELIM");
 	case LineParserState::Error: return F("ERR");
-	case LineParserState::END: return F("END");
+	case LineParserState::End: return F("END");
 	}
+	return F("");
 }
 
 

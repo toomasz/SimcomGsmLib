@@ -2,9 +2,9 @@
 
 
 SocketManager::SocketManager(SimcomAtCommands &atCommands, GsmLogger& logger) :
-	_atCommands(atCommands),
-	_sockets({ nullptr }),
 	_logger(logger),
+	_atCommands(atCommands),
+	_sockets{ nullptr },
 	_isNetworkAvailable(false)
 {
 	atCommands.OnMuxEvent(this, [](void* ctx, uint8_t mux, FixedStringBase& eventStr)

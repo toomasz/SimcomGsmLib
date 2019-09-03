@@ -26,9 +26,11 @@ enum class GsmState :uint8_t
 
 class GsmModule
 {
+	GsmLogger& _logger;
 	SimcomAtCommands& _gsm;	
 	SocketManager _socketManager;
-	GsmLogger& _logger;
+	GsmState _state;
+
 	FixedString100 _error;
 	bool _isInSleepMode;
 	void GetStateStringFromProg(char* stateStr, GsmState state)
@@ -58,7 +60,6 @@ class GsmModule
 			ModuleConnectCount++;			
 		}
 	}
-	GsmState _state;
 	bool ReadModemProperties(bool force = false);
 	bool RequestSleepIfEnabled();
 	bool ExitSleepIfEnabled();
@@ -73,12 +74,13 @@ public:
 	uint16_t SimStatusInterval = 1000;
 	uint16_t GetPropertiesInterval = 1000;
 	uint16_t GetTemperatureInterval = 5000;
-	char *ApnName;
-	char* ApnUser;
-	char* ApnPassword;
+	const char *ApnName;
+	const char* ApnUser;
+	const char* ApnPassword;
 	int ModuleConnectCount = 0;
 	RegistrationMode OperatorSelectionMode = RegistrationMode::Automatic;
-	char *NumericOperatorName = "";
+	const char *NumericOperatorName = "";
+	uint64_t BaudRate;
 
 
 	SimcomAtCommands& At()
@@ -96,7 +98,6 @@ public:
 	{
 		return _socketManager.CreateSocket(mux, protocolType);
 	}
-	uint64_t BaudRate;
 	GsmState GetState()
 	{
 		return _state;

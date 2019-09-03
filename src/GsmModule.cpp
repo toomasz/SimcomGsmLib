@@ -4,15 +4,15 @@
 
 
 GsmModule::GsmModule(SimcomAtCommands &gsm):
+	_logger(gsm.Logger()),
 	_gsm(gsm), 
 	_socketManager(gsm, gsm.Logger()),
-	_logger(gsm.Logger()),
 	_state(GsmState::Initial),
+	_isInSleepMode(false),
 	ApnName(""),
 	ApnUser(""),
 	ApnPassword(""),
-	_isInSleepMode(false),
-	BaudRate(115200)
+	BaudRate(115200ull)
 {
 	Serial.println("GsmModule::GsmModule");
 	_gsm.OnGsmModuleEvent(this, [](void*ctx, GsmModuleEventType eventType) 

@@ -3,21 +3,21 @@
 #include "../GsmLibHelpers.h"
 
 GsmAsyncSocket::GsmAsyncSocket(SimcomAtCommands& gsm, uint8_t mux, ProtocolType protocol, GsmLogger& logger):
+	_logger(logger),
 	_gsm(gsm),
 	_mux(mux),
 	_isNetworkAvailable(false),
 	_connectAtTimeouted(false),
 	_protocol(protocol),
 	_state(SocketStateType::Closed),
+	_receivedBytes(0),
+	_sentBytes(0),
 	_onSocketEventCtx(nullptr),
 	_onSocketEvent(nullptr),
 	_onSocketDataReceivedCtx(nullptr),
 	_onSocketDataReceived(nullptr),
 	_onPollCtx(nullptr),
-	_onPoll(nullptr),
-	_receivedBytes(0),
-	_sentBytes(0),
-	_logger(logger)
+	_onPoll(nullptr)	
 {
 }
 
@@ -178,6 +178,8 @@ void GsmAsyncSocket::OnCipstatusInfo(ConnectionInfo &connectionInfo)
 {
 	switch (connectionInfo.State)
 	{
+	case ConnectionState::Initial:
+		break;
 	case ConnectionState::Connecting:
 		RaiseEvent(SocketEventType::ConnectBegin);
 		break;
@@ -225,6 +227,7 @@ bool GsmAsyncSocket::SendPendingData()
 		_sentBytes += sentBytes;
 	}
 	_sendBuffer.clear();
+	return true;
 }
 
 bool GsmAsyncSocket::ReadIncomingData()

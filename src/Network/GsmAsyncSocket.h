@@ -34,17 +34,17 @@ class SocketManager;
 class GsmAsyncSocket
 {
 	friend class SocketManager;
-	FixedString<2000> _sendBuffer;
 
+	GsmLogger& _logger;
+	SimcomAtCommands& _gsm;
+	FixedString<2000> _sendBuffer;
 	uint8_t _mux;
 	bool _isNetworkAvailable;
 	bool _connectAtTimeouted;
 	ProtocolType _protocol;
-	SimcomAtCommands& _gsm;
 	SocketStateType _state;
 	uint64_t _receivedBytes;
 	uint64_t _sentBytes;
-	GsmLogger& _logger;
 
 	void* _onSocketEventCtx;
 	SocketEventHandler _onSocketEvent;

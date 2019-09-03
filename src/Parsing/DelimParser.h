@@ -15,7 +15,7 @@ enum class LineParserState
 	EndQuote,
 	Delimiter,
 	Error,
-	END
+	End
 };
 
 class DelimParser

@@ -1,6 +1,6 @@
 #include "OperatorNameHelper.h"
 
-char* OperatorNameHelper::_gsmNetworks[][2] =
+const char* OperatorNameHelper::_gsmNetworks[][2] =
 {
 	{"26001", "Plus"},
 	{"26002", "T-Mobile"},
@@ -31,7 +31,6 @@ AtResultType OperatorNameHelper::GetRealOperatorName(SimcomAtCommands& gsm, Fixe
 
 const char* OperatorNameHelper::GetRealNetworkName(const char* networkName)
 {
-	int i = 0;
 	auto gsmNetwork = _gsmNetworks[0];
 	while (gsmNetwork[0] != nullptr)
 	{

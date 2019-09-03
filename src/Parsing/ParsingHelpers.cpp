@@ -130,20 +130,20 @@ const char ConnectOkStr[]  PROGMEM = "STATE: CONNECT OK";
 const char IpProcessingStr[]  PROGMEM = "STATE: IP PROCESSING";
 
 
-#define FPSTR(x) reinterpret_cast<const __FlashStringHelper*>(x)
+#define FLASH_STRING(x) reinterpret_cast<const __FlashStringHelper*>(x)
 
 struct IpStatusEntry IpStatusMap[] =
 {
-	FPSTR(IpInitalStr), SimcomIpState::IpInitial,
-	FPSTR(IpStartStr), SimcomIpState::IpStart,
-	FPSTR(IpConfigStr), SimcomIpState::IpConfig,
-	FPSTR(IpGporsActStr), SimcomIpState::IpGprsact,
-	FPSTR(IpStatusStr), SimcomIpState::IpStatus,
-	FPSTR(TcpConnectingStr), SimcomIpState::TcpConnecting,
-	FPSTR(TcpClosedStr), SimcomIpState::TcpClosed,
-	FPSTR(PdpDeactStr), SimcomIpState::PdpDeact,
-	FPSTR(ConnectOkStr), SimcomIpState::ConnectOk,
-	FPSTR(IpProcessingStr), SimcomIpState::IpProcessing,
+	FLASH_STRING(IpInitalStr), SimcomIpState::IpInitial,
+	FLASH_STRING(IpStartStr), SimcomIpState::IpStart,
+	FLASH_STRING(IpConfigStr), SimcomIpState::IpConfig,
+	FLASH_STRING(IpGporsActStr), SimcomIpState::IpGprsact,
+	FLASH_STRING(IpStatusStr), SimcomIpState::IpStatus,
+	FLASH_STRING(TcpConnectingStr), SimcomIpState::TcpConnecting,
+	FLASH_STRING(TcpClosedStr), SimcomIpState::TcpClosed,
+	FLASH_STRING(PdpDeactStr), SimcomIpState::PdpDeact,
+	FLASH_STRING(ConnectOkStr), SimcomIpState::ConnectOk,
+	FLASH_STRING(IpProcessingStr), SimcomIpState::IpProcessing,
 	0,SimcomIpState::Unknown
 };
 
@@ -201,7 +201,6 @@ bool ParsingHelpers::ParseSocketStatusLine(DelimParser & parser, ConnectionInfo&
 	{
 		return false;
 	}	
-	ProtocolType protocolType;
 	ConnectionState connectionState;
 
 	if (!ParsingHelpers::ParseConnectionState(connectionStateStr, connectionState))

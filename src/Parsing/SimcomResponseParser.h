@@ -12,19 +12,22 @@
 typedef bool(*MuxEventHandler)(void* ctx, uint8_t mux, FixedStringBase& eventStr);
 typedef void(*MuxCipstatusInfoHandler)(void* ctx, ConnectionInfo& info);
 typedef void(*OnGsmModuleEventHandler)(void *ctx, GsmModuleEventType eventType);
+
+enum class LineState 
+{
+	PARSER_INITIAL,
+	PARSER_CR,
+	PARSER_LF,
+	PARSER_LINE 
+};
+
 class SimcomResponseParser
 {
-	enum LineState { PARSER_INITIAL, PARSER_CR, PARSER_LF, PARSER_LINE };
-	uint8_t lineParserState;
+	LineState lineParserState;
 	ParserState _state;
 	GsmLogger &_logger;
 	FixedString150 _response;
-	ParserContext& _parserContext;
-	bool IsErrorLine();
-	bool IsOkLine();
-	bool ParseUnsolicited(FixedStringBase & line);
-	ParserState ParseLine();
-	int StateTransition(char c);
+	ParserContext& _parserContext;	
 	bool _garbageOnSerialDetected;
 	Stream& _serial;
 	SequenceDetector _promptSequenceDetector;
@@ -33,16 +36,20 @@ class SimcomResponseParser
 	FixedStringBase& _currentCommandStr;
 
 	MuxEventHandler _onMuxEvent;
-	void* _onMuxEventCtx;
+	void* _onMuxEventCtx;	
+	MuxCipstatusInfoHandler _onMuxCipstatusInfo;
+	void* _onMuxCipstatusInfoCtx;
 	OnGsmModuleEventHandler _onGsmModuleEvent;
 	void* _onGsmModuleEventCtx;
 
-	MuxCipstatusInfoHandler _onMuxCipstatusInfo;
-	void* _onMuxCipstatusInfoCtx;
+	ParserState ParseLine();
+	LineState StateTransition(char c);
+	bool IsErrorLine();
+	bool IsOkLine();
+	bool ParseUnsolicited(FixedStringBase & line);
 public:
 	SimcomResponseParser(ParserContext &parserContext, GsmLogger &logger,Stream& serial, FixedStringBase &currentCommandStr);
 	AtResultType GetAtResultType();
-	volatile bool commandReady;
 	void SetCommandType(AtCommand commandType, bool expectEcho = true);
 	void FeedChar(char c);	
 	bool GarbageOnSerialDetected();
@@ -50,6 +57,7 @@ public:
 	void OnMuxEvent(void* ctx, MuxEventHandler onMuxEvent);
 	void OnMuxCipstatusInfo(void* ctx, MuxCipstatusInfoHandler onMuxCipstatusInfo);
 	void OnGsmModuleEvent(void* ctx, OnGsmModuleEventHandler handler);
+	volatile bool commandReady;
 	bool IsGarbageDetectionActive;
 };
 

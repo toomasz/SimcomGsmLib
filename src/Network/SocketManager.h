@@ -9,9 +9,9 @@ const int SocketCount = 6;
 
 class SocketManager
 {
-	GsmAsyncSocket* _sockets[SocketCount];
-	SimcomAtCommands& _atCommands;
 	GsmLogger &_logger;
+	SimcomAtCommands& _atCommands;
+	GsmAsyncSocket* _sockets[SocketCount];
 	bool _isNetworkAvailable;
 	
 	bool OnMuxEvent(uint8_t mux, FixedStringBase& eventStr);

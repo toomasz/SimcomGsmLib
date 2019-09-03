@@ -5,12 +5,12 @@ SimcomAtCommands::SimcomAtCommands(Stream& serial, UpdateBaudRateCallback update
 _serial(serial),
 _updateBaudRateCallback(updateBaudRateCallback),
 _cpuSleepCallback(cpuSleepCallback),
-_currentBaudRate(0),
 _setDtrCallback(setDtrCallback),
+_currentBaudRate(0),
 _parser(_parserContext, _logger, serial, _currentCommand),
-IsAsync(false),
 _isInSleepMode(false),
-_lastIncomingByteTime(0)
+_lastIncomingByteTime(0),
+IsAsync(false)
 {
 }
 
@@ -35,7 +35,7 @@ void SimcomAtCommands::ReadCharAndIgnore()
 	{
 		return;
 	}
-	auto c = _serial.read();
+	_serial.read();
 	_lastIncomingByteTime = millis();
 }
 AtResultType SimcomAtCommands::PopCommandResult(bool ensureDelay, uint64_t timeout)
@@ -461,7 +461,7 @@ bool SimcomAtCommands::SetDtr(bool value)
 	return _setDtrCallback(value);
 }
 
-AtResultType SimcomAtCommands::Call(char *number)
+AtResultType SimcomAtCommands::Call(const char *number)
 {
 	SendAt_P(AtCommand::Generic, F("ATD%s;"), number);
 	return PopCommandResult();

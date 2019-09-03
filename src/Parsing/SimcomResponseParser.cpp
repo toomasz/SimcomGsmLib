@@ -7,21 +7,21 @@ SimcomResponseParser::SimcomResponseParser(ParserContext& parserContext, GsmLogg
 _logger(logger),
 _parserContext(parserContext),
 _garbageOnSerialDetected(false),
-IsGarbageDetectionActive(true),
 _serial(serial),
 _promptSequenceDetector("> "),
-commandReady(false),
 _currentCommandStr(currentCommandStr),
 _onMuxEvent(nullptr),
 _onMuxEventCtx(nullptr),
 _onMuxCipstatusInfo(nullptr),
 _onMuxCipstatusInfoCtx(nullptr),
 _onGsmModuleEvent(nullptr),
-_onGsmModuleEventCtx(nullptr)
+_onGsmModuleEventCtx(nullptr),
+commandReady(false),
+IsGarbageDetectionActive(true)
 {
 	Serial.println("SimcomResponseParser::SimcomResponseParser");
 	_currentCommand = AtCommand::Generic;
-	lineParserState = PARSER_INITIAL;
+	lineParserState = LineState::PARSER_INITIAL;
 	_state = ParserState::Timeout;
 }
 
@@ -83,13 +83,13 @@ void SimcomResponseParser::FeedChar(char c)
 		_parserContext.CiprxGetLeftBytesToRead--;
 		return;
 	}	
-	int prevState = lineParserState;
+	LineState prevState = lineParserState;
 
 	lineParserState = StateTransition(c);
 
-	if(prevState  == PARSER_INITIAL || prevState == PARSER_LF || prevState == PARSER_LINE)
+	if(prevState  == LineState::PARSER_INITIAL || prevState == LineState::PARSER_LF || prevState == LineState::PARSER_LINE)
 	{		
-		if (lineParserState == PARSER_LINE)
+		if (lineParserState == LineState::PARSER_LINE)
 		{
 			if (_response.freeBytes() > 0)
 			{
@@ -98,7 +98,7 @@ void SimcomResponseParser::FeedChar(char c)
 		}
 	}
 	// line -> delimiter
-	if ((prevState == PARSER_LINE || prevState == PARSER_CR) && (lineParserState == PARSER_LF))
+	if ((prevState == LineState::PARSER_LINE || prevState == LineState::PARSER_CR) && (lineParserState == LineState::PARSER_LF))
 	{
 		if (_response.length() == 0)
 		{
@@ -662,63 +662,63 @@ void SimcomResponseParser::SetCommandType(AtCommand command, bool expectEcho)
 	}
 }
 
-int SimcomResponseParser::StateTransition(char c)
+LineState SimcomResponseParser::StateTransition(char c)
 {
 	switch (lineParserState)
 	{
-		case PARSER_INITIAL:
+		case LineState::PARSER_INITIAL:
 			if (c == '\r')
 			{
-				return PARSER_CR;
+				return LineState::PARSER_CR;
 			}
 			else if (c == '\n')
 			{
-				return PARSER_LF;
+				return LineState::PARSER_LF;
 			}
 			else
 			{
-				return PARSER_LINE;
+				return LineState::PARSER_LINE;
 			}
-		case PARSER_CR:
+		case LineState::PARSER_CR:
 			if (c == '\r')
 			{
-				return PARSER_CR;
+				return LineState::PARSER_CR;
 			}
 			else if (c == '\n')
 			{
-				return PARSER_LF;
+				return LineState::PARSER_LF;
 			}
 			else
 			{
-				return PARSER_INITIAL;
+				return LineState::PARSER_INITIAL;
 			}
-		case PARSER_LF:
+		case LineState::PARSER_LF:
 			if (c == '\r')
 			{
-				return PARSER_CR;
+				return LineState::PARSER_CR;
 			}
 			else if (c == '\n')
 			{
-				return PARSER_LF;
+				return LineState::PARSER_LF;
 			}
 			else
 			{
-				return PARSER_LINE;
+				return LineState::PARSER_LINE;
 			}
-		case PARSER_LINE:
+		case LineState::PARSER_LINE:
+		default:
 			if (c == '\r')
 			{
-				return PARSER_CR;
+				return LineState::PARSER_CR;
 			}
 			else if (c == '\n')
 			{
-				return PARSER_LF;
+				return LineState::PARSER_LF;
 			}
 			else
 			{
-				return PARSER_LINE;
+				return LineState::PARSER_LINE;
 			}
-
 	}
 
 }
