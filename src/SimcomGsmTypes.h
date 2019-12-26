@@ -28,9 +28,9 @@ public:
 		memset(_octets, 0, 4);		
 	}
 	uint8_t _octets[4];
-	FixedString20 ToString()
+	FixedString32 ToString()
 	{
-		FixedString20 str;
+		FixedString32 str;
 		str.appendFormat("%d.%d.%d.%d", _octets[0], _octets[1], _octets[2], _octets[3]);
 		return str;
 	}
@@ -169,7 +169,7 @@ public:
 		HasIncomingCall = false;
 	}
 	bool HasIncomingCall;
-	FixedString20 CallerNumber;
+	FixedString32 CallerNumber;
 };
 
 

@@ -27,7 +27,7 @@ private:
 		uint64_t _currentBaudRate;
 		SimcomResponseParser _parser;
 		ParserContext _parserContext;
-		FixedString50 _currentCommand;
+		FixedString64 _currentCommand;
 
 		void SendAt_P(AtCommand commandType, const __FlashStringHelper *command, ...);
 		void SendAt_P(AtCommand commandType, bool expectEcho, const __FlashStringHelper *command, ...);
@@ -46,7 +46,7 @@ public:
 		{
 			return _logger;
 		}		
-		FixedString50 TimeoutedCommand;
+		FixedString64 TimeoutedCommand;
 
 		bool IsAsync;
 		SimcomAtCommands(Stream& serial, UpdateBaudRateCallback updateBaudRateCallback, SetDtrCallback setDtrCallback = nullptr, CpuSleepCallback cpuSleepCallback = nullptr);
@@ -70,7 +70,7 @@ public:
 		AtResultType FlightModeOn();
 		AtResultType FlightModeOff();
 		AtResultType SetRegistrationMode(RegistrationMode mode, bool imsiFormat = false, const char * operatorName = nullptr);
-		AtResultType GetImei(FixedString20 &imei);
+		AtResultType GetImei(FixedString32 &imei);
 		AtResultType GetBatteryStatus(BatteryStatus &batteryStatus);
 		AtResultType GetSignalQuality(int16_t &signalQuality);
 		AtResultType SetEcho(bool echoEnabled);
@@ -82,7 +82,7 @@ public:
 		AtResultType GetIncomingCall(IncomingCallInfo &callInfo);
 		
 		// USSD
-		AtResultType SendUssdWaitResponse(char *ussd, FixedString150& response);
+		AtResultType SendUssdWaitResponse(char *ussd, FixedString128& response);
 		// TCP/UDP
 		AtResultType GetIpState(SimcomIpState &ipState);
 		AtResultType GetIpAddress(GsmIp &ipAddress);

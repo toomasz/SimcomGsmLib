@@ -10,7 +10,7 @@ class OperatorNameHelper
 	static const char* _gsmNetworks[][2];
 	static const char *GetRealNetworkName(const char* networkName);
 public:
-	static AtResultType GetRealOperatorName(SimcomAtCommands& gsm, FixedString20&operatorName);
+	static AtResultType GetRealOperatorName(SimcomAtCommands& gsm, FixedString32&operatorName);
 };
 
 

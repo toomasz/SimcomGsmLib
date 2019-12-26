@@ -140,7 +140,7 @@ void SimcomResponseParser::FeedChar(char c)
 				_logger.Log(F( "Unknown response (%d b): "), _response.length());
 			}
 
-			FixedString200 printableLine;
+			FixedString256 printableLine;
 			BinaryToString(_response, printableLine);
 			_logger.Log(F(" '%s'"), printableLine.c_str());
 			// do nothing, do not change _state to none
@@ -224,7 +224,7 @@ bool SimcomResponseParser::ParseUnsolicited(FixedStringBase& line)
 	uint8_t mux;
 	if (parser.NextNum(mux))
 	{
-		FixedString50 str;
+		FixedString64 str;
 		if (mux <= 5)
 		{
 			if (parser.NextString(str))
@@ -427,7 +427,7 @@ ParserState SimcomResponseParser::ParseLine()
 			{
 				return ParserState::PartialError;
 			}
-			FixedString20 number;			
+			FixedString32 number;			
 			if (!parser.NextString(number))
 			{
 				return ParserState::PartialError;

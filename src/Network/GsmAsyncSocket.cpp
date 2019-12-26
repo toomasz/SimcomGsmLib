@@ -236,7 +236,7 @@ bool GsmAsyncSocket::ReadIncomingData()
 	{
 		return true;
 	}
-	FixedString200 dataBuffer;
+	FixedString256 dataBuffer;
 	uint16_t leftData;
 	auto gsmReadResult = _gsm.Read(_mux, dataBuffer, leftData);
 	if (gsmReadResult != AtResultType::Success)

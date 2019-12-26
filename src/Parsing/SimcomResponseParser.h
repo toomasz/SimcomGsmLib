@@ -26,7 +26,7 @@ class SimcomResponseParser
 	LineState lineParserState;
 	ParserState _state;
 	GsmLogger &_logger;
-	FixedString150 _response;
+	FixedString256 _response;
 	ParserContext& _parserContext;	
 	bool _garbageOnSerialDetected;
 	Stream& _serial;

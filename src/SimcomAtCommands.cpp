@@ -106,7 +106,7 @@ void SimcomAtCommands::SendAt_P(AtCommand commandType, const __FlashStringHelper
 
 	va_list argptr;
 	va_start(argptr, command);
-	FixedString200 buffer;
+	FixedString256 buffer;
 
 	_currentCommand.clear();
 	_currentCommand.appendFormatV(command, argptr);
@@ -406,7 +406,7 @@ uint64_t SimcomAtCommands::FindCurrentBaudRate()
 	return baudRate;
 }
 
-AtResultType SimcomAtCommands::GetImei(FixedString20 &imei)
+AtResultType SimcomAtCommands::GetImei(FixedString32 &imei)
 {	
 	_parserContext.Imei = &imei;
 	SendAt_P(AtCommand::Gsn, F("AT+GSN"));
@@ -431,7 +431,7 @@ AtResultType SimcomAtCommands::SendSms(char *number, char *message)
 	_serial.print('\x1a');
 	return PopCommandResult();
 }
-AtResultType SimcomAtCommands::SendUssdWaitResponse(char *ussd, FixedString150& response)
+AtResultType SimcomAtCommands::SendUssdWaitResponse(char *ussd, FixedString128& response)
 {
 	_parserContext.UssdResponse = &response;
 	SendAt_P(AtCommand::Cusd, F("AT+CUSD=1,\"%s\""), ussd);

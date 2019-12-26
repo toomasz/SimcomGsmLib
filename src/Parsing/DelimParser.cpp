@@ -146,9 +146,9 @@ bool DelimParser::NextToken()
 	return false;
 }
 
-FixedString150 DelimParser::CurrentToken()
+FixedString128 DelimParser::CurrentToken()
 {
-	FixedString150 str;
+	FixedString128 str;
 	auto tokEnd = _position - 1;
 	if (_tokenStart <= tokEnd)
 	{
@@ -298,7 +298,7 @@ bool DelimParser::ParseDouble(const char* str, int length, double &target, char 
 }
 bool DelimParser::NextFloat(float & dst)
 {
-	FixedString20 floatStr;
+	FixedString32 floatStr;
 
 	if (!NextToken())
 	{

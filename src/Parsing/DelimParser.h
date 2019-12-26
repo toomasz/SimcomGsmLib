@@ -32,7 +32,7 @@ public:
 	bool StartsWith(const __FlashStringHelper* commandStart);
 	DelimParser(FixedStringBase &line, char separator = ',');
 	bool NextToken();
-	FixedString150 CurrentToken();
+	FixedString128 CurrentToken();
 	bool Skip(int tokenCount);
 	bool NextString(FixedStringBase& targetString);
 	bool NextNum(uint8_t & dst, bool allowNull = false, int base = 10);

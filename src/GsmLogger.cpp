@@ -22,7 +22,7 @@ void GsmLogger::Log(const __FlashStringHelper* format, ...)
 	va_list argptr;
 	va_start(argptr, format);
 
-	FixedString200 buffer;
+	FixedString128 buffer;
 	buffer.appendFormatV(format, argptr);
 	if (_onLog != nullptr)
 	{
@@ -45,7 +45,7 @@ void GsmLogger::LogAt(const __FlashStringHelper* format, ...)
 	va_list argptr;
 	va_start(argptr, format);
 
-	FixedString200 buffer;
+	FixedString128 buffer;
 	buffer.appendFormatV(format, argptr);
 	if (_onLog != nullptr)
 	{

@@ -31,7 +31,7 @@ class GsmModule
 	SocketManager _socketManager;
 	GsmState _state;
 
-	FixedString100 _error;
+	FixedString128 _error;
 	bool _isInSleepMode;
 	void GetStateStringFromProg(char* stateStr, GsmState state)
 	{
@@ -110,7 +110,7 @@ public:
 	int GarbageOnSerialDetected();
 	int16_t signalQuality;
 	BatteryStatus batteryInfo;
-	FixedString20 operatorName;
+	FixedString32 operatorName;
 	IncomingCallInfo callInfo;
 	GsmRegistrationState gsmRegStatus;
 	GsmIp ipAddress;

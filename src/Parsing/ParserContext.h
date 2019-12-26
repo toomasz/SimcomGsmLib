@@ -16,8 +16,8 @@ struct ParserContext
 	GsmIp* IpAddress;
 	FixedStringBase* OperatorName;
 	uint16_t operatorSelectionMode;
-	FixedString150* UssdResponse;
-	FixedString20* Imei;
+	FixedString128* UssdResponse;
+	FixedString32* Imei;
 	BatteryStatus* BatteryInfo;
 	IncomingCallInfo* CallInfo;
 	SimcomIpState* IpState;	

@@ -62,7 +62,7 @@ bool ParsingHelpers::ParseIpAddress(FixedStringBase &ipAddress, GsmIp& ip)
 	return n == 4;
 }
 
-bool ParsingHelpers::ParseProtocolType(FixedString20& protocolStr, ProtocolType& protocol)
+bool ParsingHelpers::ParseProtocolType(FixedString16& protocolStr, ProtocolType& protocol)
 {
 	if (protocolStr == F("TCP"))
 	{
@@ -77,7 +77,7 @@ bool ParsingHelpers::ParseProtocolType(FixedString20& protocolStr, ProtocolType&
 	return false;
 }
 
-bool ParsingHelpers::ParseConnectionState(FixedString20& connectionStateStr, ConnectionState& connectionState)
+bool ParsingHelpers::ParseConnectionState(FixedString16& connectionStateStr, ConnectionState& connectionState)
 {
 	if (connectionStateStr == F("INITIAL"))
 	{
@@ -185,10 +185,10 @@ bool ParsingHelpers::ParseSocketStatusLine(DelimParser & parser, ConnectionInfo&
 {
 	uint8_t mux;
 	uint8_t bearer;
-	FixedString20 protocolStr;
-	FixedString20 ipAddressStr;
+	FixedString16 protocolStr;
+	FixedString16 ipAddressStr;
 	uint16_t port;
-	FixedString20 connectionStateStr;
+	FixedString16 connectionStateStr;
 
 	auto parsingAllSegmentsIsOk =
 		parser.NextNum(mux) &&
