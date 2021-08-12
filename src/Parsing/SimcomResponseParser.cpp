@@ -124,7 +124,7 @@ void SimcomResponseParser::FeedChar(char c)
 		}
 		
 		// if command not parsed yet
-		else if (parseResult == ParserState::None)
+		else if (parseResult == ParserState::None && !_response.equals(_currentCommandStr.c_str()))
 		{
 			if (ParsingHelpers::CheckIfLineContainsGarbage(_response))
 			{
@@ -136,8 +136,8 @@ void SimcomResponseParser::FeedChar(char c)
 
 			}
 			else
-			{
-				_logger.Log(F( "Unknown response (%d b): "), _response.length());
+			{				
+				_logger.Log(F( "Unknown response (%d b): "), _response.length());				
 			}
 
 			FixedString256 printableLine;
