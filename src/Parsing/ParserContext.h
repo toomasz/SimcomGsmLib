@@ -43,6 +43,8 @@ struct ParserContext
 	uint16_t *CipsendSentBytes;
 	SequenceDetector CipsendDataEchoDetector;
 	float *Temperature;
+    uint16_t* lastSmsMessageIndex;
+    FixedString256* smsMessage;
 };
 
 #endif

@@ -430,6 +430,20 @@ AtResultType SimcomAtCommands::SendSms(char *number, char *message)
 	_serial.print(message);
 	_serial.print('\x1a');
 	return PopCommandResult();
+}        
+
+AtResultType SimcomAtCommands::GetLastSmsIndexForRead(uint16_t &smsIndex)
+{
+    _parserContext.lastSmsMessageIndex = &smsIndex;
+    SendAt_P(AtCommand::Cpms, F("AT+CPMS?"));
+    return PopCommandResult();
+}
+
+AtResultType SimcomAtCommands::ReadSms(int smsIndex, FixedString32& number, FixedString256& message)
+{
+    _parserContext.smsMessage = &message;
+	SendAt_P(AtCommand::Cmgr, F("AT+CMGR=%d"), smsIndex);    
+    return PopCommandResult();
 }
 AtResultType SimcomAtCommands::SendUssdWaitResponse(char *ussd, FixedString128& response)
 {

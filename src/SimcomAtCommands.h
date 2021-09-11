@@ -75,7 +75,9 @@ public:
 		AtResultType GetSignalQuality(int16_t &signalQuality);
 		AtResultType SetEcho(bool echoEnabled);
 		AtResultType SendSms(char *number, char *message);
-	
+        AtResultType GetLastSmsIndexForRead(uint16_t &smsIndex);
+        AtResultType ReadSms(int smsIndex, FixedString32& number, FixedString256& message);
+
 		// Calls
 		AtResultType Call(const char *number);
 		AtResultType HangUp();

@@ -177,7 +177,21 @@ bool SimcomResponseParser::IsOkLine()
 {
 	return _response == F("OK");
 }
-
+bool SimcomResponseParser::IsCurrentLineAllInHexChars()
+{
+    if(_response.length() == 0)
+    {
+        return false;
+    }
+    for(int i =0; i < _response.length(); i++)
+    {
+        if(!isxdigit(_response[i]))
+        {
+            return false;
+        }
+    }
+    return true;
+}
 bool SimcomResponseParser::ParseUnsolicited(FixedStringBase& line)
 {
 	if(line.equals(F("+CIPRXGET: 1,0")))
@@ -629,6 +643,30 @@ ParserState SimcomResponseParser::ParseLine()
 		}
 	}
 
+    if (_currentCommand == AtCommand::Cpms)
+	{
+		if (parser.StartsWith(F("+CPMS: ")))
+		{
+			if (!parser.Skip(7))
+			{
+				return ParserState::PartialError;
+			}
+			if (!parser.NextNum(*_parserContext.lastSmsMessageIndex))
+			{
+				return ParserState::PartialError;
+			}
+			return ParserState::PartialSuccess;
+		}
+	}
+    if (_currentCommand == AtCommand::Cmgr)
+	{
+        if(IsCurrentLineAllInHexChars())
+        {
+            _logger.Log(F("sms pdu: %s"), _response.c_str());
+            *_parserContext.smsMessage = _response;
+            return ParserState::PartialSuccess;
+        }
+	}
 	if (IsOkLine())
 	{
 		if (_state == ParserState::PartialSuccess)

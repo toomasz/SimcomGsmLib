@@ -47,6 +47,7 @@ class SimcomResponseParser
 	bool IsErrorLine();
 	bool IsOkLine();
 	bool ParseUnsolicited(FixedStringBase & line);
+    bool IsCurrentLineAllInHexChars();
 public:
 	SimcomResponseParser(ParserContext &parserContext, GsmLogger &logger,Stream& serial, FixedStringBase &currentCommandStr);
 	AtResultType GetAtResultType();
