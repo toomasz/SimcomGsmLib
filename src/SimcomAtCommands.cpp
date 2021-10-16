@@ -1,5 +1,6 @@
 #include "SimcomAtCommands.h"
 #include "GsmLibHelpers.h"
+#include "Parsing/SmsParser.h"
 
 SimcomAtCommands::SimcomAtCommands(Stream& serial, UpdateBaudRateCallback updateBaudRateCallback, SetDtrCallback setDtrCallback, CpuSleepCallback cpuSleepCallback) :
 _serial(serial),
@@ -57,9 +58,10 @@ AtResultType SimcomAtCommands::PopCommandResult(bool ensureDelay, uint64_t timeo
 
 	const unsigned long start = millis();
 	while (_parser.commandReady == false && (millis() - start) < timeout)
-	{
+	{       
 		ReadCharAndFeedParser();		
 	}
+
 	const auto commandResult = _parser.GetAtResultType();
 	const auto elapsedMs = millis() - start;
 	
@@ -439,11 +441,26 @@ AtResultType SimcomAtCommands::GetLastSmsIndexForRead(uint16_t &smsIndex)
     return PopCommandResult();
 }
 
-AtResultType SimcomAtCommands::ReadSms(int smsIndex, FixedString32& number, FixedString256& message)
+AtResultType SimcomAtCommands::ReadSms(int smsIndex, FixedString16& number, FixedString256& message, time_t& smsTime)
 {
-    _parserContext.smsMessage = &message;
-	SendAt_P(AtCommand::Cmgr, F("AT+CMGR=%d"), smsIndex);    
-    return PopCommandResult();
+    FixedString512 pduText;
+    _parserContext.smsMessage = &pduText;
+	SendAt_P(AtCommand::Cmgr, F("AT+CMGR=%d"), smsIndex);        
+
+    auto result = PopCommandResult();
+
+    if(result == AtResultType::Success)
+    {
+        char binPdu[256];
+        hex2bin(pduText.c_str(), pduText.length(), binPdu);
+        char smsNumber[30];
+        char smsMessage[255];
+        pdu_decode_bin((unsigned char*)(binPdu), pduText.length()/2, &smsTime, smsNumber, 30, smsMessage, 255);
+
+        number.append(smsNumber);
+        message.append(smsMessage);
+    }
+    return result;
 }
 AtResultType SimcomAtCommands::SendUssdWaitResponse(char *ussd, FixedString128& response)
 {

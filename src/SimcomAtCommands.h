@@ -76,7 +76,7 @@ public:
 		AtResultType SetEcho(bool echoEnabled);
 		AtResultType SendSms(char *number, char *message);
         AtResultType GetLastSmsIndexForRead(uint16_t &smsIndex);
-        AtResultType ReadSms(int smsIndex, FixedString32& number, FixedString256& message);
+        AtResultType ReadSms(int smsIndex, FixedString16& number, FixedString256& message, time_t &smsTime);
 
 		// Calls
 		AtResultType Call(const char *number);

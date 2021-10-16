@@ -21,9 +21,9 @@ enum class LineParserState
 class DelimParser
 {
 	FixedStringBase &_line;
-	uint8_t _position;
+	uint16_t _position;
 	LineParserState _currentState;
-	uint8_t _tokenStart;
+	uint16_t _tokenStart;
 	LineParserState GetNextState(char c, LineParserState state);
 	int hexDigitToInt(char c);
 	char _separator;

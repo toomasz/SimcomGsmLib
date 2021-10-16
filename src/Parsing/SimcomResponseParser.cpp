@@ -19,7 +19,6 @@ _onGsmModuleEventCtx(nullptr),
 commandReady(false),
 IsGarbageDetectionActive(true)
 {
-	Serial.println("SimcomResponseParser::SimcomResponseParser");
 	_currentCommand = AtCommand::Generic;
 	lineParserState = LineState::PARSER_INITIAL;
 	_state = ParserState::Timeout;
@@ -236,6 +235,7 @@ bool SimcomResponseParser::ParseUnsolicited(FixedStringBase& line)
 	DelimParser parser(line);
 
 	uint8_t mux;
+
 	if (parser.NextNum(mux))
 	{
 		FixedString64 str;
@@ -253,7 +253,6 @@ bool SimcomResponseParser::ParseUnsolicited(FixedStringBase& line)
 			}
 		}
 	}
-	
 	return false;
 }
 
@@ -660,9 +659,12 @@ ParserState SimcomResponseParser::ParseLine()
 	}
     if (_currentCommand == AtCommand::Cmgr)
 	{
+        if(parser.StartsWith(F("+CMGR: ")))
+        {
+            return ParserState::PartialSuccess;
+        }
         if(IsCurrentLineAllInHexChars())
         {
-            _logger.Log(F("sms pdu: %s"), _response.c_str());
             *_parserContext.smsMessage = _response;
             return ParserState::PartialSuccess;
         }
